@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../interfaces/IV1LogWriter.sol";
+import "../interfaces/IV1QuexLogWriter.sol";
 import "../interfaces/IV1QuexLogReader.sol";
 import "../interfaces/IV1LogPolicies.sol";
 import "../interfaces/IV1SignersRegistry.sol";
@@ -11,7 +11,7 @@ struct StrippedData {
     uint256 timestamp;
 }
 
-contract V1Log is Ownable, IV1LogWriter, IV1QuexLogReader {
+contract V1Log is Ownable, IV1QuexLogWriter, IV1QuexLogReader {
     IV1LogPolicies LOG_POLICIES;
     IV1SignersRegistry SIGNERS_REGISTRY;
     mapping (bytes32 => mapping (uint256 => StrippedData)) data_items;
