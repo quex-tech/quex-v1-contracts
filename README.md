@@ -65,5 +65,5 @@ For now, it only contains fiducial logic with filtering by ID.
 Storage for the off-chain data. Every received data item must be signed by TD. The contract verifies that TD has
 write permissions by calling `isAllowed` method of `V1LogPolicies`, verifies the signature, and stores the data. For API
 key management and query efficiency, single TD can provide several data feeds signed with the same key. For thet reason,
-`feeID` is included in signed data, and single log contract can manage several feeds (given that the same log policies
+`feedID` is included in signed data, and single log contract can manage several feeds (given that the same log policies
 are applied to all of them).
