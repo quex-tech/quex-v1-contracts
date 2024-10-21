@@ -43,18 +43,13 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry {
         bytes4 callbackMethod,
         uint32 callbackGasLimit
     ) external returns (bytes32 requestCallId, uint256 requestCallPrice) {
-        QuexRequest memory quexRequest = requestTemplateRegistry.getQuexRequest(quexRequestId);
+        (uint256 tdId, QuexRequest memory quexRequest) = requestTemplateRegistry.getQuexRequest(quexRequestId);
+        
         require(bytes(quexRequest.request.path).length > 0, "Request template doesn't exist");
-
-        // todo: add td isAllowed check
+        require(tdId == 0 || trustDomainRegistry.isAllowed(tdId), "Trust Domain is not allowed to use");
 
         requestCallPrice = requestCallProxy.calculateRequestCallPrice(callbackGasLimit);
-        requestCallId = requestCallProxy.sendRequest{value: requestCallPrice}(
-            quexRequestId,
-            callbackAddress,
-            callbackMethod,
-            callbackGasLimit
-        );
+        requestCallId = requestCallProxy.sendRequest{value: requestCallPrice}(quexRequestId);
 
         requestCalls[requestCallId] = RequestCall(
             requestCallId,
