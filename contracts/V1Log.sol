@@ -3,7 +3,7 @@ pragma solidity 0.8.22;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IV1QuexLogWriter.sol";
 import "../interfaces/IV1QuexLogReader.sol";
-import "../interfaces/IV1LogPolicies.sol";
+import "../interfaces/IV1TrustDomainRegistry.sol";
 import "../interfaces/IV1SignersRegistry.sol";
 
 struct StrippedData {
@@ -12,7 +12,7 @@ struct StrippedData {
 }
 
 contract V1Log is Ownable, IV1QuexLogWriter, IV1QuexLogReader {
-    IV1LogPolicies LOG_POLICIES;
+    IV1TrustDomainRegistry LOG_POLICIES;
     IV1SignersRegistry SIGNERS_REGISTRY;
     mapping (bytes32 => mapping (uint256 => StrippedData)) data_items;
     mapping (bytes32 => uint256) curr_ids;
@@ -26,7 +26,7 @@ contract V1Log is Ownable, IV1QuexLogWriter, IV1QuexLogReader {
         address _log_policies, 
         address _signers_registry
     ) Ownable(initialOwner) {
-        LOG_POLICIES = IV1LogPolicies(_log_policies);
+        LOG_POLICIES = IV1TrustDomainRegistry(_log_policies);
         SIGNERS_REGISTRY = IV1SignersRegistry(_signers_registry);
     }
 
@@ -36,7 +36,7 @@ contract V1Log is Ownable, IV1QuexLogWriter, IV1QuexLogReader {
     }
 
     function setLogPoliciesContract(address log_policies) public onlyOwner {
-        LOG_POLICIES = IV1LogPolicies(log_policies);
+        LOG_POLICIES = IV1TrustDomainRegistry(log_policies);
     }
 
     function addFeed(bytes32 feedID) public onlyOwner {
