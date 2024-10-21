@@ -47,14 +47,14 @@ struct HTTPPrivatePatch {
     bytes body;
 }
 
-struct QuexRequest {
+struct RequestSpec {
     HTTPRequest request;
     HTTPPrivatePatch patch;
     string filter;
     string schema;
 }
 
-interface IV1RequestTemplateRegistry {
+interface IV1RequestSpecRegistry {
     function addRequest(HTTPRequest memory request) external returns (bytes32 requestId);
 
     function addPrivatePatch(uint256 tdId, HTTPPrivatePatch memory privatePatch) external returns (bytes32 patchId);
@@ -63,12 +63,12 @@ interface IV1RequestTemplateRegistry {
 
     function addResponseSchema(string memory responseSchema) external returns (bytes32 schemaId);
 
-    function addQuexRequest(
+    function addRequestSpec(
         bytes32 requestId,
         bytes32 patchId,
         bytes32 filterId,
         bytes32 schemaId
-    ) external returns (bytes32 quexRequestId);
+    ) external returns (bytes32 requestSpecId);
 
-    function getQuexRequest(bytes32 quexRequestId) external view returns (uint256 tdId, QuexRequest memory quexRequest);
+    function getRequestSpec(bytes32 requestSpecId) external view returns (uint256 tdId, RequestSpec memory requestSpec);
 }

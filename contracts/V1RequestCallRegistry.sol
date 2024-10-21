@@ -3,7 +3,7 @@ pragma solidity 0.8.22;
 
 import "../interfaces/IV1RequestCallProxy.sol";
 import "../interfaces/IV1RequestCallRegistry.sol";
-import "../interfaces/IV1RequestTemplateRegistry.sol";
+import "../interfaces/IV1RequestSpecRegistry.sol";
 import "../interfaces/IV1TrustDomainRegistry.sol";
 
 contract V1RequestCallRegistry is IV1RequestCallRegistry {
@@ -23,7 +23,7 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry {
 
     IV1RequestCallProxy internal immutable requestCallProxy;
     IV1TrustDomainRegistry internal immutable trustDomainRegistry;
-    IV1RequestTemplateRegistry internal immutable requestTemplateRegistry;
+    IV1RequestSpecRegistry internal immutable requestSpecRegistry;
 
     mapping(bytes32 => RequestCall) requestCalls;
 
@@ -33,23 +33,23 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry {
         address trustDomainRegistryAddress
     ) {
         requestCallProxy = IV1RequestCallProxy(requestCallProxyAddress);
-        requestTemplateRegistry = IV1RequestTemplateRegistry(requestTemplateRegistryAddress);
+        requestSpecRegistry = IV1RequestSpecRegistry(requestTemplateRegistryAddress);
         trustDomainRegistry = IV1TrustDomainRegistry(trustDomainRegistryAddress);
     }
 
     function sendRequest(
-        bytes32 quexRequestId,
+        bytes32 requestSpecId,
         address callbackAddress,
         bytes4 callbackMethod,
         uint32 callbackGasLimit
     ) external returns (bytes32 requestCallId, uint256 requestCallPrice) {
-        (uint256 tdId, QuexRequest memory quexRequest) = requestTemplateRegistry.getQuexRequest(quexRequestId);
-        
-        require(bytes(quexRequest.request.path).length > 0, "Request template doesn't exist");
+        (uint256 tdId, RequestSpec memory requestSpec) = requestSpecRegistry.getRequestSpec(requestSpecId);
+
+        require(bytes(requestSpec.request.path).length > 0, "Request template doesn't exist");
         require(tdId == 0 || trustDomainRegistry.isAllowed(tdId), "Trust Domain is not allowed to use");
 
         requestCallPrice = requestCallProxy.calculateRequestCallPrice(callbackGasLimit);
-        requestCallId = requestCallProxy.sendRequest{value: requestCallPrice}(quexRequestId);
+        requestCallId = requestCallProxy.sendRequest{value: requestCallPrice}(requestSpecId);
 
         requestCalls[requestCallId] = RequestCall(
             requestCallId,

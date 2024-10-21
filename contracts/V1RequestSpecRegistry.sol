@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "../interfaces/IV1RequestTemplateRegistry.sol";
+import "../interfaces/IV1RequestSpecRegistry.sol";
 
-contract V1RequestTemplateRegistry is IV1RequestTemplateRegistry {
-    struct QuexRequestInternal {
+contract V1RequestSpecRegistry is IV1RequestSpecRegistry {
+    struct RequestSpecInternal {
         bytes32 requestId;
         bytes32 patchId;
         bytes32 filterId;
@@ -16,7 +16,7 @@ contract V1RequestTemplateRegistry is IV1RequestTemplateRegistry {
     mapping(bytes32 => uint256) privatePatchTdIds;
     mapping(bytes32 => string) jqFilters;
     mapping(bytes32 => string) resultSchemas;
-    mapping(bytes32 => QuexRequestInternal) quexRequests;
+    mapping(bytes32 => RequestSpecInternal) requestSpecs;
 
     function addRequest(HTTPRequest memory request) external returns (bytes32 requestId) {
         requestId = keccak256(abi.encode(request));
@@ -42,26 +42,26 @@ contract V1RequestTemplateRegistry is IV1RequestTemplateRegistry {
         return schemaId;
     }
 
-    function addQuexRequest(
+    function addRequestSpec(
         bytes32 requestId,
         bytes32 patchId,
         bytes32 filterId,
         bytes32 schemaId
-    ) external returns (bytes32 quexRequestId) {
-        QuexRequestInternal memory quexRequest = QuexRequestInternal(requestId, patchId, filterId, schemaId);
-        quexRequestId = keccak256(abi.encode(quexRequest));
-        quexRequests[quexRequestId] = QuexRequestInternal(requestId, patchId, filterId, schemaId);
-        return quexRequestId;
+    ) external returns (bytes32 requestSpecId) {
+        RequestSpecInternal memory requestSpecInternal = RequestSpecInternal(requestId, patchId, filterId, schemaId);
+        requestSpecId = keccak256(abi.encode(requestSpecInternal));
+        requestSpecs[requestSpecId] = requestSpecInternal;
+        return requestSpecId;
     }
 
-    function getQuexRequest(bytes32 quexRequestId) external view returns (uint256 tdId, QuexRequest memory quexRequest) {
-        QuexRequestInternal memory quexRequestInernal = quexRequests[quexRequestId];
-        quexRequest = QuexRequest(
-            requests[quexRequestInernal.requestId],
-            privatePatches[quexRequestInernal.patchId],
-            jqFilters[quexRequestInernal.filterId],
-            resultSchemas[quexRequestInernal.schemaId]
+    function getRequestSpec(bytes32 requestSpecId) external view returns (uint256 tdId, RequestSpec memory requestSpec) {
+        RequestSpecInternal memory requestSpecInternal = requestSpecs[requestSpecId];
+        requestSpec = RequestSpec(
+            requests[requestSpecInternal.requestId],
+            privatePatches[requestSpecInternal.patchId],
+            jqFilters[requestSpecInternal.filterId],
+            resultSchemas[requestSpecInternal.schemaId]
         );
-        return (privatePatchTdIds[quexRequestInernal.patchId], quexRequest);
+        return (privatePatchTdIds[requestSpecInternal.patchId], requestSpec);
     }
 }
