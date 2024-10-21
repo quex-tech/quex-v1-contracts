@@ -13,6 +13,7 @@ contract V1RequestTemplateRegistry is IV1RequestTemplateRegistry {
 
     mapping(bytes32 => HTTPRequest) requests;
     mapping(bytes32 => HTTPPrivatePatch) privatePatches;
+    mapping(bytes32 => uint256) privatePatchTdIds;
     mapping(bytes32 => string) jqFilters;
     mapping(bytes32 => string) resultSchemas;
     mapping(bytes32 => QuexRequestInternal) quexRequests;
@@ -23,8 +24,8 @@ contract V1RequestTemplateRegistry is IV1RequestTemplateRegistry {
         return requestId;
     }
 
-    function addPrivatePatch(HTTPPrivatePatch memory privatePatch) external returns (bytes32 patchId) {
-        patchId = keccak256(abi.encode(privatePatch));
+    function addPrivatePatch(uint256 tdId, HTTPPrivatePatch memory privatePatch) external returns (bytes32 patchId) {
+        patchId = keccak256(abi.encodePacked(tdId, abi.encode(privatePatch)));
         privatePatches[patchId] = privatePatch;
         return patchId;
     }
@@ -53,29 +54,14 @@ contract V1RequestTemplateRegistry is IV1RequestTemplateRegistry {
         return quexRequestId;
     }
 
-    function getRequest(bytes32 requestId) external view returns (HTTPRequest memory request) {
-        return requests[requestId];
-    }
-
-    function getPrivatePatch(bytes32 patchId) external view returns (HTTPPrivatePatch memory privatePatch) {
-        return privatePatches[patchId];
-    }
-
-    function getJqFilter(bytes32 filterId) external view returns (string memory jqFilter) {
-        return jqFilters[filterId];
-    }
-
-    function getResponseSchema(bytes32 schemaId) external view returns (string memory responseSchema) {
-        return resultSchemas[schemaId];
-    }
-
-    function getQuexRequest(bytes32 quexRequestId) external view returns (QuexRequest memory quexRequest) {
+    function getQuexRequest(bytes32 quexRequestId) external view returns (uint256 tdId, QuexRequest memory quexRequest) {
         QuexRequestInternal memory quexRequestInernal = quexRequests[quexRequestId];
-        return QuexRequest(
+        quexRequest = QuexRequest(
             requests[quexRequestInernal.requestId],
             privatePatches[quexRequestInernal.patchId],
             jqFilters[quexRequestInernal.filterId],
             resultSchemas[quexRequestInernal.schemaId]
         );
+        return (privatePatchTdIds[quexRequestInernal.patchId], quexRequest);
     }
 }

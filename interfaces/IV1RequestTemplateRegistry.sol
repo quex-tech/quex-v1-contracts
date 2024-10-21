@@ -57,7 +57,7 @@ struct QuexRequest {
 interface IV1RequestTemplateRegistry {
     function addRequest(HTTPRequest memory request) external returns (bytes32 requestId);
 
-    function addPrivatePatch(HTTPPrivatePatch memory privatePatch) external returns (bytes32 patchId);
+    function addPrivatePatch(uint256 tdId, HTTPPrivatePatch memory privatePatch) external returns (bytes32 patchId);
 
     function addJqFilter(string memory jqFilter) external returns (bytes32 filterId);
 
@@ -70,13 +70,5 @@ interface IV1RequestTemplateRegistry {
         bytes32 schemaId
     ) external returns (bytes32 quexRequestId);
 
-    function getRequest(bytes32 requestId) external view returns (HTTPRequest memory request);
-
-    function getPrivatePatch(bytes32 patchId) external view returns (HTTPPrivatePatch memory privatePatch);
-
-    function getJqFilter(bytes32 filterId) external view returns (string memory jqFilter);
-
-    function getResponseSchema(bytes32 schemaId) external view returns (string memory responseSchema);
-
-    function getQuexRequest(bytes32 quexRequestId) external view returns (QuexRequest memory quexRequest);
+    function getQuexRequest(bytes32 quexRequestId) external view returns (uint256 tdId, QuexRequest memory quexRequest);
 }
