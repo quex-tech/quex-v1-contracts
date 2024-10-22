@@ -7,5 +7,5 @@ interface IV1RequestCallRegistry {
         address callbackAddress,
         bytes4 callbackMethod,
         uint32 callbackGasLimit
-    ) external returns (bytes32 requestCallId, uint256 requestCallPrice);
+    ) external payable returns (bytes32 requestCallId, uint256 requestCallPrice);
 }

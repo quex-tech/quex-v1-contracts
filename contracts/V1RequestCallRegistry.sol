@@ -29,11 +29,11 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry {
 
     constructor(
         address requestCallProxyAddress,
-        address requestTemplateRegistryAddress,
+        address requestSpecRegistryAddress,
         address trustDomainRegistryAddress
     ) {
         requestCallProxy = IV1RequestCallProxy(requestCallProxyAddress);
-        requestSpecRegistry = IV1RequestSpecRegistry(requestTemplateRegistryAddress);
+        requestSpecRegistry = IV1RequestSpecRegistry(requestSpecRegistryAddress);
         trustDomainRegistry = IV1TrustDomainRegistry(trustDomainRegistryAddress);
     }
 
@@ -42,13 +42,15 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry {
         address callbackAddress,
         bytes4 callbackMethod,
         uint32 callbackGasLimit
-    ) external returns (bytes32 requestCallId, uint256 requestCallPrice) {
+    ) external payable returns (bytes32 requestCallId, uint256 requestCallPrice) {
         (uint256 tdId, RequestSpec memory requestSpec) = requestSpecRegistry.getRequestSpec(requestSpecId);
 
         require(bytes(requestSpec.request.path).length > 0, "Request template doesn't exist");
         require(tdId == 0 || trustDomainRegistry.isAllowed(tdId), "Trust Domain is not allowed to use");
 
         requestCallPrice = requestCallProxy.calculateRequestCallPrice(callbackGasLimit);
+        require(msg.value >= requestCallPrice, "Insufficient value sent");
+
         requestCallId = requestCallProxy.sendRequest{value: requestCallPrice}(requestSpecId);
 
         requestCalls[requestCallId] = RequestCall(
@@ -59,6 +61,10 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry {
             RequestCallStatus.Created,
             requestCallPrice
         );
+
+        if (msg.value > requestCallPrice) {
+            payable(msg.sender).transfer(msg.value - requestCallPrice);
+        }
 
         return (requestCallId, requestCallPrice);
     }
