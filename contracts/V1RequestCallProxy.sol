@@ -6,7 +6,6 @@ import "../interfaces/IV1RequestSpecRegistry.sol";
 import "../interfaces/IV1TrustDomainRegistry.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-
 contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
     uint256 private requestCallIdNonce = 0;
 
@@ -14,6 +13,14 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
     IV1RequestSpecRegistry internal requestSpecRegistry;
 
     event RequestCallCreated(bytes32 requestCallId, bytes32 requestSpecId);
+    event RequestCallCompleted(
+        bytes32 requestCallId,
+        address relayer,
+        address callbackAddress,
+        bytes4 callbackMethod,
+        uint32 callbackGasLimit,
+        bool callbackSuccess
+    );
 
     constructor(
         address initialOwner,
@@ -36,13 +43,36 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
 
         requestCallId = _createRequestCallId(requestSpecId);
         emit RequestCallCreated(requestCallId, requestSpecId);
-        
+
         return requestCallId;
+    }
+
+    function processResponse(
+        bytes32 requestCallId,
+        address callbackAddress,
+        bytes4 callbackMethod,
+        uint32 callbackGasLimit,
+        RequestCallResult memory requestCallResult,
+        address payable relayerAddress
+    ) external payable {
+        require(trustDomainRegistry.isAllowed(requestCallResult.tdId), "Trust Domain is not allowed to use");
+        require(_validateRequestCallResult(requestCallResult), "Recieved result is not valid");
+
+        bytes memory payload = abi.encodeWithSelector(callbackMethod, requestCallResult.dataItem);
+        (bool success, ) = callbackAddress.call{gas: callbackGasLimit}(payload);
+
+        relayerAddress.transfer(msg.value);
+        emit RequestCallCompleted(requestCallId, relayerAddress, callbackAddress, callbackMethod, callbackGasLimit, success);
     }
 
     function _createRequestCallId(bytes32 requestSpecId) private returns (bytes32 requestCallId) {
         ++requestCallIdNonce;
         return keccak256(abi.encode(requestSpecId, msg.sender, block.timestamp, block.number, requestCallIdNonce));
+    }
+
+    function _validateRequestCallResult(RequestCallResult memory requestCallResult) private returns (bool) {
+        // todo: check signature
+        return true;
     }
 
     function changeRequestSpecRegistry(address newContractAddress) external onlyOwner {

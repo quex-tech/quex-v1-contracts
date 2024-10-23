@@ -57,6 +57,21 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry, Ownable {
         return (requestCallId, requestCallPrice);
     }
 
+    function processResponse(
+        bytes32 requestCallId,
+        RequestCallResult memory requestCallResult
+    ) external {
+        RequestCall memory requestCall = requestCalls[requestCallId];
+        requestCallProxy.processResponse{value: requestCall.price}(
+            requestCallId,
+            requestCall.callbackAddress,
+            requestCall.callbackMethod,
+            requestCall.callbackGasLimit,
+            requestCallResult,
+            payable(msg.sender)
+        );
+    }
+
     function changeRequestCallProxy(address newContractAddress) external onlyOwner {
         requestCallProxy = IV1RequestCallProxy(newContractAddress);
     }
