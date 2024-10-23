@@ -14,6 +14,7 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry {
 
     struct RequestCall {
         bytes32 id;
+        bytes32 requestSpecId;
         address callbackAddress;
         bytes4 callbackMethod;
         uint32 callbackGasLimit;
@@ -51,10 +52,11 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry {
         requestCallPrice = requestCallProxy.calculateRequestCallPrice(callbackGasLimit);
         require(msg.value >= requestCallPrice, "Insufficient value sent");
 
-        requestCallId = requestCallProxy.sendRequest{value: requestCallPrice}(requestSpecId);
+        requestCallId = requestCallProxy.sendRequest(requestSpecId);
 
         requestCalls[requestCallId] = RequestCall(
             requestCallId,
+            requestSpecId,
             callbackAddress,
             callbackMethod,
             callbackGasLimit,

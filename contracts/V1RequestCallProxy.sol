@@ -12,7 +12,7 @@ contract V1RequestCallProxy is IV1RequestCallProxy {
         return callbackGasLimit * tx.gasprice;
     }
 
-    function sendRequest(bytes32 requestSpecId) external payable returns (bytes32 requestCallId) {
+    function sendRequest(bytes32 requestSpecId) external returns (bytes32 requestCallId) {
         requestCallId = _createRequestCallId(requestSpecId);
         emit RequestCallCreated(requestCallId, requestSpecId);
         return requestCallId;
