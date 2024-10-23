@@ -3,10 +3,9 @@ pragma solidity 0.8.22;
 
 import "../interfaces/IV1RequestCallProxy.sol";
 import "../interfaces/IV1RequestCallRegistry.sol";
-import "../interfaces/IV1RequestSpecRegistry.sol";
-import "../interfaces/IV1TrustDomainRegistry.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract V1RequestCallRegistry is IV1RequestCallRegistry {
+contract V1RequestCallRegistry is IV1RequestCallRegistry, Ownable {
     enum RequestCallStatus {
         Created,
         Completed
@@ -22,20 +21,12 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry {
         uint256 price;
     }
 
-    IV1RequestCallProxy internal immutable requestCallProxy;
-    IV1TrustDomainRegistry internal immutable trustDomainRegistry;
-    IV1RequestSpecRegistry internal immutable requestSpecRegistry;
+    IV1RequestCallProxy internal requestCallProxy;
 
     mapping(bytes32 => RequestCall) requestCalls;
 
-    constructor(
-        address requestCallProxyAddress,
-        address requestSpecRegistryAddress,
-        address trustDomainRegistryAddress
-    ) {
+    constructor(address initialOwner, address requestCallProxyAddress) Ownable(initialOwner) {
         requestCallProxy = IV1RequestCallProxy(requestCallProxyAddress);
-        requestSpecRegistry = IV1RequestSpecRegistry(requestSpecRegistryAddress);
-        trustDomainRegistry = IV1TrustDomainRegistry(trustDomainRegistryAddress);
     }
 
     function sendRequest(
@@ -44,11 +35,6 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry {
         bytes4 callbackMethod,
         uint32 callbackGasLimit
     ) external payable returns (bytes32 requestCallId, uint256 requestCallPrice) {
-        (uint256 tdId, RequestSpec memory requestSpec) = requestSpecRegistry.getRequestSpec(requestSpecId);
-
-        require(bytes(requestSpec.request.path).length > 0, "Request template doesn't exist");
-        require(tdId == 0 || trustDomainRegistry.isAllowed(tdId), "Trust Domain is not allowed to use");
-
         requestCallPrice = requestCallProxy.calculateRequestCallPrice(callbackGasLimit);
         require(msg.value >= requestCallPrice, "Insufficient value sent");
 
@@ -69,5 +55,9 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry {
         }
 
         return (requestCallId, requestCallPrice);
+    }
+
+    function changeRequestCallProxy(address newContractAddress) external onlyOwner {
+        requestCallProxy = IV1RequestCallProxy(newContractAddress);
     }
 }
