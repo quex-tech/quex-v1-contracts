@@ -15,7 +15,7 @@ struct ETHSignature {
 
 struct DataItem {
     uint256 timestamp;
-    bytes32 feedID;
+    bytes32 feedId;
     bytes value;
 }
 

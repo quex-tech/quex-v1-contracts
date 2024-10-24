@@ -58,7 +58,7 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
         require(trustDomainRegistry.isAllowed(requestCallResult.tdId), "Trust Domain is not allowed to use");
         require(_validateRequestCallResult(requestCallResult), "Recieved result is not valid");
 
-        bytes memory payload = abi.encodeWithSelector(callbackMethod, requestCallResult.dataItem);
+        bytes memory payload = abi.encodeWithSelector(callbackMethod, requestCallId, requestCallResult.dataItem);
         (bool success, ) = callbackAddress.call{gas: callbackGasLimit}(payload);
 
         relayerAddress.transfer(msg.value);
