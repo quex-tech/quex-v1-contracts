@@ -2,8 +2,10 @@
 pragma solidity 0.8.22;
 
 import "../interfaces/IV1RequestSpecRegistry.sol";
+import "../interfaces/IV1TrustDomainRegistry.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract V1RequestSpecRegistry is IV1RequestSpecRegistry {
+contract V1RequestSpecRegistry is IV1RequestSpecRegistry, Ownable {
     event RequestAdded(bytes32 requestId);
     event PrivatePatchAdded(bytes32 patchId);
     event JqFilterAdded(bytes32 filterId);
@@ -24,6 +26,12 @@ contract V1RequestSpecRegistry is IV1RequestSpecRegistry {
     mapping(bytes32 => string) resultSchemas;
     mapping(bytes32 => RequestSpecInternal) requestSpecs;
 
+    IV1TrustDomainRegistry internal trustDomainRegistry;
+
+    constructor(address initialOwner, address trustDomainRegistryAddress) Ownable(initialOwner) {
+        trustDomainRegistry = IV1TrustDomainRegistry(trustDomainRegistryAddress);
+    }
+
     function addRequest(HTTPRequest memory request) external returns (bytes32 requestId) {
         requestId = keccak256(abi.encode(request));
         requests[requestId] = request;
@@ -32,6 +40,8 @@ contract V1RequestSpecRegistry is IV1RequestSpecRegistry {
     }
 
     function addPrivatePatch(uint256 tdId, HTTPPrivatePatch memory privatePatch) external returns (bytes32 patchId) {
+        require(trustDomainRegistry.isAllowed(tdId), "Trust Domain is not allowed to use");
+
         patchId = keccak256(abi.encodePacked(tdId, abi.encode(privatePatch)));
         privatePatches[patchId] = privatePatch;
         emit PrivatePatchAdded(patchId);
@@ -70,7 +80,9 @@ contract V1RequestSpecRegistry is IV1RequestSpecRegistry {
         return requestSpecId;
     }
 
-    function getRequestSpec(bytes32 requestSpecId) external view returns (uint256 tdId, RequestSpec memory requestSpec) {
+    function getRequestSpec(
+        bytes32 requestSpecId
+    ) external view returns (uint256 tdId, RequestSpec memory requestSpec) {
         RequestSpecInternal memory requestSpecInternal = requestSpecs[requestSpecId];
         requestSpec = RequestSpec(
             requests[requestSpecInternal.requestId],
@@ -79,5 +91,9 @@ contract V1RequestSpecRegistry is IV1RequestSpecRegistry {
             resultSchemas[requestSpecInternal.schemaId]
         );
         return (privatePatchTdIds[requestSpecInternal.patchId], requestSpec);
+    }
+
+    function changeTrustDomainRegistry(address newContractAddress) external onlyOwner {
+        trustDomainRegistry = IV1TrustDomainRegistry(newContractAddress);
     }
 }
