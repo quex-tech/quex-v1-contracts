@@ -9,6 +9,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
     uint256 private requestCallIdNonce = 0;
 
+    mapping(address => bool) private allowedAddresses;
+
     IV1TrustDomainRegistry internal trustDomainRegistry;
     IV1RequestSpecRegistry internal requestSpecRegistry;
 
@@ -21,6 +23,11 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
         uint32 callbackGasLimit,
         bool callbackSuccess
     );
+
+    modifier onlyAllowed() {
+        require(allowedAddresses[msg.sender], "Caller is not allowed");
+        _;
+    }
 
     constructor(
         address initialOwner,
@@ -35,7 +42,7 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
         return callbackGasLimit * tx.gasprice;
     }
 
-    function sendRequest(bytes32 requestSpecId) external returns (bytes32 requestCallId) {
+    function sendRequest(bytes32 requestSpecId) external onlyAllowed returns (bytes32 requestCallId) {
         (uint256 tdId, RequestSpec memory requestSpec) = requestSpecRegistry.getRequestSpec(requestSpecId);
 
         require(bytes(requestSpec.request.path).length > 0, "Request template doesn't exist");
@@ -54,7 +61,7 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
         uint32 callbackGasLimit,
         RequestCallResult memory requestCallResult,
         address payable relayerAddress
-    ) external payable {
+    ) external payable onlyAllowed {
         require(trustDomainRegistry.isAllowed(requestCallResult.tdId), "Trust Domain is not allowed to use");
         require(_validateRequestCallResult(requestCallResult), "Recieved result is not valid");
 
@@ -62,7 +69,14 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
         (bool success, ) = callbackAddress.call{gas: callbackGasLimit}(payload);
 
         relayerAddress.transfer(msg.value);
-        emit RequestCallCompleted(requestCallId, relayerAddress, callbackAddress, callbackMethod, callbackGasLimit, success);
+        emit RequestCallCompleted(
+            requestCallId,
+            relayerAddress,
+            callbackAddress,
+            callbackMethod,
+            callbackGasLimit,
+            success
+        );
     }
 
     function _createRequestCallId(bytes32 requestSpecId) private returns (bytes32 requestCallId) {
@@ -81,5 +95,13 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
 
     function changeTrustDomainRegistry(address newContractAddress) external onlyOwner {
         trustDomainRegistry = IV1TrustDomainRegistry(newContractAddress);
+    }
+
+    function addAllowedAddress(address address_) external onlyOwner {
+        allowedAddresses[address_] = true;
+    }
+
+    function removeAllowedAddress(address address_) external onlyOwner {
+        allowedAddresses[address_] = false;
     }
 }
