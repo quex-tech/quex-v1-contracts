@@ -58,6 +58,11 @@ contract V1RequestSpecRegistry is IV1RequestSpecRegistry {
         bytes32 filterId,
         bytes32 schemaId
     ) external returns (bytes32 requestSpecId) {
+        require(bytes(requests[requestId].host).length != 0, "Request not found");
+        require(patchId == 0 || privatePatchTdIds[patchId] != 0, "Private patch not found");
+        require(bytes(jqFilters[filterId]).length != 0, "jq filter not found");
+        require(bytes(resultSchemas[schemaId]).length != 0, "Result schema not found");
+
         RequestSpecInternal memory requestSpecInternal = RequestSpecInternal(requestId, patchId, filterId, schemaId);
         requestSpecId = keccak256(abi.encode(requestSpecInternal));
         requestSpecs[requestSpecId] = requestSpecInternal;
