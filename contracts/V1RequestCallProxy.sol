@@ -3,16 +3,19 @@ pragma solidity 0.8.22;
 
 import "../interfaces/IV1RequestCallProxy.sol";
 import "../interfaces/IV1RequestSpecRegistry.sol";
+import "../interfaces/IV1SignersRegistry.sol";
 import "../interfaces/IV1TrustDomainRegistry.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
     uint256 private requestCallIdNonce = 0;
+    uint256 constant MAX_LAG = 30 minutes;
 
     mapping(address => bool) private allowedAddresses;
 
     IV1TrustDomainRegistry internal trustDomainRegistry;
     IV1RequestSpecRegistry internal requestSpecRegistry;
+    IV1SignersRegistry internal signerRegistry;
 
     event RequestCallCreated(bytes32 requestCallId, bytes32 requestSpecId);
     event RequestCallCompleted(
@@ -32,10 +35,12 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
     constructor(
         address initialOwner,
         address requestSpecRegistryAddress,
-        address trustDomainRegistryAddress
+        address trustDomainRegistryAddress,
+        address signerRegistryAddress
     ) Ownable(initialOwner) {
         requestSpecRegistry = IV1RequestSpecRegistry(requestSpecRegistryAddress);
         trustDomainRegistry = IV1TrustDomainRegistry(trustDomainRegistryAddress);
+        signerRegistry = IV1SignersRegistry(signerRegistryAddress);
     }
 
     function calculateRequestCallPrice(uint32 callbackGasLimit) external view returns (uint256 requestCallPrice) {
@@ -63,7 +68,8 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
         address payable relayerAddress
     ) external payable onlyAllowed {
         require(trustDomainRegistry.isAllowed(requestCallResult.tdId), "Trust Domain is not allowed to use");
-        require(_validateRequestCallResult(requestCallResult), "Recieved result is not valid");
+        require(_isTimestampValid(requestCallResult.dataItem.timestamp), "Time skew is too high");
+        require(_isResultSignatureValid(requestCallResult), "Signature is not valid");
 
         bytes memory payload = abi.encodeWithSelector(callbackMethod, requestCallId, requestCallResult.dataItem);
         (bool success, ) = callbackAddress.call{gas: callbackGasLimit}(payload);
@@ -84,9 +90,17 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
         return keccak256(abi.encode(requestSpecId, msg.sender, block.timestamp, block.number, requestCallIdNonce));
     }
 
-    function _validateRequestCallResult(RequestCallResult memory requestCallResult) private returns (bool) {
-        // todo: check signature
-        return true;
+    function _isResultSignatureValid(RequestCallResult memory requestCallResult) private view returns (bool) {
+        bytes memory message = abi.encode(requestCallResult.dataItem);
+        address signer = signerRegistry.getAddr(requestCallResult.tdId);
+        ETHSignature memory signature = requestCallResult.signature;
+        bytes32 messageHash = keccak256(message);
+        bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
+        return ecrecover(ethSignedMessageHash, signature.v, signature.r, signature.s) == signer;
+    }
+
+    function _isTimestampValid(uint256 timestamp) private view returns (bool) {
+        return (block.timestamp - MAX_LAG < timestamp) && (block.timestamp + MAX_LAG > timestamp);
     }
 
     function changeRequestSpecRegistry(address newContractAddress) external onlyOwner {
