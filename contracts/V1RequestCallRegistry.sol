@@ -6,18 +6,10 @@ import "../interfaces/IV1RequestCallRegistry.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract V1RequestCallRegistry is IV1RequestCallRegistry, Ownable {
-    enum RequestCallStatus {
-        Created,
-        Completed
-    }
-
     struct RequestCall {
-        bytes32 id;
-        bytes32 requestSpecId;
         address callbackAddress;
         bytes4 callbackMethod;
         uint32 callbackGasLimit;
-        RequestCallStatus status;
         uint256 price;
     }
 
@@ -41,12 +33,9 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry, Ownable {
         requestCallId = requestCallProxy.sendRequest(requestSpecId);
 
         requestCalls[requestCallId] = RequestCall(
-            requestCallId,
-            requestSpecId,
             callbackAddress,
             callbackMethod,
             callbackGasLimit,
-            RequestCallStatus.Created,
             requestCallPrice
         );
 
@@ -70,6 +59,7 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry, Ownable {
             requestCallResult,
             payable(msg.sender)
         );
+        delete requestCalls[requestCallId];
     }
 
     function changeRequestCallProxy(address newContractAddress) external onlyOwner {
