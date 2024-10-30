@@ -2,5 +2,6 @@
 pragma solidity 0.8.22;
 
 interface IV1TrustDomainRegistry {
-    function isAllowed(uint256 td_id) external view returns (bool);
+    function getSignerAddress(uint256 tdId) external view returns (address);
+    function isAllowed(uint256 tdId) external view returns (bool);
 }

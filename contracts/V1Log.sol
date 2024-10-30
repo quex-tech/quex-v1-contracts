@@ -4,7 +4,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IV1QuexLogWriter.sol";
 import "../interfaces/IV1QuexLogReader.sol";
 import "../interfaces/IV1TrustDomainRegistry.sol";
-import "../interfaces/IV1SignersRegistry.sol";
 
 struct StrippedData {
     int256 value;
@@ -12,8 +11,7 @@ struct StrippedData {
 }
 
 contract V1Log is Ownable, IV1QuexLogWriter, IV1QuexLogReader {
-    IV1TrustDomainRegistry LOG_POLICIES;
-    IV1SignersRegistry SIGNERS_REGISTRY;
+    IV1TrustDomainRegistry trustDomainRegistry;
     mapping (bytes32 => mapping (uint256 => StrippedData)) data_items;
     mapping (bytes32 => uint256) curr_ids;
     bytes32[] feeds;
@@ -23,11 +21,9 @@ contract V1Log is Ownable, IV1QuexLogWriter, IV1QuexLogReader {
 
     constructor (
         address initialOwner, 
-        address _log_policies, 
-        address _signers_registry
+        address _log_policies
     ) Ownable(initialOwner) {
-        LOG_POLICIES = IV1TrustDomainRegistry(_log_policies);
-        SIGNERS_REGISTRY = IV1SignersRegistry(_signers_registry);
+        trustDomainRegistry = IV1TrustDomainRegistry(_log_policies);
     }
 
     function getLastData(bytes32 feedID) public view returns (uint256 id, int256 value, uint256 timestamp) {
@@ -36,7 +32,7 @@ contract V1Log is Ownable, IV1QuexLogWriter, IV1QuexLogReader {
     }
 
     function setLogPoliciesContract(address log_policies) public onlyOwner {
-        LOG_POLICIES = IV1TrustDomainRegistry(log_policies);
+        trustDomainRegistry = IV1TrustDomainRegistry(log_policies);
     }
 
     function addFeed(bytes32 feedID) public onlyOwner {
@@ -59,9 +55,9 @@ contract V1Log is Ownable, IV1QuexLogWriter, IV1QuexLogReader {
     }
 
     function pushData(DataItem memory data_item, uint256 td_id, uint8 v, bytes32 r, bytes32 s) public {
-        require(LOG_POLICIES.isAllowed(td_id), "TD is not allowed by V1LogPolicies Contract");
+        require(trustDomainRegistry.isAllowed(td_id), "TD is not allowed by V1LogPolicies Contract");
         bytes memory message = abi.encode(data_item);
-        address signer = SIGNERS_REGISTRY.getAddr(td_id);
+        address signer = trustDomainRegistry.getSignerAddress(td_id);
         require(verifySignature(signer, message, v, r, s), "Signature verification failed"); 
         uint256 curr_id = curr_ids[data_item.feedID];
         uint256 latest_timestamp = data_items[data_item.feedID][curr_id].timestamp;

@@ -3,7 +3,6 @@ pragma solidity 0.8.22;
 
 import "../interfaces/IV1RequestCallProxy.sol";
 import "../interfaces/IV1RequestSpecRegistry.sol";
-import "../interfaces/IV1SignersRegistry.sol";
 import "../interfaces/IV1TrustDomainRegistry.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -15,7 +14,6 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
 
     IV1TrustDomainRegistry internal trustDomainRegistry;
     IV1RequestSpecRegistry internal requestSpecRegistry;
-    IV1SignersRegistry internal signerRegistry;
 
     event RequestCallCreated(bytes32 requestCallId, bytes32 requestSpecId);
     event RequestCallCompleted(
@@ -35,12 +33,10 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
     constructor(
         address initialOwner,
         address requestSpecRegistryAddress,
-        address trustDomainRegistryAddress,
-        address signerRegistryAddress
+        address trustDomainRegistryAddress
     ) Ownable(initialOwner) {
         requestSpecRegistry = IV1RequestSpecRegistry(requestSpecRegistryAddress);
         trustDomainRegistry = IV1TrustDomainRegistry(trustDomainRegistryAddress);
-        signerRegistry = IV1SignersRegistry(signerRegistryAddress);
     }
 
     function calculateRequestCallPrice(uint32 callbackGasLimit) external view returns (uint256 requestCallPrice) {
@@ -92,7 +88,7 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
 
     function _isResultSignatureValid(RequestCallResult memory requestCallResult) private view returns (bool) {
         bytes memory message = abi.encode(requestCallResult.dataItem);
-        address signer = signerRegistry.getAddr(requestCallResult.tdId);
+        address signer = trustDomainRegistry.getSignerAddress(requestCallResult.tdId);
         ETHSignature memory signature = requestCallResult.signature;
         bytes32 messageHash = keccak256(message);
         bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
