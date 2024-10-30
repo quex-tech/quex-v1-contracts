@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../interfaces/IV1LogPolicies.sol";
+import "../interfaces/IV1TrustDomainRegistry.sol";
 
-contract V1LogPolicies is IV1LogPolicies, Ownable {
+contract V1TrustDomainRegistry is IV1TrustDomainRegistry, Ownable {
     mapping(uint256 => uint) trusted_tds;
 
     constructor (address initialOwner) Ownable (initialOwner) {
