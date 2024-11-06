@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-struct RequestCallResult {
+struct RequestResult {
     uint256 tdId;
     DataItem dataItem;
     ETHSignature signature;
@@ -19,16 +19,16 @@ struct DataItem {
     bytes value;
 }
 
-interface IV1RequestCallRegistry {
+interface IV1RequestRegistry {
     function sendRequest(
         bytes32 feedId,
         address callbackAddress,
         bytes4 callbackMethod,
         uint32 callbackGasLimit
-    ) external payable returns (bytes32 requestCallId, uint256 requestCallPrice);
+    ) external payable returns (bytes32 requestId, uint256 requestPrice);
 
     function processResponse(
-        bytes32 requestCallId,
-        RequestCallResult memory requestCallResult
+        bytes32 requestId,
+        RequestResult memory requestResult
     ) external;
 }
