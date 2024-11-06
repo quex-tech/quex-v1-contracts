@@ -21,7 +21,7 @@ struct DataItem {
 
 interface IV1RequestCallRegistry {
     function sendRequest(
-        bytes32 requestSpecId,
+        bytes32 feedId,
         address callbackAddress,
         bytes4 callbackMethod,
         uint32 callbackGasLimit

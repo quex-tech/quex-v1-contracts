@@ -6,7 +6,7 @@ import "../interfaces/IV1RequestCallRegistry.sol";
 interface IV1RequestCallProxy {
     function calculateRequestCallPrice(uint32 callbackGasLimit) external view returns (uint256 requestCallPrice);
 
-    function sendRequest(bytes32 requestSpecId) external returns (bytes32 requestCallId);
+    function sendRequest(bytes32 feedId) external returns (bytes32 requestCallId);
 
     function processResponse(
         bytes32 requestCallId,

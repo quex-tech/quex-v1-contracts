@@ -2,30 +2,30 @@
 pragma solidity 0.8.22;
 
 import "../interfaces/IV1FeedRegistryPolicy.sol";
-import "../interfaces/IV1RequestSpecRegistry.sol";
+import "../interfaces/IV1FeedRegistry.sol";
 import "../interfaces/IV1TrustDomainRegistry.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract V1RequestSpecRegistry is IV1RequestSpecRegistry, Ownable {
+contract V1FeedRegistry is IV1FeedRegistry, Ownable {
     event RequestAdded(bytes32 requestId);
     event PrivatePatchAdded(bytes32 patchId);
     event JqFilterAdded(bytes32 filterId);
     event ResultSchemaAdded(bytes32 schemaId);
-    event RequestSpecAdded(bytes32 requestSpecId);
+    event FeedAdded(bytes32 feedId);
 
-    struct RequestSpecInternal {
+    struct FeedInternal {
         bytes32 requestId;
         bytes32 patchId;
         bytes32 schemaId;
         bytes32 filterId;
     }
 
-    mapping(bytes32 => HTTPRequest) requests;
-    mapping(bytes32 => HTTPPrivatePatch) privatePatches;
-    mapping(bytes32 => uint256) privatePatchTdIds;
-    mapping(bytes32 => string) jqFilters;
-    mapping(bytes32 => string) resultSchemas;
-    mapping(bytes32 => RequestSpecInternal) requestSpecs;
+    mapping(bytes32 => HTTPRequest) public requests;
+    mapping(bytes32 => HTTPPrivatePatch) public privatePatches;
+    mapping(bytes32 => uint256) public privatePatchTdIds;
+    mapping(bytes32 => string) public jqFilters;
+    mapping(bytes32 => string) public resultSchemas;
+    mapping(bytes32 => FeedInternal) public feeds;
 
     IV1TrustDomainRegistry internal trustDomainRegistry;
     IV1FeedRegistryPolicy internal feedRegistryPolicy;
@@ -74,29 +74,29 @@ contract V1RequestSpecRegistry is IV1RequestSpecRegistry, Ownable {
         return schemaId;
     }
 
-    function addRequestSpec(
+    function addFeed(
         bytes32 requestId,
         bytes32 patchId,
         bytes32 schemaId,
         bytes32 filterId
-    ) external onlyAllowed returns (bytes32 requestSpecId) {
+    ) external onlyAllowed returns (bytes32 feedId) {
         require(bytes(requests[requestId].host).length != 0, "Request not found");
         require(patchId == 0 || privatePatchTdIds[patchId] != 0, "Private patch not found");
         require(bytes(resultSchemas[schemaId]).length != 0, "Result schema not found");
         require(bytes(jqFilters[filterId]).length != 0, "jq filter not found");
 
-        RequestSpecInternal memory requestSpecInternal = RequestSpecInternal(requestId, patchId, schemaId, filterId);
-        requestSpecId = keccak256(abi.encode(requestSpecInternal));
-        requestSpecs[requestSpecId] = requestSpecInternal;
-        emit RequestSpecAdded(requestSpecId);
-        return requestSpecId;
+        FeedInternal memory feedInternal = FeedInternal(requestId, patchId, schemaId, filterId);
+        feedId = _calculateFeedId(feedInternal);
+        feeds[feedId] = feedInternal;
+        emit FeedAdded(feedId);
+        return feedId;
     }
 
-    function getRequestSpec(
-        bytes32 requestSpecId
-    ) external view returns (uint256 tdId, RequestSpec memory requestSpec) {
-        RequestSpecInternal memory requestSpecInternal = requestSpecs[requestSpecId];
-        return (privatePatchTdIds[requestSpecInternal.patchId], _getRequestSpec(requestSpecInternal));
+    function getFeed(
+        bytes32 feedId
+    ) external view returns (uint256 tdId, Feed memory feed) {
+        FeedInternal memory feedInternal = feeds[feedId];
+        return (privatePatchTdIds[feedInternal.patchId], _getFeed(feedInternal));
     }
 
     function changeTrustDomainRegistry(address newContractAddress) external onlyOwner {
@@ -107,20 +107,20 @@ contract V1RequestSpecRegistry is IV1RequestSpecRegistry, Ownable {
         feedRegistryPolicy = IV1FeedRegistryPolicy(newContractAddress);
     }
 
-    function _calculateRequestSpecId(RequestSpecInternal memory requestSpecInternal) private view returns (bytes32) {
-        RequestSpec memory requestSpec = _getRequestSpec(requestSpecInternal);
-        return keccak256(abi.encode(requestSpec));
+    function _calculateFeedId(FeedInternal memory feedId) private view returns (bytes32) {
+        Feed memory feed = _getFeed(feedId);
+        return keccak256(abi.encode(feed));
     }
 
-    function _getRequestSpec(
-        RequestSpecInternal memory requestSpecInternal
-    ) private view returns (RequestSpec memory requestSpec) {
+    function _getFeed(
+        FeedInternal memory feedInternal
+    ) private view returns (Feed memory feed) {
         return
-            RequestSpec(
-                requests[requestSpecInternal.requestId],
-                privatePatches[requestSpecInternal.patchId],
-                resultSchemas[requestSpecInternal.schemaId],
-                jqFilters[requestSpecInternal.filterId]
+            Feed(
+                requests[feedInternal.requestId],
+                privatePatches[feedInternal.patchId],
+                resultSchemas[feedInternal.schemaId],
+                jqFilters[feedInternal.filterId]
             );
     }
 }

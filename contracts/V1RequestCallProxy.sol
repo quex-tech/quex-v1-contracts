@@ -2,20 +2,20 @@
 pragma solidity 0.8.22;
 
 import "../interfaces/IV1RequestCallProxy.sol";
-import "../interfaces/IV1RequestSpecRegistry.sol";
+import "../interfaces/IV1FeedRegistry.sol";
 import "../interfaces/IV1TrustDomainRegistry.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
     uint256 private requestCallIdNonce = 0;
-    uint256 constant MAX_LAG = 30 minutes;
+    uint256 constant private MAX_LAG = 30 minutes;
 
     mapping(address => bool) private allowedAddresses;
 
     IV1TrustDomainRegistry internal trustDomainRegistry;
-    IV1RequestSpecRegistry internal requestSpecRegistry;
+    IV1FeedRegistry internal feedRegistry;
 
-    event RequestCallCreated(bytes32 requestCallId, bytes32 requestSpecId);
+    event RequestCallCreated(bytes32 requestCallId, bytes32 feedId);
     event RequestCallCompleted(
         bytes32 requestCallId,
         address relayer,
@@ -32,10 +32,10 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
 
     constructor(
         address initialOwner,
-        address requestSpecRegistryAddress,
+        address feedRegistryAddress,
         address trustDomainRegistryAddress
     ) Ownable(initialOwner) {
-        requestSpecRegistry = IV1RequestSpecRegistry(requestSpecRegistryAddress);
+        feedRegistry = IV1FeedRegistry(feedRegistryAddress);
         trustDomainRegistry = IV1TrustDomainRegistry(trustDomainRegistryAddress);
     }
 
@@ -43,14 +43,14 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
         return callbackGasLimit * tx.gasprice;
     }
 
-    function sendRequest(bytes32 requestSpecId) external onlyAllowed returns (bytes32 requestCallId) {
-        (uint256 tdId, RequestSpec memory requestSpec) = requestSpecRegistry.getRequestSpec(requestSpecId);
+    function sendRequest(bytes32 feedId) external onlyAllowed returns (bytes32 requestCallId) {
+        (uint256 tdId, Feed memory feed) = feedRegistry.getFeed(feedId);
 
-        require(bytes(requestSpec.request.path).length > 0, "Request template doesn't exist");
+        require(bytes(feed.request.path).length > 0, "Request template doesn't exist");
         require(tdId == 0 || trustDomainRegistry.isAllowed(tdId), "Trust Domain is not allowed to use");
 
-        requestCallId = _createRequestCallId(requestSpecId);
-        emit RequestCallCreated(requestCallId, requestSpecId);
+        requestCallId = _createRequestCallId(feedId);
+        emit RequestCallCreated(requestCallId, feedId);
 
         return requestCallId;
     }
@@ -83,9 +83,9 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
         );
     }
 
-    function _createRequestCallId(bytes32 requestSpecId) private returns (bytes32 requestCallId) {
+    function _createRequestCallId(bytes32 feedId) private returns (bytes32 requestCallId) {
         ++requestCallIdNonce;
-        return keccak256(abi.encode(requestSpecId, msg.sender, block.timestamp, block.number, requestCallIdNonce));
+        return keccak256(abi.encode(feedId, msg.sender, block.timestamp, block.number, requestCallIdNonce));
     }
 
     function _isResultSignatureValid(RequestCallResult memory requestCallResult) private view returns (bool) {
@@ -102,8 +102,8 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
         return (block.timestamp - MAX_LAG < timestamp) && (block.timestamp + MAX_LAG > timestamp);
     }
 
-    function changeRequestSpecRegistry(address newContractAddress) external onlyOwner {
-        requestSpecRegistry = IV1RequestSpecRegistry(newContractAddress);
+    function changeFeedRegistry(address newContractAddress) external onlyOwner {
+        feedRegistry = IV1FeedRegistry(newContractAddress);
     }
 
     function changeTrustDomainRegistry(address newContractAddress) external onlyOwner {

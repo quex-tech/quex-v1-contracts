@@ -23,7 +23,7 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry, Ownable {
     }
 
     function sendRequest(
-        bytes32 requestSpecId,
+        bytes32 feedId,
         address callbackAddress,
         bytes4 callbackMethod,
         uint32 callbackGasLimit
@@ -31,10 +31,10 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry, Ownable {
         requestCallPrice = requestCallProxy.calculateRequestCallPrice(callbackGasLimit);
         require(msg.value >= requestCallPrice, "Insufficient value sent");
 
-        requestCallId = requestCallProxy.sendRequest(requestSpecId);
+        requestCallId = requestCallProxy.sendRequest(feedId);
 
         requestCalls[requestCallId] = RequestCall(
-            requestSpecId,
+            feedId,
             callbackAddress,
             callbackMethod,
             callbackGasLimit,
