@@ -87,7 +87,8 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
     }
 
     function _isResultSignatureValid(RequestCallResult memory requestCallResult) private view returns (bool) {
-        bytes memory message = abi.encode(requestCallResult.dataItem);
+        DataItem memory data = requestCallResult.dataItem;
+        bytes memory message = abi.encode(data.timestamp, data.feedId, data.value);
         address signer = trustDomainRegistry.getSignerAddress(requestCallResult.tdId);
         ETHSignature memory signature = requestCallResult.signature;
         bytes32 messageHash = keccak256(message);
