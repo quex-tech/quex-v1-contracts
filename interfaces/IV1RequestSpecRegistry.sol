@@ -50,8 +50,8 @@ struct HTTPPrivatePatch {
 struct RequestSpec {
     HTTPRequest request;
     HTTPPrivatePatch patch;
-    string filter;
     string schema;
+    string filter;
 }
 
 interface IV1RequestSpecRegistry {

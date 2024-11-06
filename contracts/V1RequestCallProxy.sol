@@ -57,6 +57,7 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
 
     function processResponse(
         bytes32 requestCallId,
+        bytes32 feedId,
         address callbackAddress,
         bytes4 callbackMethod,
         uint32 callbackGasLimit,
@@ -64,6 +65,7 @@ contract V1RequestCallProxy is IV1RequestCallProxy, Ownable {
         address payable relayerAddress
     ) external payable onlyAllowed {
         require(trustDomainRegistry.isAllowed(requestCallResult.tdId), "Trust Domain is not allowed to use");
+        require(requestCallResult.dataItem.feedId == feedId, "Response feed id is different from request feed id");
         require(_isTimestampValid(requestCallResult.dataItem.timestamp), "Time skew is too high");
         require(_isResultSignatureValid(requestCallResult), "Signature is not valid");
 
