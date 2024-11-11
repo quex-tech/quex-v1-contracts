@@ -1,47 +1,189 @@
 import {expect} from "chai";
 import "@nomicfoundation/hardhat-ethers";
-import {time, reset} from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import {V1FeedRegistry, V1TrustDomainRegistry} from "../typechain";
+import {time, reset, takeSnapshot, SnapshotRestorer} from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import {TestQuexResponseProcessor, V1RequestRegistry} from "../typechain";
 import {ContractHelpers} from "./contract_helpers";
 import {RequestResultStruct} from "../typechain/interfaces/IV1RequestRegistry";
+import type {HardhatEthersSigner} from "@nomicfoundation/hardhat-ethers/signers";
+import {ethers} from "hardhat";
 
-describe("RequestRegistry", function () {
-    let trustDomainRegistry: V1TrustDomainRegistry;
-    let feedRegistry: V1FeedRegistry;
+
+describe("Requests", function () {
+    let feedId: string;
+    let requestRegistry: V1RequestRegistry;
+    let callbackContract: TestQuexResponseProcessor;
+    let callbackAddress: string;
+    let callbackGoodMethod: string;
+    let callbackErrorMethod: string;
+    let callbackBadSignatureMethod: string;
+    let userSigner: HardhatEthersSigner;
+    let snapshot: SnapshotRestorer;
+
+    const response: RequestResultStruct = {
+        dataItem: {
+            timestamp: 1731070829,
+            feedId: "0x494bfcfb4cc9d5c67112179ef33ab6792d60a298a1c50e6496302edfa8e9b306",
+            value: "0x00000000000000000000000000000000000000000000000000000000003ae620",
+        },
+        signature: {
+            r: "0xce147ddddf12bb982973dc022ca648a642f89f3a2eb49bcf80640baa0307573e",
+            s: "0x46d86b4a484891d6941748284c1be8d0599ae8282d4ce4dcb8a6b6d1ad316b55",
+            v: 28,
+        },
+        tdId: 1,
+    };
+
+    const oneEther = BigInt("1000000000000000000");
 
     before(async () => {
         await reset();
-        await time.setNextBlockTimestamp(1731070829);
-        trustDomainRegistry = await ContractHelpers.TrustDomainRegistry.create_configured();
-        feedRegistry = await ContractHelpers.FeedRegistry.create_configured(trustDomainRegistry);
+        await time.setNextBlockTimestamp(response.dataItem.timestamp);
+
+        const trustDomainRegistry = await ContractHelpers.TrustDomainRegistry.create_configured();
+        const feedRegistry = await ContractHelpers.FeedRegistry.create_configured(trustDomainRegistry);
+        feedId = await ContractHelpers.FeedRegistry.create_feed(feedRegistry);
+        requestRegistry = await ContractHelpers.RequestRegistry.create_configured(feedRegistry, trustDomainRegistry);
+        callbackContract = await ContractHelpers.TestQuexResponseProcessor.deploy();
+        callbackAddress = await callbackContract.getAddress();
+        callbackGoodMethod = callbackContract.interface.getFunction("goodProcessor").selector;
+        callbackErrorMethod = callbackContract.interface.getFunction("errorProcessor").selector;
+        callbackBadSignatureMethod = callbackContract.interface.getFunction("badSignatureProcessor").selector;
+        userSigner = await ContractHelpers.getUser();
+        snapshot = await takeSnapshot();
     });
 
-    it("Full on-chain flow", async function () {
-        const feedId = await ContractHelpers.FeedRegistry.create_feed(feedRegistry);
-        const requestRegistry = await ContractHelpers.RequestRegistry.create_configured(feedRegistry, trustDomainRegistry);
+    afterEach(async () => {
+        await snapshot.restore();
+    })
 
-        const callbackContract = await ContractHelpers.TestQuexResponseProcessor.deploy();
-        const callbackMethod = callbackContract.interface.getFunction("goodProcessor").selector;
+    describe("RequestRegistry", function () {
+        describe("sendRequest", function () {
+            it("charge only request price", async () => {
+                const initialBalance = await ethers.provider.getBalance(await userSigner.getAddress());
 
-        const requestId = await ContractHelpers.RequestRegistry.sendRequest(requestRegistry, feedId, await callbackContract.getAddress(), callbackMethod, 10000, BigInt("1000000000000000000"));
+                const txResponse = await requestRegistry
+                    .connect(userSigner)
+                    .sendRequest(feedId, callbackAddress, callbackGoodMethod, 1, {value: oneEther});
+                const requestId = await ContractHelpers.RequestRegistry.getRequestId(txResponse);
+                const requestPrice = await ContractHelpers.RequestRegistry.getRequestPrice(requestRegistry, requestId);
+                const txGasFee = await ContractHelpers.getTransactionGasFee(txResponse.hash);
 
-        const response: RequestResultStruct = {
-            dataItem: {
-                timestamp: 1731070829,
-                feedId: "0x494bfcfb4cc9d5c67112179ef33ab6792d60a298a1c50e6496302edfa8e9b306",
-                value: "0x00000000000000000000000000000000000000000000000000000000003ae620"
-            },
-            signature: {
-                r: "0xce147ddddf12bb982973dc022ca648a642f89f3a2eb49bcf80640baa0307573e",
-                s: "0x46d86b4a484891d6941748284c1be8d0599ae8282d4ce4dcb8a6b6d1ad316b55",
-                v: 28
-            },
-            tdId: 1
-        }
+                const resultBalance = await ethers.provider.getBalance(await userSigner.getAddress());
 
-        const res = await requestRegistry.processResponse(requestId, response);
-        await requestRegistry.requests("")
-        console.log(res);
+                expect(initialBalance - resultBalance - txGasFee).to.eq(requestPrice);
+            });
+
+            it("revert if feed not found", async () => {
+                const wrongFeedId = "0xce147ddddf12bb982973dc022ca648a642f89f3a2eb49bcf80640baa0307573e";
+                expect(
+                    requestRegistry
+                        .connect(userSigner)
+                        .sendRequest(wrongFeedId, callbackAddress, callbackGoodMethod, 1, {value: oneEther})
+                ).to.be.reverted;
+            });
+
+            it("revert if value is insufficient", async () => {
+                expect(
+                    requestRegistry
+                        .connect(userSigner)
+                        .sendRequest(feedId, callbackAddress, callbackGoodMethod, 1, {value: 1})
+                ).to.be.reverted;
+            });
+        })
+
+        describe("processResponse", function () {
+            let requestId: string;
+            let requestPrice: bigint;
+            let relayerSigner: HardhatEthersSigner;
+
+            before(async () => {
+                relayerSigner = await ContractHelpers.getRelayer();
+            });
+
+            async function prepareRequest(request: {feedId?: string, callbackAddress?: string, callbackMethod?: string, callbackGasLimit?: bigint}) {
+                request.feedId ??= feedId;
+                request.callbackAddress ??= callbackAddress;
+                request.callbackMethod ??= callbackGoodMethod;
+                request.callbackGasLimit ??= BigInt(1000000);
+
+                const txResponse = await requestRegistry
+                    .connect(userSigner)
+                    .sendRequest(request.feedId, request.callbackAddress, request.callbackMethod, request.callbackGasLimit, {value: oneEther});
+                requestId = await ContractHelpers.RequestRegistry.getRequestId(txResponse);
+                requestPrice = await ContractHelpers.RequestRegistry.getRequestPrice(requestRegistry, requestId);
+            }
+
+            describe("request should be deleted and relayer should be paid if", () => {
+                const testCases: [string, {feedId?: string, callbackAddress?: string, callbackMethod?: string, callbackGasLimit?: bigint}][] = [
+                    ["everything went as expected", {}],
+                    ["callback method reverts transaction", {callbackMethod: callbackErrorMethod}],
+                    ["callback method has wrong signature", {callbackMethod: callbackBadSignatureMethod}],
+                    ["callback method not exist", {callbackMethod: "0x00112233"}],
+                    ["callback contract not exist", {callbackAddress: "0x0011223344556677889900112233445566778899"}],
+                    ["callback gas limit is not enough", {callbackGasLimit: BigInt(1)}]
+                ];
+
+                for (const [description, prepareRequestParams] of testCases) {
+                    it(description, async () => {
+                        await prepareRequest(prepareRequestParams);
+
+                        const initialContractBalance = await ethers.provider.getBalance(await requestRegistry.getAddress());
+                        const initialRelayerBalance = await ethers.provider.getBalance(await relayerSigner.getAddress());
+
+                        const txResponse = await requestRegistry.connect(relayerSigner).processResponse(requestId, response);
+                        const txGasFee = await ContractHelpers.getTransactionGasFee(txResponse.hash);
+
+                        const resultContractBalance = await ethers.provider.getBalance(await requestRegistry.getAddress());
+                        const resultRelayerBalance = await ethers.provider.getBalance(await relayerSigner.getAddress());
+
+                        expect(resultContractBalance).to.eq(initialContractBalance - requestPrice);
+                        expect(resultRelayerBalance).to.eq(initialRelayerBalance + requestPrice - txGasFee);
+                        expect((await requestRegistry.requests(requestId))[0])
+                            .to.be.eq("0x0000000000000000000000000000000000000000000000000000000000000000");
+                    });
+                }
+            });
+
+            describe("request shouldn't be deleted and relayer shouldn't be paid if", () => {
+                it("signature is incorrect", async () => {
+                    await prepareRequest({});
+
+                    const wrongResponse = structuredClone(response)
+                    wrongResponse.signature.r = "0xce147ddddf12bb982973dc022ca648a642f89f3a2eb49bcf80640baa0307574e"
+
+                    const initialContractBalance = await ethers.provider.getBalance(await requestRegistry.getAddress());
+                    await expect(requestRegistry.connect(relayerSigner).processResponse(requestId, wrongResponse))
+                        .to.be.reverted;
+                    const resultContractBalance = await ethers.provider.getBalance(await requestRegistry.getAddress());
+                    expect(resultContractBalance).to.eq(initialContractBalance);
+                });
+
+                it("feedId in response and feedId in request are different", async () => {
+                    const response: RequestResultStruct = {
+                        dataItem: {
+                            timestamp: 1731332075,
+                            feedId: "0xc8439b6e40b6b50a0a840b9a7b11b6753cf41dec6f32b0f2831c3f1966f7d3b4",
+                            value: "0x00000000000000000000000000000000000000000000000000000000003ae238",
+                        },
+                        signature: {
+                            r: "0x181178ad1014935cb1ba2d538178aea19cfebc3bb782e65cd4fc8484b005d210",
+                            s: "0x0079f291a2c478e381c8a9547e5344a0bd07aa7f538b3ff08e4ff58428405c94",
+                            v: 28,
+                        },
+                        tdId: 1,
+                    };
+                    await time.setNextBlockTimestamp(response.dataItem.timestamp);
+
+                    const initialContractBalance = await ethers.provider.getBalance(await requestRegistry.getAddress());
+                    await expect(requestRegistry.connect(relayerSigner).processResponse(requestId, response))
+                        .to.be.reverted;
+                    const resultContractBalance = await ethers.provider.getBalance(await requestRegistry.getAddress());
+                    expect(resultContractBalance).to.eq(initialContractBalance);
+                });
+            });
+
+            it("", async () => {
+            });
+        });
     });
 });
-

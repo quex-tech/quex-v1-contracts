@@ -101,7 +101,6 @@ contract V1QuoteVerifier is IV1QuoteVerifier {
             bytes32(y),
             authentication_data
         ));
-        console.logBytes32(qe_report_data);
         require(qe_reports[qe_id].REPORT_DATA1 == qe_report_data);
 
         bytes memory td_header = bytes.concat(

@@ -3,10 +3,11 @@ import "@nomicfoundation/hardhat-ethers";
 import {
     P256Verifier,
     V1CertificateVerifier,
-    V1FeedRegistry, V1FeedRegistryPolicy, V1QuoteVerifier, V1RequestLogic, V1RequestLogic__factory, V1RequestRegistry,
+    V1FeedRegistry, V1FeedRegistryPolicy, V1QuoteVerifier, V1RequestLogic, V1RequestRegistry,
     V1TrustDomainRegistry,
 } from "../typechain";
 import {FeedStruct, HTTPPrivatePatchStruct, HTTPRequestStruct} from "../typechain/interfaces/IV1FeedRegistry";
+import {ContractTransactionResponse} from "ethers";
 
 export namespace ContractHelpers {
     export async function getOwner() {
@@ -19,6 +20,13 @@ export namespace ContractHelpers {
 
     export async function getUser() {
         return (await ethers.getSigners())[2];
+    }
+
+    export async function getTransactionGasFee(txHash: string) {
+        const txReceipt = await ethers.provider.getTransactionReceipt(txHash);
+        if (txReceipt == null)
+            return BigInt(0);
+        return txReceipt.gasUsed * txReceipt.gasPrice;
     }
 
     export namespace P256Verifier {
@@ -364,13 +372,14 @@ export namespace ContractHelpers {
             );
         }
 
-        export async function sendRequest(requestRegistry: V1RequestRegistry, feedId: string, callbackAddress: string, callbackMethod: string, callbackGasLimit: number, value: bigint) {
-            const res = await requestRegistry
-                .connect(await ContractHelpers.getUser())
-                .sendRequest(feedId, callbackAddress, callbackMethod, callbackGasLimit, {value: value});
-
-            const logs = await ethers.provider.getLogs({blockHash: res.blockHash!});
+        export async function getRequestId(response: ContractTransactionResponse) {
+            const logs = await ethers.provider.getLogs({blockHash: response.blockHash!});
             return logs[0].data.slice(0, 66);
+        }
+
+        export async function getRequestPrice(requestRegistry: V1RequestRegistry, requestId: string) {
+            const request = await requestRegistry.requests(requestId);
+            return request[4];
         }
     }
 
