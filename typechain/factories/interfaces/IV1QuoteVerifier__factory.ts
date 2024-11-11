@@ -141,7 +141,7 @@ const _abi = [
           },
           {
             internalType: "bytes",
-            name: "MRCONFIGD",
+            name: "MRCONFIGID",
             type: "bytes",
           },
           {
@@ -394,7 +394,7 @@ const _abi = [
           },
           {
             internalType: "bytes",
-            name: "MRCONFIGD",
+            name: "MRCONFIGID",
             type: "bytes",
           },
           {

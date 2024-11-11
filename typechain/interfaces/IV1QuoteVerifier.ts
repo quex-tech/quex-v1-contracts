@@ -63,7 +63,7 @@ export type TDQuoteStruct = {
   TDATTRIBUTES: BytesLike;
   XFAM: BytesLike;
   MRTD: BytesLike;
-  MRCONFIGD: BytesLike;
+  MRCONFIGID: BytesLike;
   MROWNER: BytesLike;
   MROWNERCONFIG: BytesLike;
   RTMR0: BytesLike;
@@ -83,7 +83,7 @@ export type TDQuoteStructOutput = [
   TDATTRIBUTES: string,
   XFAM: string,
   MRTD: string,
-  MRCONFIGD: string,
+  MRCONFIGID: string,
   MROWNER: string,
   MROWNERCONFIG: string,
   RTMR0: string,
@@ -101,7 +101,7 @@ export type TDQuoteStructOutput = [
   TDATTRIBUTES: string;
   XFAM: string;
   MRTD: string;
-  MRCONFIGD: string;
+  MRCONFIGID: string;
   MROWNER: string;
   MROWNERCONFIG: string;
   RTMR0: string;

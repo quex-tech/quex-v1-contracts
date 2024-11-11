@@ -22,7 +22,7 @@ struct TDQuote {
     bytes8 TDATTRIBUTES;
     bytes8 XFAM;
     bytes MRTD;
-    bytes MRCONFIGD;
+    bytes MRCONFIGID;
     bytes MROWNER;
     bytes MROWNERCONFIG;
     bytes RTMR0;

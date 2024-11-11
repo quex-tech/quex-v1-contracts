@@ -115,7 +115,7 @@ contract V1QuoteVerifier is IV1QuoteVerifier {
             td_quote.TDATTRIBUTES,
             td_quote.XFAM,
             td_quote.MRTD,
-            td_quote.MRCONFIGD
+            td_quote.MRCONFIGID
         );
         bytes memory body_bin = bytes.concat(
             body1,

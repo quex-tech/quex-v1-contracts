@@ -8,6 +8,7 @@ import {
 } from "../typechain";
 import {FeedStruct, HTTPPrivatePatchStruct, HTTPRequestStruct} from "../typechain/interfaces/IV1FeedRegistry";
 import {ContractTransactionResponse} from "ethers";
+import {TDQuoteStruct} from "../typechain/interfaces/IV1QuoteVerifier";
 
 export namespace ContractHelpers {
     export async function getOwner() {
@@ -191,7 +192,7 @@ export namespace ContractHelpers {
                 s: BigInt("0xa83caf21fd8fd15841b54fff586f18f5cd2bbeff07cf669a9d423a6c3fe69bed"),
             };
 
-            const td_quote = {
+            const td_quote: TDQuoteStruct = {
                 USER_DATA: "0x9e7915cba6b92a808258e5db174b6f2d00000000",
                 TEE_TCB_SVN: "0x05010200000000000000000000000000",
                 MRSEAM: "0x1cc6a17ab799e9a693fac7536be61c12ee1e0fabada82d0c999e08ccee2aa86de77b0870f558c570e7ffe55d6d47fa04",
@@ -201,7 +202,7 @@ export namespace ContractHelpers {
                 TDATTRIBUTES: "0x0000001000000000",
                 XFAM: "0xe702060000000000",
                 MRTD: "0x91eb2b44d141d4ece09f0c75c2c53d247a3c68edd7fafe8a3520c942a604a407de03ae6dc5f87f27428b2538873118b7",
-                MRCONFIGD:
+                MRCONFIGID:
                     "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
                 MROWNER:
                     "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
