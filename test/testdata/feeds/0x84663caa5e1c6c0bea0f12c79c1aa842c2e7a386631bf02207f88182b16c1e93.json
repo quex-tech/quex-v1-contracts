@@ -1,0 +1,31 @@
+{
+  "feedId": "0x84663caa5e1c6c0bea0f12c79c1aa842c2e7a386631bf02207f88182b16c1e93",
+  "description": "request: with params",
+  "feed": {
+    "request": {
+      "method": 0,
+      "host": "www.binance.com",
+      "path": "",
+      "headers": [],
+      "parameters": [
+        {
+          "key": "key1",
+          "value": "value1"
+        },
+        {
+          "key": "key2",
+          "value": "value2"
+        }
+      ],
+      "body": "0x"
+    },
+    "patch": {
+      "pathSuffix": "0x",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "schema": "int256",
+    "filter": "[.lastUpdateId] + ([.bids, .asks] | map(map(map(tonumber*100000000|floor))))"
+  }
+}

@@ -6,9 +6,15 @@ import {
     V1FeedRegistry, V1FeedRegistryPolicy, V1QuoteVerifier, V1RequestLogic, V1RequestRegistry,
     V1TrustDomainRegistry,
 } from "../typechain";
-import {FeedStruct, HTTPPrivatePatchStruct, HTTPRequestStruct} from "../typechain/interfaces/IV1FeedRegistry";
+import {
+    FeedStruct,
+    FeedStructOutput,
+    HTTPPrivatePatchStruct,
+    HTTPRequestStruct
+} from "../typechain/interfaces/IV1FeedRegistry";
 import {ContractTransactionResponse} from "ethers";
 import {TDQuoteStruct} from "../typechain/interfaces/IV1QuoteVerifier";
+import {vars} from "hardhat/config";
 
 export namespace ContractHelpers {
     export async function getOwner() {
@@ -335,6 +341,31 @@ export namespace ContractHelpers {
             const schemaId = await addResponseSchema(feedRegistry, feed.schema);
             const filterId = await addJqFilter(feedRegistry, feed.filter);
             return await addFeed(feedRegistry, requestId, patchId, schemaId, filterId);
+        }
+
+        export namespace Converter {
+            export function feedOutputToStruct(feedOutput: FeedStructOutput): FeedStruct {
+                const request = feedOutput[0];
+                const patch = feedOutput[1];
+                return {
+                    request: {
+                        method: Number(request[0]),
+                        host: request[1],
+                        path: request[2],
+                        headers: request[3].map(x => {return {key: x[0], value: x[1]}}),
+                        parameters: request[4].map(x => {return {key: x[0], value: x[1]}}),
+                        body: request[5]
+                    },
+                    patch: {
+                        pathSuffix: patch[0],
+                        headers: patch[1].map(x => {return {key: x[0], ciphertext: x[1]}}),
+                        parameters: patch[2].map(x => {return {key: x[0], ciphertext: x[1]}}),
+                        body: patch[3]
+                    },
+                    schema: feedOutput[2],
+                    filter: feedOutput[3]
+                };
+            }
         }
     }
 

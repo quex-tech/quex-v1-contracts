@@ -1,0 +1,22 @@
+{
+  "feedId": "0xf242bd00c03b33f5bc1846767c63af0322412af680cb203ccf43c848f69a74c2",
+  "description": "request: PUT",
+  "feed": {
+    "request": {
+      "method": 2,
+      "host": "www.binance.com",
+      "path": "",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "patch": {
+      "pathSuffix": "0x",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "schema": "string",
+    "filter": "[.lastUpdateId] + ([.bids, .asks] | map(map(map(tonumber*100000000|floor))))"
+  }
+}

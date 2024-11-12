@@ -1,0 +1,22 @@
+{
+  "feedId": "0xadf24a1052888eb50979f51a93f698d6e12fc01a75548323e2c4e5797d0da86c",
+  "description": "patch: with suffix",
+  "feed": {
+    "request": {
+      "method": 0,
+      "host": "coinmarketcap.com",
+      "path": "",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "patch": {
+      "pathSuffix": "0x0123456789",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "schema": "(uint256,(uint256,uint256)[5],(uint256,uint256)[5])",
+    "filter": "[.lastUpdateId] + ([.bids, .asks] | map(map(map(tonumber*100000000|floor))))"
+  }
+}

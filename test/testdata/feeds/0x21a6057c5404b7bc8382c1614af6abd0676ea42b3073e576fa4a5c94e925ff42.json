@@ -1,0 +1,40 @@
+{
+  "feedId": "0x21a6057c5404b7bc8382c1614af6abd0676ea42b3073e576fa4a5c94e925ff42",
+  "description": "request: with all fields",
+  "feed": {
+    "request": {
+      "method": 0,
+      "host": "www.binance.com",
+      "path": "/api/v3/depth",
+      "headers": [
+        {
+          "key": "key1",
+          "value": "value1"
+        },
+        {
+          "key": "key2",
+          "value": "value2"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "key3",
+          "value": "value3"
+        },
+        {
+          "key": "key4",
+          "value": "value4"
+        }
+      ],
+      "body": "0x00112233445566778899"
+    },
+    "patch": {
+      "pathSuffix": "0x",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "schema": "string",
+    "filter": "."
+  }
+}

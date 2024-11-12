@@ -1,0 +1,22 @@
+{
+  "feedId": "0x7c4786cd4b4312db2ad9682114c1b7dbfff29a0a8fa7dd4508e6f10348676549",
+  "description": "request: DELETE",
+  "feed": {
+    "request": {
+      "method": 4,
+      "host": "www.binance.com",
+      "path": "/api/v3/depth",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "patch": {
+      "pathSuffix": "0x",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "schema": "int256",
+    "filter": "."
+  }
+}

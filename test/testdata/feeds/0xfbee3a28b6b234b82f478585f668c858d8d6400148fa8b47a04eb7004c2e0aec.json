@@ -1,0 +1,22 @@
+{
+  "feedId": "0xfbee3a28b6b234b82f478585f668c858d8d6400148fa8b47a04eb7004c2e0aec",
+  "description": "request: PATCH",
+  "feed": {
+    "request": {
+      "method": 3,
+      "host": "coinmarketcap.com",
+      "path": "/api/v3/ticker/price",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "patch": {
+      "pathSuffix": "0x",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "schema": "(uint256,(uint256,uint256)[5],(uint256,uint256)[5])",
+    "filter": ".[] | select(.symbol == \"ETHBTC\") | (.price | tonumber * 100000000 | floor)"
+  }
+}

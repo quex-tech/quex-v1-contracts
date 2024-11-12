@@ -1,0 +1,22 @@
+{
+  "feedId": "0xfe1cb4c09495f7b48e55abf4e7ec52f11e08d63616bfb279296baa16720febbc",
+  "description": "request: POST",
+  "feed": {
+    "request": {
+      "method": 1,
+      "host": "coinmarketcap.com",
+      "path": "/api/v3/depth",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "patch": {
+      "pathSuffix": "0x",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "schema": "uint256",
+    "filter": "."
+  }
+}
