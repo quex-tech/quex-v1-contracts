@@ -47,6 +47,7 @@ contract V1FeedRegistry is IV1FeedRegistry, Ownable {
     }
 
     function addRequest(HTTPRequest memory request) external onlyAllowed returns (bytes32 requestId) {
+        require(bytes(request.host).length > 0, "Host is required");
         requestId = keccak256(abi.encode(request));
         requests[requestId] = request;
         emit RequestAdded(requestId);
@@ -68,6 +69,7 @@ contract V1FeedRegistry is IV1FeedRegistry, Ownable {
     }
 
     function addJqFilter(string memory jqFilter) external onlyAllowed returns (bytes32 filterId) {
+        require(bytes(jqFilter).length > 0, "Filter couldn't be empty");
         filterId = keccak256(bytes(jqFilter));
         jqFilters[filterId] = jqFilter;
         emit JqFilterAdded(filterId);
@@ -75,6 +77,7 @@ contract V1FeedRegistry is IV1FeedRegistry, Ownable {
     }
 
     function addResponseSchema(string memory responseSchema) external onlyAllowed returns (bytes32 schemaId) {
+        require(bytes(responseSchema).length > 0, "Schema couldn't be empty");
         schemaId = keccak256(bytes(responseSchema));
         resultSchemas[schemaId] = responseSchema;
         emit ResultSchemaAdded(schemaId);

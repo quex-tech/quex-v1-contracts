@@ -74,6 +74,29 @@ describe("FeedRegistry", function () {
         }
     });
 
+    it("addRequest. Reject if host is empty", async () => {
+        const request = structuredClone(testCases[0][2].request);
+        request.host = "";
+        await expect(feedRegistry
+            .connect(await ContractHelpers.getOwner())
+            .addRequest(request))
+            .to.be.rejectedWith("Host is required");
+    });
+
+    it("addJqFilter. Reject if filter is empty", async () => {
+        await expect(feedRegistry
+            .connect(await ContractHelpers.getOwner())
+            .addJqFilter(""))
+            .to.be.rejectedWith("Filter couldn't be empty");
+    });
+
+    it("addResponseSchema. Reject if schema is empty", async () => {
+        await expect(feedRegistry
+            .connect(await ContractHelpers.getOwner())
+            .addResponseSchema(""))
+            .to.be.rejectedWith("Schema couldn't be empty");
+    });
+
     function hasPatch(feed: FeedStruct) {
         return feed.patch.pathSuffix != "0x"
             || feed.patch.headers.length != 0
