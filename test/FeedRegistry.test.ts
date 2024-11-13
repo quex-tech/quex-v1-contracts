@@ -20,8 +20,8 @@ describe("FeedRegistry", function () {
         .map(json => [json["feedId"], json["description"], json["feed"]]);
 
     before(async function () {
-        trustDomainRegistry = await ContractHelpers.TrustDomainRegistry.create_configured();
-        feedRegistry = await ContractHelpers.FeedRegistry.create_configured(trustDomainRegistry);
+        trustDomainRegistry = await ContractHelpers.TrustDomainRegistry.createConfigured();
+        feedRegistry = await ContractHelpers.FeedRegistry.createConfigured(trustDomainRegistry);
         snapshot = await takeSnapshot();
     })
 
@@ -32,7 +32,7 @@ describe("FeedRegistry", function () {
     describe("Generate correct feed id", () => {
         for (const [expectedFeedId, description, feed] of testCases) {
             it(description, async function () {
-                const feedId = await ContractHelpers.FeedRegistry.create_feed(feedRegistry, feed);
+                const feedId = await ContractHelpers.FeedRegistry.createFeed(feedRegistry, feed);
                 expect(feedId).to.eq(expectedFeedId);
             });
         }
@@ -41,7 +41,7 @@ describe("FeedRegistry", function () {
     describe("Received feed is equal to created one", () => {
         for (const [, description, feed] of testCases) {
             it(description, async function () {
-                const feedId = await ContractHelpers.FeedRegistry.create_feed(feedRegistry, feed);
+                const feedId = await ContractHelpers.FeedRegistry.createFeed(feedRegistry, feed);
                 const resultOutput = await feedRegistry.getFeed(feedId);
                 const resultFeed = ContractHelpers.FeedRegistry.Converter.feedOutputToStruct(resultOutput[1]);
                 expect(resultFeed).to.eql(feed);
@@ -52,7 +52,7 @@ describe("FeedRegistry", function () {
     describe("Receive zero tdId if patch is empty and non-zero otherwise", () => {
         for (const [, description, feed] of testCases) {
             it(description, async function () {
-                const feedId = await ContractHelpers.FeedRegistry.create_feed(feedRegistry, feed);
+                const feedId = await ContractHelpers.FeedRegistry.createFeed(feedRegistry, feed);
                 const resultOutput = await feedRegistry.getFeed(feedId);
                 expect(resultOutput[0]).to.eq(hasPatch(feed) ? 1 : 0);
             });

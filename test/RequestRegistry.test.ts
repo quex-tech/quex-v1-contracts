@@ -39,9 +39,9 @@ describe("RequestRegistry", function () {
 
     before(async () => {
         await reset();
-        trustDomainRegistry = await ContractHelpers.TrustDomainRegistry.create_configured();
-        const feedRegistry = await ContractHelpers.FeedRegistry.create_configured(trustDomainRegistry);
-        feedId = await ContractHelpers.FeedRegistry.create_feed(feedRegistry);
+        trustDomainRegistry = await ContractHelpers.TrustDomainRegistry.createConfigured();
+        const feedRegistry = await ContractHelpers.FeedRegistry.createConfigured(trustDomainRegistry);
+        feedId = await ContractHelpers.FeedRegistry.createFeed(feedRegistry);
         const feedWithPatch = {
             request: {
                 method: 0,
@@ -60,8 +60,8 @@ describe("RequestRegistry", function () {
             schema: "int256",
             filter: ".[] | select(.symbol == \"ETHBTC\") | (.price | tonumber * 100000000 | floor)"
         };
-        feedIdWithPatch = await ContractHelpers.FeedRegistry.create_feed(feedRegistry, feedWithPatch);
-        requestRegistry = await ContractHelpers.RequestRegistry.create_configured(feedRegistry, trustDomainRegistry);
+        feedIdWithPatch = await ContractHelpers.FeedRegistry.createFeed(feedRegistry, feedWithPatch);
+        requestRegistry = await ContractHelpers.RequestRegistry.createConfigured(feedRegistry, trustDomainRegistry);
         callbackContract = await ContractHelpers.TestQuexResponseProcessor.deploy();
         callbackAddress = await callbackContract.getAddress();
         callbackGoodMethod = callbackContract.interface.getFunction("goodProcessor").selector;

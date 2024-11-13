@@ -53,7 +53,7 @@ export namespace ContractHelpers {
         }
 
         export async function addRootKey(certificateVerifier: V1CertificateVerifier) {
-            const root_CA_key = {
+            const rootCaKey = {
                 x: BigInt("0x0ba9c4c0c0c86193a3fe23d6b02cda10a8bbd4e88e48b4458561a36e705525f5"),
                 y: BigInt("0x67918e2edc88e40d860bd0cc4ee26aacc988e505a953558c453f6b0904ae7394"),
                 not_before: "0x3138303532313130343531305a",
@@ -61,10 +61,10 @@ export namespace ContractHelpers {
             };
             await certificateVerifier
                 .connect(await getOwner())
-                .addRootKey(root_CA_key);
+                .addRootKey(rootCaKey);
         }
 
-        export const platform_CA_cert = {
+        export const platformCaCert = {
             x: BigInt("24030003042588091771170974992323049441734798737906192722609658704857607787826"),
             y: BigInt("106254777459282516381561500528085635876136725707838022931959366032360701572062"),
             serial: BigInt("0x956f5dcdbd1be1e94049c9d4f433ce01570bde54"),
@@ -80,17 +80,17 @@ export namespace ContractHelpers {
             await certificateVerifier
                 .connect(await getOwner())
                 .addPlatformCAKey(
-                    platform_CA_cert.x,
-                    platform_CA_cert.y,
-                    platform_CA_cert.serial,
-                    platform_CA_cert.not_before,
-                    platform_CA_cert.extensions,
-                    platform_CA_cert.r,
-                    platform_CA_cert.s
+                    platformCaCert.x,
+                    platformCaCert.y,
+                    platformCaCert.serial,
+                    platformCaCert.not_before,
+                    platformCaCert.extensions,
+                    platformCaCert.r,
+                    platformCaCert.s
                 );
         }
 
-        export const processor_PCK_cert = {
+        export const processorPckCert = {
             x: BigInt("0x29d53fd6f1b968cd130b55911d8995f01c83ea869b4918fbbc756fa885989f48"),
             y: BigInt("0x7ad0885cfc54ff36f560053306f2b9d59c417e01ea23aee328db62e38460e8ec"),
             serial: BigInt("0x00cd53aca66dbd5e173beea15185ed20b13a099950"),
@@ -107,15 +107,15 @@ export namespace ContractHelpers {
             await certificateVerifier
                 .connect(await getOwner())
                 .addPCK(
-                    processor_PCK_cert.x,
-                    processor_PCK_cert.y,
-                    processor_PCK_cert.serial,
-                    processor_PCK_cert.not_before,
-                    processor_PCK_cert.not_after,
-                    processor_PCK_cert.extensions,
-                    processor_PCK_cert.authority,
-                    processor_PCK_cert.r,
-                    processor_PCK_cert.s
+                    processorPckCert.x,
+                    processorPckCert.y,
+                    processorPckCert.serial,
+                    processorPckCert.not_before,
+                    processorPckCert.not_after,
+                    processorPckCert.extensions,
+                    processorPckCert.authority,
+                    processorPckCert.r,
+                    processorPckCert.s
                 );
         }
     }
@@ -128,10 +128,8 @@ export namespace ContractHelpers {
                 await getOwner()
             );
         }
-    }
 
-    export namespace TrustDomainRegistry {
-        export async function create_configured() {
+        export async function createConfigured() {
             const p256Verifier = await P256Verifier.deploy();
 
             const certificateVerifier = await CertificateVerifier.deploy(p256Verifier);
@@ -139,7 +137,13 @@ export namespace ContractHelpers {
             await CertificateVerifier.addPlatformCAKey(certificateVerifier);
             await CertificateVerifier.addPCK(certificateVerifier);
 
-            const quoteVerifier = await QuoteVerifier.deploy(p256Verifier, certificateVerifier);
+            return await QuoteVerifier.deploy(p256Verifier, certificateVerifier);
+        }
+    }
+
+    export namespace TrustDomainRegistry {
+        export async function createConfigured() {
+            const quoteVerifier = await QuoteVerifier.createConfigured();
 
             const trustDomainRegistry = await deploy(quoteVerifier);
             await addQE(trustDomainRegistry);
@@ -148,7 +152,7 @@ export namespace ContractHelpers {
             return trustDomainRegistry;
         }
 
-        async function deploy(quoteVerifier: V1QuoteVerifier) {
+        export async function deploy(quoteVerifier: V1QuoteVerifier) {
             const owner = await getOwner();
             return await ethers.deployContract(
                 "V1TrustDomainRegistry",
@@ -157,8 +161,8 @@ export namespace ContractHelpers {
             );
         }
 
-        async function addQE(trustDomainRegistry: V1TrustDomainRegistry) {
-            const qe_report_data = {
+        export async function addQE(trustDomainRegistry: V1TrustDomainRegistry) {
+            const qeReportData = {
                 CPUSVN: "0x0202191b03ff00060000000000000000",
                 MISCSELECT: "0x00000000",
                 MRENCLAVE: "0xe5a3a7b5d830c2953b98534c6c59a3a34fdc34e933f7f5898f0a85cf08846bca",
@@ -170,7 +174,7 @@ export namespace ContractHelpers {
                 REPORT_DATA2: "0x0000000000000000000000000000000000000000000000000000000000000000",
             };
 
-            const qe_report_signature = {
+            const qeReportSignature = {
                 r: BigInt("0x5e301006050e5b32024d91d63d916bb90caa81edaee22df41e9de6dafba461f6"),
                 s: BigInt("0x4a39eed0ccc11b5769704d9e8e0e4b702412f830e44a72e40033122a76a4aae7"),
             };
@@ -178,27 +182,27 @@ export namespace ContractHelpers {
             await trustDomainRegistry
                 .connect(await getOwner())
                 .addQE(
-                    qe_report_data,
-                    CertificateVerifier.platform_CA_cert.serial,
-                    CertificateVerifier.processor_PCK_cert.serial,
-                    qe_report_signature.r,
-                    qe_report_signature.s
+                    qeReportData,
+                    CertificateVerifier.platformCaCert.serial,
+                    CertificateVerifier.processorPckCert.serial,
+                    qeReportSignature.r,
+                    qeReportSignature.s
                 );
         }
 
-        async function addTD(trustDomainRegistry: V1TrustDomainRegistry) {
-            const attestation_key = {
+        export async function addTD(trustDomainRegistry: V1TrustDomainRegistry) {
+            const attestationKey = {
                 x: BigInt("0xe677c409ec1f7632b791c907cdb2955c032b4972b971c005bb6711a2f7da7881"),
                 y: BigInt("0x1590a686922b5a24191c92595806084b833b659e4aee627f82b60140a131372c"),
             };
-            const qe_authentication_data = "0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
+            const qeAuthenticationData = "0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
 
-            const quote_signature = {
+            const quoteSignature = {
                 r: BigInt("0x22aea7554995bc5ea924ef84808ceebe88726056865564c572e5f6013487ed59"),
                 s: BigInt("0xa83caf21fd8fd15841b54fff586f18f5cd2bbeff07cf669a9d423a6c3fe69bed"),
             };
 
-            const td_quote: TDQuoteStruct = {
+            const tdQuote: TDQuoteStruct = {
                 USER_DATA: "0x9e7915cba6b92a808258e5db174b6f2d00000000",
                 TEE_TCB_SVN: "0x05010200000000000000000000000000",
                 MRSEAM: "0x1cc6a17ab799e9a693fac7536be61c12ee1e0fabada82d0c999e08ccee2aa86de77b0870f558c570e7ffe55d6d47fa04",
@@ -225,17 +229,17 @@ export namespace ContractHelpers {
             await trustDomainRegistry
                 .connect(await getOwner())
                 .addTD(
-                    td_quote,
+                    tdQuote,
                     1,
-                    attestation_key.x,
-                    attestation_key.y,
-                    qe_authentication_data,
-                    quote_signature.r,
-                    quote_signature.s
+                    attestationKey.x,
+                    attestationKey.y,
+                    qeAuthenticationData,
+                    quoteSignature.r,
+                    quoteSignature.s
                 );
         }
 
-        async function allowTD(trustDomainRegistry: V1TrustDomainRegistry) {
+        export async function allowTD(trustDomainRegistry: V1TrustDomainRegistry) {
             await trustDomainRegistry
                 .connect(await getOwner())
                 .enableTD(1);
@@ -261,7 +265,7 @@ export namespace ContractHelpers {
     }
 
     export namespace FeedRegistry {
-        export async function create_configured(trustDomainRegistry: V1TrustDomainRegistry) {
+        export async function createConfigured(trustDomainRegistry: V1TrustDomainRegistry) {
             const feedRegistryPolicy = await FeedRegistryPolicy.deploy();
             await FeedRegistryPolicy.addOwnerAsAllowed(feedRegistryPolicy);
             return deploy(trustDomainRegistry, feedRegistryPolicy);
@@ -316,7 +320,7 @@ export namespace ContractHelpers {
             return logs[0].data;
         }
 
-        export async function create_feed(feedRegistry: V1FeedRegistry, feed?: FeedStruct) {
+        export async function createFeed(feedRegistry: V1FeedRegistry, feed?: FeedStruct) {
             feed ??= {
                 request: {
                     method: 0,
@@ -388,7 +392,7 @@ export namespace ContractHelpers {
     }
 
     export namespace RequestRegistry {
-        export async function create_configured(feedRegistry: V1FeedRegistry, trustDomainRegistry: V1TrustDomainRegistry) {
+        export async function createConfigured(feedRegistry: V1FeedRegistry, trustDomainRegistry: V1TrustDomainRegistry) {
             const requestLogic = await RequestLogic.deploy(feedRegistry, trustDomainRegistry);
             const requestRegistry = await deploy(requestLogic);
             await RequestLogic.addAllowed(requestLogic, await requestRegistry.getAddress())
