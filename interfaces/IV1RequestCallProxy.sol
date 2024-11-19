@@ -10,6 +10,7 @@ interface IV1RequestCallProxy {
 
     function processResponse(
         bytes32 requestCallId,
+        bytes32 feedId, 
         address callbackAddress,
         bytes4 callbackMethod,
         uint32 callbackGasLimit,

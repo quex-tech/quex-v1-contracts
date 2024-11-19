@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract V1RequestCallRegistry is IV1RequestCallRegistry, Ownable {
     struct RequestCall {
+        bytes32 feedId;
         address callbackAddress;
         bytes4 callbackMethod;
         uint32 callbackGasLimit;
@@ -33,6 +34,7 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry, Ownable {
         requestCallId = requestCallProxy.sendRequest(requestSpecId);
 
         requestCalls[requestCallId] = RequestCall(
+            requestSpecId,
             callbackAddress,
             callbackMethod,
             callbackGasLimit,
@@ -53,6 +55,7 @@ contract V1RequestCallRegistry is IV1RequestCallRegistry, Ownable {
         RequestCall memory requestCall = requestCalls[requestCallId];
         requestCallProxy.processResponse{value: requestCall.price}(
             requestCallId,
+            requestCall.feedId,
             requestCall.callbackAddress,
             requestCall.callbackMethod,
             requestCall.callbackGasLimit,
