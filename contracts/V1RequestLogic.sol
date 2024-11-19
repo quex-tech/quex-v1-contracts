@@ -46,7 +46,7 @@ contract V1RequestLogic is IV1RequestLogic, Ownable {
     function sendRequest(bytes32 feedId) external onlyAllowed returns (bytes32 requestId) {
         (uint256 tdId, Feed memory feed) = feedRegistry.getFeed(feedId);
 
-        require(bytes(feed.request.path).length > 0, "Request template doesn't exist");
+        require(bytes(feed.request.path).length > 0, "Feed doesn't exist");
         require(tdId == 0 || trustDomainRegistry.isAllowed(tdId), "Trust Domain is not allowed to use");
 
         requestId = _createRequestId(feedId);

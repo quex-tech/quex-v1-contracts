@@ -20,6 +20,8 @@ contract V1FeedRegistry is IV1FeedRegistry, Ownable {
         bytes32 filterId;
     }
 
+    bytes32 internal constant emptyPatchId = 0x6b2b869b804dcf429485140926f5bad3d088ce13c9b403b8d1b9b2c85bbcb13d;
+
     mapping(bytes32 => HTTPRequest) public requests;
     mapping(bytes32 => HTTPPrivatePatch) public privatePatches;
     mapping(bytes32 => uint256) public privatePatchTdIds;
@@ -45,22 +47,29 @@ contract V1FeedRegistry is IV1FeedRegistry, Ownable {
     }
 
     function addRequest(HTTPRequest memory request) external onlyAllowed returns (bytes32 requestId) {
+        require(bytes(request.host).length > 0, "Host is required");
         requestId = keccak256(abi.encode(request));
         requests[requestId] = request;
         emit RequestAdded(requestId);
         return requestId;
     }
 
-    function addPrivatePatch(uint256 tdId, HTTPPrivatePatch memory privatePatch) external onlyAllowed returns (bytes32 patchId) {
+    function addPrivatePatch(
+        uint256 tdId,
+        HTTPPrivatePatch memory privatePatch
+    ) external onlyAllowed returns (bytes32 patchId) {
         require(trustDomainRegistry.isAllowed(tdId), "Trust Domain is not allowed to use");
-
         patchId = keccak256(abi.encodePacked(tdId, abi.encode(privatePatch)));
-        privatePatches[patchId] = privatePatch;
+        if (patchId != emptyPatchId) {
+            privatePatches[patchId] = privatePatch;
+            privatePatchTdIds[patchId] = tdId;
+        }
         emit PrivatePatchAdded(patchId);
         return patchId;
     }
 
     function addJqFilter(string memory jqFilter) external onlyAllowed returns (bytes32 filterId) {
+        require(bytes(jqFilter).length > 0, "Filter couldn't be empty");
         filterId = keccak256(bytes(jqFilter));
         jqFilters[filterId] = jqFilter;
         emit JqFilterAdded(filterId);
@@ -68,6 +77,7 @@ contract V1FeedRegistry is IV1FeedRegistry, Ownable {
     }
 
     function addResponseSchema(string memory responseSchema) external onlyAllowed returns (bytes32 schemaId) {
+        require(bytes(responseSchema).length > 0, "Schema couldn't be empty");
         schemaId = keccak256(bytes(responseSchema));
         resultSchemas[schemaId] = responseSchema;
         emit ResultSchemaAdded(schemaId);
@@ -81,7 +91,7 @@ contract V1FeedRegistry is IV1FeedRegistry, Ownable {
         bytes32 filterId
     ) external onlyAllowed returns (bytes32 feedId) {
         require(bytes(requests[requestId].host).length != 0, "Request not found");
-        require(patchId == 0 || privatePatchTdIds[patchId] != 0, "Private patch not found");
+        require(patchId == 0 || patchId == emptyPatchId || privatePatchTdIds[patchId] != 0, "Private patch not found");
         require(bytes(resultSchemas[schemaId]).length != 0, "Result schema not found");
         require(bytes(jqFilters[filterId]).length != 0, "jq filter not found");
 
@@ -92,9 +102,7 @@ contract V1FeedRegistry is IV1FeedRegistry, Ownable {
         return feedId;
     }
 
-    function getFeed(
-        bytes32 feedId
-    ) external view returns (uint256 tdId, Feed memory feed) {
+    function getFeed(bytes32 feedId) external view returns (uint256 tdId, Feed memory feed) {
         FeedInternal memory feedInternal = feeds[feedId];
         return (privatePatchTdIds[feedInternal.patchId], _getFeed(feedInternal));
     }
@@ -112,9 +120,7 @@ contract V1FeedRegistry is IV1FeedRegistry, Ownable {
         return keccak256(abi.encode(feed));
     }
 
-    function _getFeed(
-        FeedInternal memory feedInternal
-    ) private view returns (Feed memory feed) {
+    function _getFeed(FeedInternal memory feedInternal) private view returns (Feed memory feed) {
         return
             Feed(
                 requests[feedInternal.requestId],

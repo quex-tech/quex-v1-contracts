@@ -1,0 +1,31 @@
+{
+  "feedId": "0x355813aa971831b8334c0cc24208e40f46b785d97a1241eb647f9b988a1f9e33",
+  "description": "patch: with headers",
+  "feed": {
+    "request": {
+      "method": 0,
+      "host": "www.binance.com",
+      "path": "/api/v3/ticker/price",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "patch": {
+      "pathSuffix": "0x",
+      "headers": [
+        {
+          "key": "key1",
+          "ciphertext": "0x556677"
+        },
+        {
+          "key": "key2",
+          "ciphertext": "0x2233445566"
+        }
+      ],
+      "parameters": [],
+      "body": "0x"
+    },
+    "schema": "int256",
+    "filter": ".[] | select(.symbol == \"ETHBTC\") | (.price | tonumber * 100000000 | floor)"
+  }
+}

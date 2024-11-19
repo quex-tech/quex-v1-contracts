@@ -1,0 +1,40 @@
+{
+  "feedId": "0xa44d1bdfbb03e638826ba953b2448767198d2714b680289f3069529599f22e41",
+  "description": "patch: with all fields",
+  "feed": {
+    "request": {
+      "method": 0,
+      "host": "coinmarketcap.com",
+      "path": "/api/v3/ticker/price",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "patch": {
+      "pathSuffix": "0x",
+      "headers": [
+        {
+          "key": "key1",
+          "ciphertext": "0x556677"
+        },
+        {
+          "key": "key2",
+          "ciphertext": "0x2233445566"
+        }
+      ],
+      "parameters": [
+        {
+          "key": "key3",
+          "ciphertext": "0x556677556677"
+        },
+        {
+          "key": "key4",
+          "ciphertext": "0x00112233445566"
+        }
+      ],
+      "body": "0x0099887766554433221100998877665544332211"
+    },
+    "schema": "(uint256,(uint256,uint256)[5],(uint256,uint256)[5])",
+    "filter": ".[] | select(.symbol == \"ETHBTC\") | (.price | tonumber * 100000000 | floor)"
+  }
+}

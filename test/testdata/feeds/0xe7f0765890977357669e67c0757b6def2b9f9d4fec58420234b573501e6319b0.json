@@ -1,0 +1,31 @@
+{
+  "feedId": "0xe7f0765890977357669e67c0757b6def2b9f9d4fec58420234b573501e6319b0",
+  "description": "patch: with params",
+  "feed": {
+    "request": {
+      "method": 0,
+      "host": "coinmarketcap.com",
+      "path": "/api/v3/depth",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "patch": {
+      "pathSuffix": "0x",
+      "headers": [],
+      "parameters": [
+        {
+          "key": "key1",
+          "ciphertext": "0x55667788"
+        },
+        {
+          "key": "key2",
+          "ciphertext": "0x2233445522334455"
+        }
+      ],
+      "body": "0x"
+    },
+    "schema": "uint256",
+    "filter": "."
+  }
+}

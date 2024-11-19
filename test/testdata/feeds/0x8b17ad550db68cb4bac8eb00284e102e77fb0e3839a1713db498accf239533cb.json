@@ -1,0 +1,22 @@
+{
+  "feedId": "0x8b17ad550db68cb4bac8eb00284e102e77fb0e3839a1713db498accf239533cb",
+  "description": "request: TRACE",
+  "feed": {
+    "request": {
+      "method": 6,
+      "host": "www.binance.com",
+      "path": "/api/v3/ticker/price",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "patch": {
+      "pathSuffix": "0x",
+      "headers": [],
+      "parameters": [],
+      "body": "0x"
+    },
+    "schema": "string",
+    "filter": ".[] | select(.symbol == \"ETHBTC\") | (.price | tonumber * 100000000 | floor)"
+  }
+}

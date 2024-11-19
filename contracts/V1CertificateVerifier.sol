@@ -2,6 +2,7 @@
 pragma solidity 0.8.22;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../interfaces/IV1CertificateVerifier.sol";
+import "hardhat/console.sol";
 
 // TODO date verifications + malformed certs
 
@@ -167,7 +168,7 @@ contract V1CertificateVerifier is IV1CertificateVerifier, Ownable {
             rootCA.x,
             rootCA.y
         );
-        require(success);
+        require(success, "Signature is invalid");
         // TODO: not_before, not_after decoding
         platformCAs[serial] = ECKey(x,y,0,0);
     }
@@ -198,7 +199,7 @@ contract V1CertificateVerifier is IV1CertificateVerifier, Ownable {
         uint256 s
     ) public {
         ECKey memory authority_key = platformCAs[authority];
-        require(authority_key.x != 0);
+        require(authority_key.x != 0, "Couldn't find related platform CA");
         bytes32 hash = platformCertBodyHash(
                     uintToBytesDER(serial),
                     not_before,
@@ -214,7 +215,7 @@ contract V1CertificateVerifier is IV1CertificateVerifier, Ownable {
             authority_key.x,
             authority_key.y
         );
-        require(success);
+        require(success, "Signature is invalid");
         // TODO not_before, not_after
         processorPCKs[authority][serial] = ECKey(x,y,0,0);
         processorPCKserials[authority].push(serial);
@@ -226,10 +227,13 @@ contract V1CertificateVerifier is IV1CertificateVerifier, Ownable {
 
     // TODO rewrite such that unneeded items are popped
     function revokePlatformCA(uint256 serial) public onlyOwner {
+        console.logUint(serial);
         delete platformCAs[serial];
         uint256 curr_len = processorPCKserials[serial].length;
+
         while(curr_len > 0) {
-            delete processorPCKs[serial][curr_len-1];
+            uint256 pck_serial = processorPCKserials[serial][curr_len - 1];
+            delete processorPCKs[serial][pck_serial];
             processorPCKserials[serial].pop();
             curr_len -= 1;
         }

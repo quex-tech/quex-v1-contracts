@@ -51,7 +51,7 @@ contract V1QuoteVerifier is IV1QuoteVerifier {
     ) public returns (uint qe_id)
     {
         ECKey memory authority_key = IV1CertificateVerifier(CERTIFICATE_VERIFIER).getPCK(platform_serial, pck_serial);
-        require(authority_key.x != 0);
+        require(authority_key.x != 0, "Provided PCK not found");
         bytes28 reserved28;
         bytes32 reserved32;
         bytes memory report_body1 = bytes.concat(
@@ -79,7 +79,7 @@ contract V1QuoteVerifier is IV1QuoteVerifier {
             s,
             authority_key.x,
             authority_key.y
-        ));
+        ), "Signature is incorrect");
         // TODO: Are all fields needed for storage?
         qe_authorities[qe_reports_counter] = QEAuthority(platform_serial, pck_serial);
         qe_reports[qe_reports_counter] = qe_report;
@@ -101,8 +101,7 @@ contract V1QuoteVerifier is IV1QuoteVerifier {
             bytes32(y),
             authentication_data
         ));
-        console.logBytes32(qe_report_data);
-        require(qe_reports[qe_id].REPORT_DATA1 == qe_report_data);
+        require(qe_reports[qe_id].REPORT_DATA1 == qe_report_data, "TD is not related to QE with provided ID");
 
         bytes memory td_header = bytes.concat(
             TD_HEADER_PREAMBLE,
@@ -116,7 +115,7 @@ contract V1QuoteVerifier is IV1QuoteVerifier {
             td_quote.TDATTRIBUTES,
             td_quote.XFAM,
             td_quote.MRTD,
-            td_quote.MRCONFIGD
+            td_quote.MRCONFIGID
         );
         bytes memory body_bin = bytes.concat(
             body1,
@@ -138,7 +137,7 @@ contract V1QuoteVerifier is IV1QuoteVerifier {
             s,
             x,
             y
-        ));
+        ), "Signature is incorrect");
         // TODO Optimize storage
         td_quotes[td_quotes_counter] = td_quote;
         td_to_qe[td_quotes_counter] = qe_id;
