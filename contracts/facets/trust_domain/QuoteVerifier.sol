@@ -36,14 +36,14 @@ library QuoteVerifier {
     uint256 private constant pbase_len = 344;
 
     function ensureQEReportIsValid(
-        TrustDomainStorage.QEReport memory qeReport,
+        QEReport memory qeReport,
         uint256 platformSerial,
         uint256 pckSerial,
         uint256 r,
         uint256 s
     ) internal view {
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
-        TrustDomainStorage.ECKey memory authorityKey = layout.processorPCKs[platformSerial][pckSerial];
+        ECKey memory authorityKey = layout.processorPCKs[platformSerial][pckSerial];
         if (authorityKey.x == 0) {
             revert PCKNotFound();
         }
@@ -80,7 +80,7 @@ library QuoteVerifier {
     }
 
     function ensureTDQuoteIsValid(
-        TrustDomainStorage.TDQuote memory tdQuote,
+        TDQuote memory tdQuote,
         uint qeId,
         uint256 x,
         uint256 y,
@@ -135,7 +135,7 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        TrustDomainStorage.ECKey memory rootCA = TrustDomainStorage.layout().rootCA;
+        ECKey memory rootCA = TrustDomainStorage.layout().rootCA;
         bytes32 hash = _rootCertBodyHash(_uintToBytesDER(serial), notBefore, x, y, extensions);
 
         if (!_verifySignatureAllowMalleability(hash, r, s, rootCA.x, rootCA.y)) {
@@ -154,7 +154,7 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        TrustDomainStorage.ECKey memory authorityKey = TrustDomainStorage.layout().platformCAs[authority];
+        ECKey memory authorityKey = TrustDomainStorage.layout().platformCAs[authority];
         if (authorityKey.x == 0) {
             revert PlatformCANotFound();
         }

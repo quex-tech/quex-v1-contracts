@@ -26,14 +26,8 @@ interface ITrustDomainRegistry {
         uint256 s
     ) external;
 
-    function getPCK(uint256 platformSerial, uint256 pckSerial) external view returns (TrustDomainStorage.ECKey memory);
-
-    function revokePCK(uint256 platformSerial, uint256 pckSerial) external;
-
-    function revokePlatformCA(uint256 serial) external;
-
     function addQE(
-        TrustDomainStorage.QEReport memory qeReport,
+        QEReport memory qeReport,
         uint256 platformSerial,
         uint256 pckSerial,
         uint256 r,
@@ -41,7 +35,7 @@ interface ITrustDomainRegistry {
     ) external returns (uint256 qeId);
 
     function addTD(
-        TrustDomainStorage.TDQuote memory tdQuote,
+        TDQuote memory tdQuote,
         uint qeId,
         uint256 x,
         uint256 y,
@@ -50,13 +44,21 @@ interface ITrustDomainRegistry {
         uint256 s
     ) external returns (uint256 tdId);
 
-    function getTD(uint256 tdId) external view returns (TrustDomainStorage.TDQuote memory);
+    function getPCK(uint256 platformSerial, uint256 pckSerial) external view returns (ECKey memory);
 
-    function getQE(uint256 qeId) external view returns (TrustDomainStorage.QEReport memory);
+    function getTD(uint256 tdId) external view returns (TDQuote memory);
+
+    function getQE(uint256 qeId) external view returns (QEReport memory);
 
     function getQEId(uint256 tdId) external view returns (uint256 qeId);
 
     function getQEAuthority(uint256 qeId) external view returns (uint256 platformSerial, uint256 pckSerial);
+}
 
-    function getSignerAddress(uint256 tdId) external view returns (address) ;
+interface ITrustDomainRegistryInternal is ITrustDomainRegistry {
+    function revokePCK(uint256 platformSerial, uint256 pckSerial) external;
+
+    function revokePlatformCA(uint256 serial) external;
+
+    function getSignerAddress(uint256 tdId) external view returns (address);
 }

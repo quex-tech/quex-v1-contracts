@@ -7,14 +7,14 @@ import "./QuoteVerifier.sol";
 
 import "@solidstate/contracts/access/ownable/Ownable.sol";
 
-contract TrustDomainRegistry is ITrustDomainRegistry, Ownable {
+contract TrustDomainRegistry is ITrustDomainRegistryInternal, Ownable {
     constructor(address) {
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
         layout.qeReportsCounter = 1;
         layout.tdQuotesCounter = 1;
     }
 
-    function addRootKey(TrustDomainStorage.ECKey memory key) public onlyOwner {
+    function addRootKey(ECKey memory key) public onlyOwner {
         TrustDomainStorage.layout().rootCA = key;
     }
 
@@ -29,7 +29,7 @@ contract TrustDomainRegistry is ITrustDomainRegistry, Ownable {
     ) external {
         QuoteVerifier.ensurePlatformCAKeyIsValid(x, y, serial, notBefore, extensions, r, s);
         // TODO: not_before, not_after decoding
-        TrustDomainStorage.layout().platformCAs[serial] = TrustDomainStorage.ECKey(x, y, 0, 0);
+        TrustDomainStorage.layout().platformCAs[serial] = ECKey(x, y, 0, 0);
     }
 
     function addPCK(
@@ -47,7 +47,7 @@ contract TrustDomainRegistry is ITrustDomainRegistry, Ownable {
 
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
         // TODO not_before, not_after
-        layout.processorPCKs[authority][serial] = TrustDomainStorage.ECKey(x,y,0,0);
+        layout.processorPCKs[authority][serial] = ECKey(x,y,0,0);
         layout.processorPCKserials[authority].push(serial);
 
     }
@@ -55,7 +55,7 @@ contract TrustDomainRegistry is ITrustDomainRegistry, Ownable {
     function getPCK(
         uint256 platformSerial,
         uint256 pckSerial
-    ) external view returns (TrustDomainStorage.ECKey memory) {}
+    ) external view returns (ECKey memory) {}
 
     function revokePCK(uint256 platformSerial, uint256 pckSerial) external onlyOwner {
         delete TrustDomainStorage.layout().processorPCKs[platformSerial][pckSerial];
@@ -75,7 +75,7 @@ contract TrustDomainRegistry is ITrustDomainRegistry, Ownable {
         }}
 
     function addQE(
-        TrustDomainStorage.QEReport memory qeReport,
+        QEReport memory qeReport,
         uint256 platformSerial,
         uint256 pckSerial,
         uint256 r,
@@ -94,7 +94,7 @@ contract TrustDomainRegistry is ITrustDomainRegistry, Ownable {
     }
 
     function addTD(
-        TrustDomainStorage.TDQuote memory tdQuote,
+        TDQuote memory tdQuote,
         uint qeId,
         uint256 x,
         uint256 y,
@@ -121,9 +121,9 @@ contract TrustDomainRegistry is ITrustDomainRegistry, Ownable {
         return TrustDomainStorage.layout().signerAddresses[tdId];
     }
 
-    function getTD(uint256 tdId) external view returns (TrustDomainStorage.TDQuote memory) {}
+    function getTD(uint256 tdId) external view returns (TDQuote memory) {}
 
-    function getQE(uint256 qeId) external view returns (TrustDomainStorage.QEReport memory) {}
+    function getQE(uint256 qeId) external view returns (QEReport memory) {}
 
     function getQEId(uint256 tdId) external view returns (uint256 qeId) {}
 
