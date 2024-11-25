@@ -251,23 +251,15 @@ export namespace ContractHelpers {
             const owner = await getOwner();
             return await ethers.deployContract(
                 "V1FeedRegistryPolicy",
-                [owner],
+                [],
                 owner
             );
-        }
-
-        export async function addOwnerAsAllowed(feedRegistryPolicy: V1FeedRegistryPolicy) {
-            const owner = await getOwner();
-            await feedRegistryPolicy
-                .connect(owner)
-                .addAllowedAddress(await owner.getAddress());
         }
     }
 
     export namespace FeedRegistry {
         export async function createConfigured(trustDomainRegistry: V1TrustDomainRegistry) {
             const feedRegistryPolicy = await FeedRegistryPolicy.deploy();
-            await FeedRegistryPolicy.addOwnerAsAllowed(feedRegistryPolicy);
             return deploy(trustDomainRegistry, feedRegistryPolicy);
         }
 
