@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 import "./TrustDomainStorage.sol";
-import "./IV1TrustDomainRegistry.sol";
+import "./ITrustDomainRegistry.sol";
 import "./QuoteVerifier.sol";
 
 import "@solidstate/contracts/access/ownable/Ownable.sol";
@@ -115,6 +115,10 @@ contract TrustDomainRegistry is ITrustDomainRegistry, Ownable {
         layout.signerAddresses[tdId] = signerAddress;
         layout.tdQuotesCounter++;
         return tdId;
+    }
+
+    function getSignerAddress(uint256 tdId) external view returns (address) {
+        return TrustDomainStorage.layout().signerAddresses[tdId];
     }
 
     function getTD(uint256 tdId) external view returns (TrustDomainStorage.TDQuote memory) {}
