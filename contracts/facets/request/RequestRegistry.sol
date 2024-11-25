@@ -7,6 +7,8 @@ import "../trust_domain/ITrustDomainRegistry.sol";
 import "./RequestStorage.sol";
 import "./IRequestRegistry.sol";
 
+import "../trust_domain_policy/ITrustDomainPolicy.sol";
+
 contract RequestRegistry is IRequestRegistryInternal {
     uint256 constant private MAX_LAG = 30 minutes;
 
@@ -28,8 +30,7 @@ contract RequestRegistry is IRequestRegistryInternal {
         (uint256 tdId, Feed memory feed) = IFeedRegistry(address(this)).getFeed(feedId);
 
         require(bytes(feed.request.path).length > 0, "Feed doesn't exist");
-        // todo: uncomment and rewrite after TrustDomainPolicy is implemented
-        // require(tdId == 0 || trustDomainRegistry.isAllowed(tdId), "Trust Domain is not allowed to use");
+        require(tdId == 0 || ITrustDomainPolicy(address(this)).isAllowed(tdId), "Trust Domain is not allowed to use");
 
         requestId = _createRequestId(feedId);
         emit RequestCreated(requestId, feedId);
@@ -51,8 +52,7 @@ contract RequestRegistry is IRequestRegistryInternal {
             revert RequestNotFound();
         } 
 
-        // todo: uncomment and rewrite after TrustDomainPolicy is implemented
-        // require(trustDomainRegistry.isAllowed(requestResult.tdId), "Trust Domain is not allowed to use");
+        require(ITrustDomainPolicy(address(this)).isAllowed(requestResult.tdId), "Trust Domain is not allowed to use");
         require(requestResult.dataItem.feedId == request.feedId, "Response feed id is different from request feed id");
         require(_isTimestampValid(requestResult.dataItem.timestamp), "Time skew is too high");
         require(_isResultSignatureValid(requestResult), "Signature is not valid");
