@@ -6,7 +6,7 @@ import "./ITrustDomainPolicy.sol";
 
 import "@solidstate/contracts/access/ownable/Ownable.sol";
 
-contract TrustDomainPolicy is ITrustDomainPolicy, ITrustDomainPolicyInternal, Ownable {
+contract TrustDomainPolicyFacet is ITrustDomainPolicy, ITrustDomainPolicyInternal, Ownable {
     function isAllowed(uint256 tdId) external view returns (bool) {
         return TrustDomainPolicyStorage.layout().allowedTDs[tdId] == 1;
     }

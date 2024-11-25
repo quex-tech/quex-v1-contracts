@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "../feed/FeedRegistry.sol";
-import "../trust_domain/ITrustDomainRegistry.sol";
-import "./RequestStorage.sol";
-
 struct RequestResult {
     uint256 tdId;
     DataItem dataItem;

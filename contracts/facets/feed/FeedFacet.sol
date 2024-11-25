@@ -5,7 +5,7 @@ import "./IFeedRegistry.sol";
 import "./FeedModels.sol";
 import "./FeedStorage.sol";
 
-contract FeedRegistry is IFeedRegistry {
+contract FeedFacet is IFeedRegistry {
     error FeedRequestNotFound();
     error FeedPrivatePatchNotFound();
     error FeedJqFilterNotFound();

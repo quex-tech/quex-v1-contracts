@@ -60,7 +60,7 @@ contract QuexDiamond is SolidStateDiamond {
         selectors[selectorIndex++] = IRequestRegistryInternal.processResponse.selector;
 
         _setSupportsInterface(type(IRequestRegistryInternal).interfaceId, true);
-        
+
         // diamond cut
 
         FacetCut[] memory facetCuts = new FacetCut[](1);

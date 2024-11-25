@@ -7,7 +7,7 @@ import "./QuoteVerifier.sol";
 
 import "@solidstate/contracts/access/ownable/Ownable.sol";
 
-contract TrustDomainRegistry is ITrustDomainRegistryInternal, Ownable {
+contract TrustDomainFacet is ITrustDomainRegistryInternal, Ownable {
     constructor(address) {
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
         layout.qeReportsCounter = 1;

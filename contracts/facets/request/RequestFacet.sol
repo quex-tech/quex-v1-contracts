@@ -3,13 +3,13 @@ pragma solidity 0.8.22;
 
 import "../feed/IFeedRegistry.sol";
 import "../trust_domain/ITrustDomainRegistry.sol";
+import "../trust_domain_policy/ITrustDomainPolicy.sol";
 
 import "./RequestStorage.sol";
 import "./IRequestRegistry.sol";
 
-import "../trust_domain_policy/ITrustDomainPolicy.sol";
 
-contract RequestRegistry is IRequestRegistryInternal {
+contract RequestFacet is IRequestRegistryInternal {
     uint256 constant private MAX_LAG = 30 minutes;
 
     error RequestNotFound();
