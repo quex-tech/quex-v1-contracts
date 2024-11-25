@@ -5,23 +5,27 @@ import "./TrustDomainModels.sol";
 
 library TrustDomainStorage {
     struct QEAuthority {
-        uint256 platform_serial;
-        uint256 pck_serial;
+        uint256 platformSerial;
+        uint256 pckSerial;
     }
 
     struct Layout {
         address p256VerifierAddress;
+
+        // certs 
         ECKey rootCA;
         mapping(uint256 => ECKey) platformCAs;
         mapping(uint256 => mapping(uint256 => ECKey)) processorPCKs;
+
+        // qoute enclave
         mapping(uint256 => uint256[]) processorPCKserials;
-        mapping(uint256 => address) signerAddresses;
         mapping(uint256 => QEReport) qeReports;
-        mapping(uint256 => TDQuote) tdQuotes;
-        mapping(uint256 => uint256) tdToQe;
         mapping(uint256 => QEAuthority) qeAuthorities;
         uint256 qeReportsCounter;
-        uint256 tdQuotesCounter;
+
+        // trust domain
+        mapping(address => TDQuote) tdQuotes;
+        mapping(address => uint256) tdToQe;
     }
 
     bytes32 internal constant STORAGE_SLOT = keccak256("quex.contracts.storage.TrustDomain");

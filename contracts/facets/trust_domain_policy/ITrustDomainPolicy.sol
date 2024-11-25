@@ -2,11 +2,11 @@
 pragma solidity 0.8.22;
 
 interface ITrustDomainPolicy {
-    function isAllowed(uint256 tdId) external view returns (bool);
+    function isAllowed(address tdAddress) external view returns (bool);
 }
 
 interface ITrustDomainPolicyInternal {
-    function allowTD(uint256 tdId) external;
+    function allowTD(address tdAddress) external;
 
-    function disallowTD(uint256 tdId) external;
+    function disallowTD(address tdAddress) external;
 }

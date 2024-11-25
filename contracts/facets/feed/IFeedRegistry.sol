@@ -12,7 +12,7 @@ interface IFeedRegistry {
 
     function addRequest(HTTPRequest memory request) external returns (bytes32 requestId);
 
-    function addPrivatePatch(uint256 tdId, HTTPPrivatePatch memory privatePatch) external returns (bytes32 patchId);
+    function addPrivatePatch(address tdAddress, HTTPPrivatePatch memory privatePatch) external returns (bytes32 patchId);
 
     function addJqFilter(string memory jqFilter) external returns (bytes32 filterId);
 
@@ -25,5 +25,5 @@ interface IFeedRegistry {
         bytes32 schemaId
     ) external returns (bytes32 feedId);
 
-    function getFeed(bytes32 feedId) external view returns (uint256 tdId, Feed memory feed);
+    function getFeed(bytes32 feedId) external view returns (address tdAddress, Feed memory feed);
 }

@@ -30,7 +30,6 @@ contract QuexDiamond is SolidStateDiamond {
 
         selectors[selectorIndex++] = ITrustDomainRegistryInternal.revokePCK.selector;
         selectors[selectorIndex++] = ITrustDomainRegistryInternal.revokePlatformCA.selector;
-        selectors[selectorIndex++] = ITrustDomainRegistryInternal.getSignerAddress.selector;
         
         _setSupportsInterface(type(ITrustDomainRegistryInternal).interfaceId, true);
 

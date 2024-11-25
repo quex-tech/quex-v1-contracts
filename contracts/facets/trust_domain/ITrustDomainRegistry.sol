@@ -42,15 +42,15 @@ interface ITrustDomainRegistry {
         bytes32 authentication_data,
         uint256 r,
         uint256 s
-    ) external returns (uint256 tdId);
+    ) external returns (address tdAddress);
 
     function getPCK(uint256 platformSerial, uint256 pckSerial) external view returns (ECKey memory);
 
-    function getTD(uint256 tdId) external view returns (TDQuote memory);
+    function getTD(address tdAddress) external view returns (TDQuote memory);
 
     function getQE(uint256 qeId) external view returns (QEReport memory);
 
-    function getQEId(uint256 tdId) external view returns (uint256 qeId);
+    function getQEId(address tdAddress) external view returns (uint256 qeId);
 
     function getQEAuthority(uint256 qeId) external view returns (uint256 platformSerial, uint256 pckSerial);
 }
@@ -59,6 +59,4 @@ interface ITrustDomainRegistryInternal is ITrustDomainRegistry {
     function revokePCK(uint256 platformSerial, uint256 pckSerial) external;
 
     function revokePlatformCA(uint256 serial) external;
-
-    function getSignerAddress(uint256 tdId) external view returns (address);
 }

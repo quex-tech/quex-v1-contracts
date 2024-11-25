@@ -27,10 +27,10 @@ contract RequestFacet is IRequestRegistryInternal {
         requestPrice = _calculateRequestPrice(callbackGasLimit);
         require(msg.value >= requestPrice, "Insufficient value sent");
 
-        (uint256 tdId, Feed memory feed) = IFeedRegistry(address(this)).getFeed(feedId);
+        (address tdAddress, Feed memory feed) = IFeedRegistry(address(this)).getFeed(feedId);
 
         require(bytes(feed.request.path).length > 0, "Feed doesn't exist");
-        require(tdId == 0 || ITrustDomainPolicy(address(this)).isAllowed(tdId), "Trust Domain is not allowed to use");
+        require(tdAddress == address(0) || ITrustDomainPolicy(address(this)).isAllowed(tdAddress), "Trust Domain is not allowed to use");
 
         requestId = _createRequestId(feedId);
         emit RequestCreated(requestId, feedId);
@@ -52,7 +52,7 @@ contract RequestFacet is IRequestRegistryInternal {
             revert RequestNotFound();
         } 
 
-        require(ITrustDomainPolicy(address(this)).isAllowed(requestResult.tdId), "Trust Domain is not allowed to use");
+        require(ITrustDomainPolicy(address(this)).isAllowed(requestResult.tdAddress), "Trust Domain is not allowed to use");
         require(requestResult.dataItem.feedId == request.feedId, "Response feed id is different from request feed id");
         require(_isTimestampValid(requestResult.dataItem.timestamp), "Time skew is too high");
         require(_isResultSignatureValid(requestResult), "Signature is not valid");
@@ -82,14 +82,13 @@ contract RequestFacet is IRequestRegistryInternal {
         return keccak256(abi.encode(feedId, msg.sender, block.timestamp, block.number, layout.requestIdNonce));
     }
 
-    function _isResultSignatureValid(RequestResult memory requestResult) private view returns (bool) {
+    function _isResultSignatureValid(RequestResult memory requestResult) private pure returns (bool) {
         DataItem memory data = requestResult.dataItem;
         bytes memory message = abi.encode(data.timestamp, data.feedId, data.value);
-        address signer = ITrustDomainRegistryInternal(address(this)).getSignerAddress(requestResult.tdId);
         ETHSignature memory signature = requestResult.signature;
         bytes32 messageHash = keccak256(message);
         bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
-        return ecrecover(ethSignedMessageHash, signature.v, signature.r, signature.s) == signer;
+        return ecrecover(ethSignedMessageHash, signature.v, signature.r, signature.s) == requestResult.tdAddress;
     }
 
     function _isTimestampValid(uint256 timestamp) private view returns (bool) {

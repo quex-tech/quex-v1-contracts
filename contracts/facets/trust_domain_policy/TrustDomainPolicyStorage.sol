@@ -3,7 +3,7 @@ pragma solidity 0.8.22;
 
 library TrustDomainPolicyStorage {
     struct Layout {
-        mapping(uint256 => uint256) allowedTDs;
+        mapping(address => uint256) allowedTDs;
     }
 
     bytes32 internal constant STORAGE_SLOT = keccak256("quex.contracts.storage.TrustDomainPolicy");

@@ -22,12 +22,12 @@ contract FeedFacet is IFeedRegistry {
         return requestId;
     }
 
-    function addPrivatePatch(uint256 tdId, HTTPPrivatePatch memory privatePatch) external returns (bytes32 patchId) {
-        patchId = keccak256(abi.encodePacked(tdId, abi.encode(privatePatch)));
-        if (patchId != emptyPatchId) {
+    function addPrivatePatch(address tdAddress, HTTPPrivatePatch memory privatePatch) external returns (bytes32 patchId) {
+        patchId = keccak256(abi.encodePacked(tdAddress, abi.encode(privatePatch)));
+        if (patchId != emptyPatchId) { // todo: think again
             FeedStorage.Layout storage layout = FeedStorage.layout();
             layout.privatePatches[patchId] = privatePatch;
-            layout.privatePatchTdIds[patchId] = tdId;
+            layout.privatePatchTdAddresses[patchId] = tdAddress;
         }
         emit PrivatePatchAdded(patchId);
         return patchId;
@@ -59,12 +59,12 @@ contract FeedFacet is IFeedRegistry {
         FeedStorage.FeedInternal memory feedInternal = FeedStorage.FeedInternal(requestId, patchId, schemaId, filterId);
 
         Feed memory feed = _getFeed(feedInternal);
-        uint256 tdId = layout.privatePatchTdIds[patchId];
+        address tdAddress = layout.privatePatchTdAddresses[patchId];
 
         if (bytes(feed.request.host).length == 0) {
             revert FeedRequestNotFound();
         }
-        if (tdId != 0 && !_isEmptyPatch(patchId)) {
+        if (tdAddress != address(0) && !_isEmptyPatch(patchId)) {
             revert FeedPrivatePatchNotFound();
         }
         if (bytes(feed.schema).length == 0) {
@@ -80,13 +80,13 @@ contract FeedFacet is IFeedRegistry {
         return feedId;
     }
 
-    function getFeed(bytes32 feedId) external view returns (uint256 tdId, Feed memory feed) {
+    function getFeed(bytes32 feedId) external view returns (address tdAddress, Feed memory feed) {
         FeedStorage.Layout storage layout = FeedStorage.layout();
         FeedStorage.FeedInternal memory feedInternal = layout.feeds[feedId];
 
         feed = _getFeed(feedInternal);
-        tdId = layout.privatePatchTdIds[feedInternal.patchId];
-        return (tdId, feed);
+        tdAddress = layout.privatePatchTdAddresses[feedInternal.patchId];
+        return (tdAddress, feed);
     }
 
     function _getFeed(FeedStorage.FeedInternal memory feedInternal) private view returns (Feed memory feed) {

@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 struct RequestResult {
-    uint256 tdId;
+    address tdAddress;
     DataItem dataItem;
     ETHSignature signature;
 }

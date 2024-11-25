@@ -11,7 +11,6 @@ contract TrustDomainFacet is ITrustDomainRegistryInternal, Ownable {
     constructor(address) {
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
         layout.qeReportsCounter = 1;
-        layout.tdQuotesCounter = 1;
     }
 
     function addRootKey(ECKey memory key) public onlyOwner {
@@ -43,19 +42,15 @@ contract TrustDomainFacet is ITrustDomainRegistryInternal, Ownable {
         uint256 r,
         uint256 s
     ) external {
-        QuoteVerifier.ensurePCKIsValid(x,y,serial, notBefore, notAfter, extensions, authority, r,s);
+        QuoteVerifier.ensurePCKIsValid(x, y, serial, notBefore, notAfter, extensions, authority, r, s);
 
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
         // TODO not_before, not_after
-        layout.processorPCKs[authority][serial] = ECKey(x,y,0,0);
+        layout.processorPCKs[authority][serial] = ECKey(x, y, 0, 0);
         layout.processorPCKserials[authority].push(serial);
-
     }
 
-    function getPCK(
-        uint256 platformSerial,
-        uint256 pckSerial
-    ) external view returns (ECKey memory) {}
+    function getPCK(uint256 platformSerial, uint256 pckSerial) external view returns (ECKey memory) {}
 
     function revokePCK(uint256 platformSerial, uint256 pckSerial) external onlyOwner {
         delete TrustDomainStorage.layout().processorPCKs[platformSerial][pckSerial];
@@ -67,12 +62,13 @@ contract TrustDomainFacet is ITrustDomainRegistryInternal, Ownable {
         delete layout.platformCAs[serial];
         uint256 curr_len = layout.processorPCKserials[serial].length;
 
-        while(curr_len > 0) {
+        while (curr_len > 0) {
             uint256 pck_serial = layout.processorPCKserials[serial][curr_len - 1];
             delete layout.processorPCKs[serial][pck_serial];
             layout.processorPCKserials[serial].pop();
             curr_len -= 1;
-        }}
+        }
+    }
 
     function addQE(
         QEReport memory qeReport,
@@ -101,33 +97,35 @@ contract TrustDomainFacet is ITrustDomainRegistryInternal, Ownable {
         bytes32 authenticationData,
         uint256 r,
         uint256 s
-    ) external returns (uint256 tdId) {
+    ) external returns (address tdAddress) {
         QuoteVerifier.ensureTDQuoteIsValid(tdQuote, qeId, x, y, authenticationData, r, s);
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
 
         bytes memory publicKey = abi.encodePacked(tdQuote.REPORT_DATA1, tdQuote.REPORT_DATA2);
-        address signerAddress = _convertPublicKeyToAddress(publicKey);
+        tdAddress = _convertPublicKeyToAddress(publicKey);
 
         // TODO Optimize storage
-        tdId = layout.tdQuotesCounter;
-        layout.tdQuotes[tdId] = tdQuote;
-        layout.tdToQe[tdId] = qeId;
-        layout.signerAddresses[tdId] = signerAddress;
-        layout.tdQuotesCounter++;
-        return tdId;
+        layout.tdQuotes[tdAddress] = tdQuote;
+        layout.tdToQe[tdAddress] = qeId;
+        return tdAddress;
     }
 
-    function getSignerAddress(uint256 tdId) external view returns (address) {
-        return TrustDomainStorage.layout().signerAddresses[tdId];
+    function getTD(address tdAddress) external view returns (TDQuote memory) {
+        return TrustDomainStorage.layout().tdQuotes[tdAddress];
     }
 
-    function getTD(uint256 tdId) external view returns (TDQuote memory) {}
+    function getQE(uint256 qeId) external view returns (QEReport memory) {
+        return TrustDomainStorage.layout().qeReports[qeId];
+    }
 
-    function getQE(uint256 qeId) external view returns (QEReport memory) {}
+    function getQEId(address tdAddress) external view returns (uint256 qeId) {
+        return TrustDomainStorage.layout().tdToQe[tdAddress];
+    }
 
-    function getQEId(uint256 tdId) external view returns (uint256 qeId) {}
-
-    function getQEAuthority(uint256 qeId) external view returns (uint256 platformSerial, uint256 pckSerial) {}
+    function getQEAuthority(uint256 qeId) external view returns (uint256 platformSerial, uint256 pckSerial) {
+        TrustDomainStorage.QEAuthority memory authority = TrustDomainStorage.layout().qeAuthorities[qeId];
+        return (authority.platformSerial, authority.pckSerial);
+    }
 
     function _convertPublicKeyToAddress(bytes memory publicKey) private pure returns (address) {
         require(publicKey.length == 64, "Invalid public key length");

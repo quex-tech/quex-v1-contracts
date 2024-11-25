@@ -7,15 +7,15 @@ import "./ITrustDomainPolicy.sol";
 import "@solidstate/contracts/access/ownable/Ownable.sol";
 
 contract TrustDomainPolicyFacet is ITrustDomainPolicy, ITrustDomainPolicyInternal, Ownable {
-    function isAllowed(uint256 tdId) external view returns (bool) {
-        return TrustDomainPolicyStorage.layout().allowedTDs[tdId] == 1;
+    function isAllowed(address tdAddress) external view returns (bool) {
+        return TrustDomainPolicyStorage.layout().allowedTDs[tdAddress] == 1;
     }
 
-    function allowTD(uint256 tdId) external onlyOwner {
-        TrustDomainPolicyStorage.layout().allowedTDs[tdId] = 1;
+    function allowTD(address tdAddress) external onlyOwner {
+        TrustDomainPolicyStorage.layout().allowedTDs[tdAddress] = 1;
     }
 
-    function disallowTD(uint256 tdId) external onlyOwner {
-        TrustDomainPolicyStorage.layout().allowedTDs[tdId] = 0;
+    function disallowTD(address tdAddress) external onlyOwner {
+        TrustDomainPolicyStorage.layout().allowedTDs[tdAddress] = 0;
     }
 }
