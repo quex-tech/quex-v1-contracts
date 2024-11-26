@@ -5,15 +5,15 @@ import {
     V1CertificateVerifier,
     V1FeedRegistry, V1FeedRegistryPolicy, V1QuoteVerifier, V1RequestLogic, V1RequestRegistry,
     V1TrustDomainRegistry,
-} from "../typechain";
+} from "../../typechain";
 import {
     FeedStruct,
     FeedStructOutput,
     HTTPPrivatePatchStruct,
     HTTPRequestStruct
-} from "../typechain/interfaces/IV1FeedRegistry";
+} from "../../typechain/interfaces/IV1FeedRegistry";
 import {ContractTransactionResponse} from "ethers";
-import {TDQuoteStruct} from "../typechain/interfaces/IV1QuoteVerifier";
+import {TDQuoteStruct} from "../../typechain/interfaces/IV1QuoteVerifier";
 import {vars} from "hardhat/config";
 
 export namespace ContractHelpers {

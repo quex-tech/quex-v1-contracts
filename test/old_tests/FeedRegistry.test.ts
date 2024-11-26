@@ -1,8 +1,8 @@
 import {expect} from "chai";
 import "@nomicfoundation/hardhat-ethers";
-import {V1FeedRegistry, V1TrustDomainRegistry} from "../typechain";
+import {V1FeedRegistry, V1TrustDomainRegistry} from "../../typechain";
 import {ContractHelpers} from "./contract_helpers";
-import {FeedStruct} from "../typechain/interfaces/IV1FeedRegistry";
+import {FeedStruct} from "../../typechain/interfaces/IV1FeedRegistry";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import {SnapshotRestorer, takeSnapshot} from "@nomicfoundation/hardhat-toolbox/network-helpers";

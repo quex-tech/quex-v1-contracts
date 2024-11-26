@@ -1,9 +1,9 @@
 import {expect} from "chai";
 import "@nomicfoundation/hardhat-ethers";
 import {takeSnapshot, SnapshotRestorer} from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import {V1TrustDomainRegistry} from "../typechain";
+import {V1TrustDomainRegistry} from "../../typechain";
 import {ContractHelpers} from "./contract_helpers";
-import {TDQuoteStruct} from "../typechain/interfaces/IV1QuoteVerifier";
+import {TDQuoteStruct} from "../../typechain/interfaces/IV1QuoteVerifier";
 
 describe("TrustDomainRegistry", function () {
     let trustDomainRegistry: V1TrustDomainRegistry;

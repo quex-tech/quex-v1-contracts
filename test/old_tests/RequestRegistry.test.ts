@@ -1,9 +1,9 @@
 import {expect} from "chai";
 import "@nomicfoundation/hardhat-ethers";
 import {time, reset, takeSnapshot, SnapshotRestorer} from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import {TestQuexResponseProcessor, V1RequestRegistry, V1TrustDomainRegistry} from "../typechain";
+import {TestQuexResponseProcessor, V1RequestRegistry, V1TrustDomainRegistry} from "../../typechain";
 import {ContractHelpers} from "./contract_helpers";
-import {RequestResultStruct} from "../typechain/interfaces/IV1RequestRegistry";
+import {RequestResultStruct} from "../../typechain/interfaces/IV1RequestRegistry";
 import type {HardhatEthersSigner} from "@nomicfoundation/hardhat-ethers/signers";
 import {ethers} from "hardhat";
 

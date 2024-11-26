@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import "@nomicfoundation/hardhat-ethers";
 import {takeSnapshot, SnapshotRestorer} from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import {V1CertificateVerifier} from "../typechain";
+import {V1CertificateVerifier} from "../../typechain";
 import {ContractHelpers} from "./contract_helpers";
 import processorPckCert = ContractHelpers.CertificateVerifier.processorPckCert;
 
