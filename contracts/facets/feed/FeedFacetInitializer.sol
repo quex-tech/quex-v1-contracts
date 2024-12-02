@@ -14,8 +14,6 @@ contract FeedFacetInitializer is ERC165Base {
     function init() external {
         _setSupportsInterface(type(IFeedRegistry).interfaceId, true);
         _setSupportsInterface(type(IFeedRequestRegistry).interfaceId, true);
-        _setSupportsInterface(type(IFeedRequestRegistryExtended).interfaceId, true);
         _setSupportsInterface(type(IFeedTrustDomainPolicy).interfaceId, true);
-        _setSupportsInterface(type(IFeedTrustDomainPolicyExtended).interfaceId, true);
     }
 }

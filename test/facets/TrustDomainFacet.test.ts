@@ -58,7 +58,7 @@ describe("TrustDomainFacet", () => {
             {
                 target: await trustDomainFacet.getAddress(),
                 action: 0,
-                selectors: [
+                selectors: [ // todo: think how do it better
                     trustDomainFacet.interface.getFunction("addRootKey").selector,
                     trustDomainFacet.interface.getFunction("getRootKey").selector,
                     trustDomainFacet.interface.getFunction("addPlatformCAKey").selector,
