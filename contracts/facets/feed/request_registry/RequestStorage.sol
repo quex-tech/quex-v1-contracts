@@ -15,7 +15,7 @@ library RequestStorage {
         uint256 requestIdNonce;
     }
 
-    bytes32 internal constant STORAGE_SLOT = keccak256("quex.contracts.storage.Request");
+    bytes32 internal constant STORAGE_SLOT = keccak256("quex.contracts.storage.Feed.Request");
 
     function layout() internal pure returns (Layout storage l) {
         bytes32 slot = STORAGE_SLOT;

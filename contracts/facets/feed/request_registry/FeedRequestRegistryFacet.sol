@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "../feed/IFeedRegistry.sol";
-import "../trust_domain/ITrustDomainRegistry.sol";
-import "../trust_domain_policy/ITrustDomainPolicy.sol";
+import "../feed_registry/IFeedRegistry.sol";
+import "../trust_domain_policy/IFeedTrustDomainPolicy.sol";
 
+import "./IFeedRequestRegistryExtended.sol";
 import "./RequestStorage.sol";
-import "./IRequestRegistry.sol";
 
 
-contract RequestFacet is IRequestRegistryInternal {
+contract FeedRequestRegistryFacet is IFeedRequestRegistryExtended {
     uint256 constant private MAX_LAG = 30 minutes;
 
     error RequestNotFound();
@@ -18,7 +17,7 @@ contract RequestFacet is IRequestRegistryInternal {
     error SignatureIsInvalid();
     error TrustDomainNotFound();
 
-    function sendRequest(
+    function sendFeedRequest(
         bytes32 feedId,
         address callbackAddress,
         bytes4 callbackMethod,
@@ -30,10 +29,10 @@ contract RequestFacet is IRequestRegistryInternal {
         (address tdAddress, Feed memory feed) = IFeedRegistry(address(this)).getFeed(feedId);
 
         require(bytes(feed.request.path).length > 0, "Feed doesn't exist");
-        require(tdAddress == address(0) || ITrustDomainPolicy(address(this)).isAllowed(tdAddress), "Trust Domain is not allowed to use");
+        require(tdAddress == address(0) || IFeedTrustDomainPolicy(address(this)).isTDAllowedForFeed(tdAddress), "Trust Domain is not allowed to use");
 
         requestId = _createRequestId(feedId);
-        emit RequestCreated(requestId, feedId);
+        emit FeedRequestCreated(requestId, feedId);
 
         RequestStorage.layout().requests[requestId] = RequestStorage.Request(feedId, callbackAddress, callbackMethod, callbackGasLimit, requestPrice);
 
@@ -44,7 +43,7 @@ contract RequestFacet is IRequestRegistryInternal {
         return (requestId, requestPrice);
     }
 
-    function processResponse(bytes32 requestId, RequestResult memory requestResult) external {
+    function processFeedResponse(bytes32 requestId, RequestResult memory requestResult) external {
         RequestStorage.Layout storage layout = RequestStorage.layout();
         RequestStorage.Request memory request = layout.requests[requestId];
 
@@ -52,7 +51,7 @@ contract RequestFacet is IRequestRegistryInternal {
             revert RequestNotFound();
         } 
 
-        require(ITrustDomainPolicy(address(this)).isAllowed(requestResult.tdAddress), "Trust Domain is not allowed to use");
+        require(IFeedTrustDomainPolicy(address(this)).isTDAllowedForFeed(requestResult.tdAddress), "Trust Domain is not allowed to use");
         require(requestResult.dataItem.feedId == request.feedId, "Response feed id is different from request feed id");
         require(_isTimestampValid(requestResult.dataItem.timestamp), "Time skew is too high");
         require(_isResultSignatureValid(requestResult), "Signature is not valid");
@@ -61,7 +60,7 @@ contract RequestFacet is IRequestRegistryInternal {
         (bool success, ) = request.callbackAddress.call{gas: request.callbackGasLimit}(payload);
 
         payable(msg.sender).transfer(request.price);
-        emit RequestCompleted(
+        emit FeedRequestCompleted(
             requestId,
             msg.sender,
             request.callbackAddress,

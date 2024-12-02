@@ -6,7 +6,7 @@ library TrustDomainPolicyStorage {
         mapping(address => uint256) allowedTDs;
     }
 
-    bytes32 internal constant STORAGE_SLOT = keccak256("quex.contracts.storage.TrustDomainPolicy");
+    bytes32 internal constant STORAGE_SLOT = keccak256("quex.contracts.storage.Feed.TrustDomainPolicy");
 
     function layout() internal pure returns (Layout storage l) {
         bytes32 slot = STORAGE_SLOT;

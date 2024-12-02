@@ -19,9 +19,9 @@ struct DataItem {
     bytes value;
 }
 
-interface IRequestRegistry {
-    event RequestCreated(bytes32 requestId, bytes32 feedId);
-    event RequestCompleted(
+interface IFeedRequestRegistry {
+    event FeedRequestCreated(bytes32 requestId, bytes32 feedId);
+    event FeedRequestCompleted(
         bytes32 requestId,
         address relayer,
         address callbackAddress,
@@ -30,14 +30,10 @@ interface IRequestRegistry {
         bool callbackSuccess
     );
 
-    function sendRequest(
+    function sendFeedRequest(
         bytes32 feedId,
         address callbackAddress,
         bytes4 callbackMethod,
         uint32 callbackGasLimit
     ) external payable returns (bytes32 requestId, uint256 requestPrice);
-}
-
-interface IRequestRegistryInternal is IRequestRegistry {
-    function processResponse(bytes32 requestId, RequestResult memory requestResult) external;
 }
