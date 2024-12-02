@@ -7,14 +7,16 @@ import "./QuoteVerifier.sol";
 
 import "@solidstate/contracts/access/ownable/Ownable.sol";
 
-contract TrustDomainFacet is ITrustDomainRegistryInternal, Ownable {
-    constructor(address) {
-        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
-        layout.qeReportsCounter = 1;
+contract TrustDomainFacet is ITrustDomainRegistryExtended, Ownable {
+    constructor() {
     }
 
-    function addRootKey(ECKey memory key) public onlyOwner {
+    function addRootKey(ECKey memory key) external onlyOwner {
         TrustDomainStorage.layout().rootCA = key;
+    }
+
+    function getRootKey() external view returns(ECKey memory) {
+        return TrustDomainStorage.layout().rootCA;
     }
 
     function addPlatformCAKey(
@@ -29,6 +31,10 @@ contract TrustDomainFacet is ITrustDomainRegistryInternal, Ownable {
         QuoteVerifier.ensurePlatformCAKeyIsValid(x, y, serial, notBefore, extensions, r, s);
         // TODO: not_before, not_after decoding
         TrustDomainStorage.layout().platformCAs[serial] = ECKey(x, y, 0, 0);
+    }
+
+    function getPlatformCAKey(uint256 serial) external view returns(ECKey memory) {
+        return TrustDomainStorage.layout().platformCAs[serial];
     }
 
     function addPCK(
@@ -47,10 +53,12 @@ contract TrustDomainFacet is ITrustDomainRegistryInternal, Ownable {
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
         // TODO not_before, not_after
         layout.processorPCKs[authority][serial] = ECKey(x, y, 0, 0);
-        layout.processorPCKserials[authority].push(serial);
+        layout.processorPCKSerials[authority].push(serial);
     }
 
-    function getPCK(uint256 platformSerial, uint256 pckSerial) external view returns (ECKey memory) {}
+    function getPCK(uint256 platformSerial, uint256 pckSerial) external view returns (ECKey memory) {
+        return TrustDomainStorage.layout().processorPCKs[platformSerial][pckSerial];
+    }
 
     function revokePCK(uint256 platformSerial, uint256 pckSerial) external onlyOwner {
         delete TrustDomainStorage.layout().processorPCKs[platformSerial][pckSerial];
@@ -60,12 +68,12 @@ contract TrustDomainFacet is ITrustDomainRegistryInternal, Ownable {
     function revokePlatformCA(uint256 serial) external onlyOwner {
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
         delete layout.platformCAs[serial];
-        uint256 curr_len = layout.processorPCKserials[serial].length;
+        uint256 curr_len = layout.processorPCKSerials[serial].length;
 
         while (curr_len > 0) {
-            uint256 pck_serial = layout.processorPCKserials[serial][curr_len - 1];
+            uint256 pck_serial = layout.processorPCKSerials[serial][curr_len - 1];
             delete layout.processorPCKs[serial][pck_serial];
-            layout.processorPCKserials[serial].pop();
+            layout.processorPCKSerials[serial].pop();
             curr_len -= 1;
         }
     }

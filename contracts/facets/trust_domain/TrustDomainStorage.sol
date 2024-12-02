@@ -17,8 +17,8 @@ library TrustDomainStorage {
         mapping(uint256 => ECKey) platformCAs;
         mapping(uint256 => mapping(uint256 => ECKey)) processorPCKs;
 
-        // qoute enclave
-        mapping(uint256 => uint256[]) processorPCKserials;
+        // quote enclave
+        mapping(uint256 => uint256[]) processorPCKSerials;
         mapping(uint256 => QEReport) qeReports;
         mapping(uint256 => QEAuthority) qeAuthorities;
         uint256 qeReportsCounter;

@@ -44,6 +44,10 @@ interface ITrustDomainRegistry {
         uint256 s
     ) external returns (address tdAddress);
 
+    function getRootKey() external view returns(ECKey memory);
+    
+    function getPlatformCAKey(uint256 serial) external view returns(ECKey memory);
+
     function getPCK(uint256 platformSerial, uint256 pckSerial) external view returns (ECKey memory);
 
     function getTD(address tdAddress) external view returns (TDQuote memory);
@@ -55,7 +59,9 @@ interface ITrustDomainRegistry {
     function getQEAuthority(uint256 qeId) external view returns (uint256 platformSerial, uint256 pckSerial);
 }
 
-interface ITrustDomainRegistryInternal is ITrustDomainRegistry {
+interface ITrustDomainRegistryExtended is ITrustDomainRegistry {
+    function addRootKey(ECKey memory key) external;
+
     function revokePCK(uint256 platformSerial, uint256 pckSerial) external;
 
     function revokePlatformCA(uint256 serial) external;
