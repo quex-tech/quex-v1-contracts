@@ -11,8 +11,6 @@ contract FeedRegistryFacet is IFeedRegistry {
     error FeedJqFilterNotFound();
     error FeedResponseSchemaNotFound();
 
-    bytes32 public constant emptyPatchId = 0x6b2b869b804dcf429485140926f5bad3d088ce13c9b403b8d1b9b2c85bbcb13d;
-
     function addRequest(HTTPRequest memory request) external returns (bytes32 requestId) {
         require(bytes(request.host).length > 0, "Host is required");
 
@@ -23,8 +21,10 @@ contract FeedRegistryFacet is IFeedRegistry {
     }
 
     function addPrivatePatch(address tdAddress, HTTPPrivatePatch memory privatePatch) external returns (bytes32 patchId) {
-        patchId = keccak256(abi.encodePacked(tdAddress, abi.encode(privatePatch)));
-        if (patchId != emptyPatchId) { // todo: think again
+        patchId = _isEmptyPatch(privatePatch)
+            ? bytes32(0)
+            : keccak256(abi.encodePacked(tdAddress, abi.encode(privatePatch)));
+        if (patchId != 0) {
             FeedStorage.Layout storage layout = FeedStorage.layout();
             layout.privatePatches[patchId] = privatePatch;
             layout.privatePatchTdAddresses[patchId] = tdAddress;
@@ -52,8 +52,8 @@ contract FeedRegistryFacet is IFeedRegistry {
     function addFeed(
         bytes32 requestId,
         bytes32 patchId,
-        bytes32 filterId,
-        bytes32 schemaId
+        bytes32 schemaId,
+        bytes32 filterId
     ) external returns (bytes32 feedId) {
         FeedStorage.Layout storage layout = FeedStorage.layout();
         FeedStorage.FeedInternal memory feedInternal = FeedStorage.FeedInternal(requestId, patchId, schemaId, filterId);
@@ -64,7 +64,7 @@ contract FeedRegistryFacet is IFeedRegistry {
         if (bytes(feed.request.host).length == 0) {
             revert FeedRequestNotFound();
         }
-        if (tdAddress != address(0) && !_isEmptyPatch(patchId)) {
+        if (patchId != 0 && tdAddress == address(0)) {
             revert FeedPrivatePatchNotFound();
         }
         if (bytes(feed.schema).length == 0) {
@@ -104,7 +104,10 @@ contract FeedRegistryFacet is IFeedRegistry {
         return keccak256(abi.encode(feed));
     }
 
-    function _isEmptyPatch(bytes32 patchId) private pure returns (bool) {
-        return patchId == 0 || patchId == emptyPatchId;
+    function _isEmptyPatch(HTTPPrivatePatch memory patch) private pure returns (bool) {
+        return patch.pathSuffix.length == 0
+            && patch.body.length == 0
+            && patch.headers.length == 0
+            && patch.parameters.length == 0;
     }
 }

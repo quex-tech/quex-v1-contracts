@@ -1,7 +1,6 @@
 import { ethers } from "hardhat";
 import "@nomicfoundation/hardhat-ethers";
 import {
-    P256Verifier,
     V1FeedRegistry,
     V1FeedRegistryPolicy,
     V1RequestLogic,
@@ -12,7 +11,7 @@ import {
     P256Verifier__factory,
     TrustDomainFacet__factory,
     FeedFacet__factory,
-    ITrustDomainRegistryExtended__factory
+    ITrustDomainRegistryExtended__factory, IFeedRegistry
 } from "../../typechain";
 import {
     FeedStruct,
@@ -20,7 +19,7 @@ import {
     HTTPPrivatePatchStruct,
     HTTPRequestStruct
 } from "../../typechain/interfaces/IV1FeedRegistry";
-import { ContractTransactionResponse } from "ethers";
+import { AddressLike, ContractTransactionResponse } from "ethers";
 import { TDQuoteStruct } from "../../typechain/interfaces/IV1QuoteVerifier";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
@@ -155,7 +154,7 @@ export namespace ContractHelpers {
                         facet.interface.getFunction("getPlatformCAKey").selector,
                         facet.interface.getFunction("getPCK").selector,
                         facet.interface.getFunction("getQE").selector,
-                        facet.interface.getFunction("getTD").selector,
+                        facet.interface.getFunction("getTD").selector
                     ]
                 }
             ];
@@ -182,7 +181,7 @@ export namespace ContractHelpers {
                 platformCaCert.s);
         }
 
-        export async function addPCK(diamond: QuexDiamond, processorPckCert: any = undefined){
+        export async function addPCK(diamond: QuexDiamond, processorPckCert: any = undefined) {
             const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
             processorPckCert ||= TestData.processorPckCert;
             await tdRegistry
@@ -244,14 +243,17 @@ export namespace ContractHelpers {
                     target: await facet.getAddress(),
                     action: 0,
                     selectors: [
-                        facet.interface.getFunction("addFeed").selector,
-                        facet.interface.getFunction("addPrivatePatch").selector,
                         facet.interface.getFunction("addRequest").selector,
+                        facet.interface.getFunction("addPrivatePatch").selector,
                         facet.interface.getFunction("addResponseSchema").selector,
+                        facet.interface.getFunction("addJqFilter").selector,
+                        facet.interface.getFunction("addFeed").selector,
+                        facet.interface.getFunction("getFeed").selector,
+
                         facet.interface.getFunction("allowTDForFeed").selector,
                         facet.interface.getFunction("disallowTDForFeed").selector,
-                        facet.interface.getFunction("getFeed").selector,
                         facet.interface.getFunction("isTDAllowedForFeed").selector,
+
                         facet.interface.getFunction("processFeedResponse").selector,
                         facet.interface.getFunction("sendFeedRequest").selector
                     ]
@@ -259,7 +261,114 @@ export namespace ContractHelpers {
             ];
 
             await (await diamond.diamondCut(facetCuts, ethers.ZeroAddress, "0x")).wait();
+
+            return facet;
         }
+
+        export namespace FeedRegistry {
+            const validTdAddress = "0xCa614CD12D3b9515610C4d8b901De4b5641Be508";
+
+            async function addRequest(feedRegistry: IFeedRegistry, request: HTTPRequestStruct) {
+                const res = await feedRegistry
+                    .addRequest(request);
+                const logs = await ethers.provider.getLogs({ blockHash: res.blockHash! });
+                return logs[0].data;
+            }
+
+            async function addPatch(feedRegistry: IFeedRegistry, patch: HTTPPrivatePatchStruct, tdAddress: AddressLike) {
+                const res = await feedRegistry
+                    .addPrivatePatch(tdAddress, patch);
+                const logs = await ethers.provider.getLogs({ blockHash: res.blockHash! });
+                return logs[0].data;
+            }
+
+            async function addResponseSchema(feedRegistry: IFeedRegistry, schema: string) {
+                const res = await feedRegistry
+                    .connect(await getOwner())
+                    .addResponseSchema(schema);
+                const logs = await ethers.provider.getLogs({ blockHash: res.blockHash! });
+                return logs[0].data;
+            }
+
+            async function addJqFilter(feedRegistry: IFeedRegistry, filter: string) {
+                const res = await feedRegistry
+                    .connect(await getOwner())
+                    .addJqFilter(filter);
+                const logs = await ethers.provider.getLogs({ blockHash: res.blockHash! });
+                return logs[0].data;
+            }
+
+            async function addFeed(feedRegistry: IFeedRegistry, requestId: string, patchId: string, schemaId: string, filterId: string) {
+                const res = await feedRegistry
+                    .connect(await getOwner())
+                    .addFeed(requestId, patchId, schemaId, filterId);
+                const logs = await ethers.provider.getLogs({ blockHash: res.blockHash! });
+                return logs[0].data;
+            }
+
+            export async function createFeed(feedRegistry: IFeedRegistry, feed?: FeedStruct, tdAddress?: AddressLike) {
+                feed ??= {
+                    request: {
+                        method: 0,
+                        host: "www.binance.com",
+                        path: "/api/v3/ticker/price",
+                        headers: [],
+                        parameters: [],
+                        body: "0x"
+                    },
+                    patch: {
+                        pathSuffix: "0x",
+                        headers: [],
+                        parameters: [],
+                        body: "0x"
+                    },
+                    schema: "int256",
+                    filter: ".[] | select(.symbol == \"ETHBTC\") | (.price | tonumber * 100000000 | floor)"
+                };
+
+                tdAddress ??= validTdAddress;
+
+                const requestId = await addRequest(feedRegistry, feed.request);
+                const patchId = await addPatch(feedRegistry, feed.patch, tdAddress);
+                const schemaId = await addResponseSchema(feedRegistry, feed.schema);
+                const filterId = await addJqFilter(feedRegistry, feed.filter);
+                return await addFeed(feedRegistry, requestId, patchId, schemaId, filterId);
+            }
+
+            export namespace Converter {
+                export function feedOutputToStruct(feedOutput: FeedStructOutput): FeedStruct {
+                    const request = feedOutput[0];
+                    const patch = feedOutput[1];
+                    return {
+                        request: {
+                            method: Number(request[0]),
+                            host: request[1],
+                            path: request[2],
+                            headers: request[3].map(x => {
+                                return { key: x[0], value: x[1] };
+                            }),
+                            parameters: request[4].map(x => {
+                                return { key: x[0], value: x[1] };
+                            }),
+                            body: request[5]
+                        },
+                        patch: {
+                            pathSuffix: patch[0],
+                            headers: patch[1].map(x => {
+                                return { key: x[0], ciphertext: x[1] };
+                            }),
+                            parameters: patch[2].map(x => {
+                                return { key: x[0], ciphertext: x[1] };
+                            }),
+                            body: patch[3]
+                        },
+                        schema: feedOutput[2],
+                        filter: feedOutput[3]
+                    };
+                }
+            }
+        }
+
 
     }
 
