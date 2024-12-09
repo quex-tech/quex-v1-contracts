@@ -11,7 +11,7 @@ import {
 } from "../../../typechain";
 import { expect } from "chai";
 
-describe('FeedFacet', () => {
+describe('::FeedFacet', () => {
     let owner: SignerWithAddress;
     let nonOwner: SignerWithAddress;
 
