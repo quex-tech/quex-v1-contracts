@@ -11,15 +11,15 @@ import {
     IFeedRequestRegistryExtended,
     P256VerifierFacet__factory
 } from "../../typechain";
+import { AddressLike, ContractTransactionResponse } from "ethers";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import { TDQuoteStruct } from "../../typechain/contracts/facets/trust_domain/TrustDomainFacet";
 import {
     FeedStruct,
     FeedStructOutput,
     HTTPPrivatePatchStruct,
     HTTPRequestStruct
-} from "../../typechain/interfaces/IV1FeedRegistry";
-import { AddressLike, ContractTransactionResponse } from "ethers";
-import { TDQuoteStruct } from "../../typechain/interfaces/IV1QuoteVerifier";
-import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+} from "../../typechain/contracts/facets/feed/FeedFacet";
 
 export namespace ContractHelpers {
     export async function getTransactionGasFee(txHash: string) {

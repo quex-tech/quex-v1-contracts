@@ -9,15 +9,14 @@ import {
     IFeedTrustDomainPolicyExtended__factory,
     QuexDiamond,
     QuexDiamond__factory,
-    TestQuexResponseProcessor
+    TestQuexResponseProcessor,
 } from "../../../typechain";
 import { expect } from "chai";
 import { ContractHelpers } from "../contract_helpers";
 import { reset, SnapshotRestorer, takeSnapshot, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { FeedStruct } from "../../../typechain/interfaces/IV1FeedRegistry";
 import fs from "node:fs";
 import path from "node:path";
-import { RequestResultStruct } from "../../../typechain/contracts/facets/feed/FeedFacet";
+import { FeedStruct, RequestResultStruct } from "../../../typechain/contracts/facets/feed/FeedFacet";
 
 describe("::FeedFacet", () => {
     let owner: SignerWithAddress;
@@ -94,7 +93,7 @@ describe("::FeedFacet", () => {
                     }
                 });
 
-                function hasPatch(feed: FeedStruct) {
+                function hasPatch(feed: FeedStruct): boolean {
                     return feed.patch.pathSuffix != "0x"
                         || feed.patch.headers.length != 0
                         || feed.patch.parameters.length != 0
