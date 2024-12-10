@@ -54,8 +54,6 @@ describe("QuexDiamond", () => {
             fallbackAddress: ethers.ZeroAddress,
             immutableSelectors
         },
-        ["fallback()"]
+        ["fallback()", "::ERC165Base"]
     );
 });
-
-
