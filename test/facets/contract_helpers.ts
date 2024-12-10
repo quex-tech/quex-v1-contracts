@@ -1,17 +1,12 @@
 import { ethers } from "hardhat";
 import "@nomicfoundation/hardhat-ethers";
 import {
-    V1FeedRegistry,
-    V1FeedRegistryPolicy,
-    V1RequestLogic,
-    V1RequestRegistry,
-    V1TrustDomainRegistry,
     QuexDiamond,
     TrustDomainFacetInitializer__factory,
     P256Verifier__factory,
     TrustDomainFacet__factory,
     FeedFacet__factory,
-    ITrustDomainRegistryExtended__factory, IFeedRegistry
+    ITrustDomainRegistryExtended__factory, IFeedRegistry, IFeedRegistry__factory, IFeedRequestRegistryExtended
 } from "../../typechain";
 import {
     FeedStruct,
@@ -120,6 +115,8 @@ export namespace ContractHelpers {
                 REPORT_DATA1: "0x292fa0aa29599c5369c7d63218a7989cdbe95b7cfd35bd4622fc558f70113255",
                 REPORT_DATA2: "0x120ed3b57a3f76209c685a04351bf752b166aa8f9b827a97d42bf5df94e1d12b"
             };
+
+            export const tdAddress = "0xCa614CD12D3b9515610C4d8b901De4b5641Be508";
         }
 
         export async function createAndAddToDiamond(diamond: QuexDiamond, deployer: HardhatEthersSigner) {
@@ -255,7 +252,8 @@ export namespace ContractHelpers {
                         facet.interface.getFunction("isTDAllowedForFeed").selector,
 
                         facet.interface.getFunction("processFeedResponse").selector,
-                        facet.interface.getFunction("sendFeedRequest").selector
+                        facet.interface.getFunction("sendFeedRequest").selector,
+                        facet.interface.getFunction("getFeedRequest").selector
                     ]
                 }
             ];
@@ -266,7 +264,7 @@ export namespace ContractHelpers {
         }
 
         export namespace FeedRegistry {
-            const validTdAddress = "0xCa614CD12D3b9515610C4d8b901De4b5641Be508";
+            const validTdAddress = ContractHelpers.TrustDomainFacet.TestData.tdAddress;
 
             async function addRequest(feedRegistry: IFeedRegistry, request: HTTPRequestStruct) {
                 const res = await feedRegistry
@@ -306,7 +304,7 @@ export namespace ContractHelpers {
                 return logs[0].data;
             }
 
-            export async function createFeed(feedRegistry: IFeedRegistry, feed?: FeedStruct, tdAddress?: AddressLike) {
+            export async function createFeed(diamond: QuexDiamond, feed?: FeedStruct, tdAddress?: AddressLike) {
                 feed ??= {
                     request: {
                         method: 0,
@@ -327,6 +325,8 @@ export namespace ContractHelpers {
                 };
 
                 tdAddress ??= validTdAddress;
+
+                const feedRegistry = IFeedRegistry__factory.connect(await diamond.getAddress(), diamond.runner);
 
                 const requestId = await addRequest(feedRegistry, feed.request);
                 const patchId = await addPatch(feedRegistry, feed.patch, tdAddress);
@@ -369,180 +369,17 @@ export namespace ContractHelpers {
             }
         }
 
+        export namespace RequestRegistry {
 
-    }
-
-
-    export namespace FeedRegistryPolicy {
-        export async function deploy() {
-            const owner = await getOwner();
-            return await ethers.deployContract(
-                "V1FeedRegistryPolicy",
-                [],
-                owner
-            );
-        }
-    }
-
-    export namespace FeedRegistry {
-        export async function createConfigured(trustDomainRegistry: V1TrustDomainRegistry) {
-            const feedRegistryPolicy = await FeedRegistryPolicy.deploy();
-            return deploy(trustDomainRegistry, feedRegistryPolicy);
-        }
-
-        async function deploy(trustDomainRegistry: V1TrustDomainRegistry, feedRegistryPolicy: V1FeedRegistryPolicy) {
-            const owner = await getOwner();
-            return await ethers.deployContract(
-                "V1FeedRegistry",
-                [owner, await trustDomainRegistry.getAddress(), await feedRegistryPolicy.getAddress()],
-                owner
-            );
-        }
-
-        async function addRequest(feedRegistry: V1FeedRegistry, request: HTTPRequestStruct) {
-            const res = await feedRegistry
-                .connect(await getOwner())
-                .addRequest(request);
-            const logs = await ethers.provider.getLogs({ blockHash: res.blockHash! });
-            return logs[0].data;
-        }
-
-        async function addPatch(feedRegistry: V1FeedRegistry, patch: HTTPPrivatePatchStruct) {
-            const res = await feedRegistry
-                .connect(await getOwner())
-                .addPrivatePatch(1, patch);
-            const logs = await ethers.provider.getLogs({ blockHash: res.blockHash! });
-            return logs[0].data;
-        }
-
-        async function addResponseSchema(feedRegistry: V1FeedRegistry, schema: string) {
-            const res = await feedRegistry
-                .connect(await getOwner())
-                .addResponseSchema(schema);
-            const logs = await ethers.provider.getLogs({ blockHash: res.blockHash! });
-            return logs[0].data;
-        }
-
-        async function addJqFilter(feedRegistry: V1FeedRegistry, filter: string) {
-            const res = await feedRegistry
-                .connect(await getOwner())
-                .addJqFilter(filter);
-            const logs = await ethers.provider.getLogs({ blockHash: res.blockHash! });
-            return logs[0].data;
-        }
-
-        async function addFeed(feedRegistry: V1FeedRegistry, requestId: string, patchId: string, schemaId: string, filterId: string) {
-            const res = await feedRegistry
-                .connect(await getOwner())
-                .addFeed(requestId, patchId, schemaId, filterId);
-            const logs = await ethers.provider.getLogs({ blockHash: res.blockHash! });
-            return logs[0].data;
-        }
-
-        export async function createFeed(feedRegistry: V1FeedRegistry, feed?: FeedStruct) {
-            feed ??= {
-                request: {
-                    method: 0,
-                    host: "www.binance.com",
-                    path: "/api/v3/ticker/price",
-                    headers: [],
-                    parameters: [],
-                    body: "0x"
-                },
-                patch: {
-                    pathSuffix: "0x",
-                    headers: [],
-                    parameters: [],
-                    body: "0x"
-                },
-                schema: "int256",
-                filter: ".[] | select(.symbol == \"ETHBTC\") | (.price | tonumber * 100000000 | floor)"
-            };
-
-            const requestId = await addRequest(feedRegistry, feed.request);
-            const patchId = await addPatch(feedRegistry, feed.patch);
-            const schemaId = await addResponseSchema(feedRegistry, feed.schema);
-            const filterId = await addJqFilter(feedRegistry, feed.filter);
-            return await addFeed(feedRegistry, requestId, patchId, schemaId, filterId);
-        }
-
-        export namespace Converter {
-            export function feedOutputToStruct(feedOutput: FeedStructOutput): FeedStruct {
-                const request = feedOutput[0];
-                const patch = feedOutput[1];
-                return {
-                    request: {
-                        method: Number(request[0]),
-                        host: request[1],
-                        path: request[2],
-                        headers: request[3].map(x => {
-                            return { key: x[0], value: x[1] };
-                        }),
-                        parameters: request[4].map(x => {
-                            return { key: x[0], value: x[1] };
-                        }),
-                        body: request[5]
-                    },
-                    patch: {
-                        pathSuffix: patch[0],
-                        headers: patch[1].map(x => {
-                            return { key: x[0], ciphertext: x[1] };
-                        }),
-                        parameters: patch[2].map(x => {
-                            return { key: x[0], ciphertext: x[1] };
-                        }),
-                        body: patch[3]
-                    },
-                    schema: feedOutput[2],
-                    filter: feedOutput[3]
-                };
+            export async function getRequestId(response: ContractTransactionResponse) {
+                const logs = await ethers.provider.getLogs({ blockHash: response.blockHash! });
+                return logs[0].data.slice(0, 66);
             }
-        }
-    }
 
-    export namespace RequestLogic {
-        export async function deploy(feedRegistry: V1FeedRegistry, trustDomainRegistry: V1TrustDomainRegistry) {
-            const owner = await getOwner();
-            return await ethers.deployContract(
-                "V1RequestLogic",
-                [owner, await feedRegistry.getAddress(), await trustDomainRegistry.getAddress()],
-                owner
-            );
-        }
-
-        export async function addAllowed(requestLogic: V1RequestLogic, contractAddress: string) {
-            const owner = await getOwner();
-            await requestLogic
-                .connect(owner)
-                .addAllowedAddress(contractAddress);
-        }
-    }
-
-    export namespace RequestRegistry {
-        export async function createConfigured(feedRegistry: V1FeedRegistry, trustDomainRegistry: V1TrustDomainRegistry) {
-            const requestLogic = await RequestLogic.deploy(feedRegistry, trustDomainRegistry);
-            const requestRegistry = await deploy(requestLogic);
-            await RequestLogic.addAllowed(requestLogic, await requestRegistry.getAddress());
-            return requestRegistry;
-        }
-
-        async function deploy(requestLogic: V1RequestLogic) {
-            const owner = await getOwner();
-            return await ethers.deployContract(
-                "V1RequestRegistry",
-                [owner, await requestLogic.getAddress()],
-                owner
-            );
-        }
-
-        export async function getRequestId(response: ContractTransactionResponse) {
-            const logs = await ethers.provider.getLogs({ blockHash: response.blockHash! });
-            return logs[0].data.slice(0, 66);
-        }
-
-        export async function getRequestPrice(requestRegistry: V1RequestRegistry, requestId: string) {
-            const request = await requestRegistry.requests(requestId);
-            return request[4];
+            export async function getRequestPrice(requestRegistry: IFeedRequestRegistryExtended, requestId: string) {
+                const request = await requestRegistry.getFeedRequest(requestId);
+                return request[1];
+            }
         }
     }
 

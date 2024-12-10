@@ -36,4 +36,6 @@ interface IFeedRequestRegistry {
         bytes4 callbackMethod,
         uint32 callbackGasLimit
     ) external payable returns (bytes32 requestId, uint256 requestPrice);
+
+    function getFeedRequest(bytes32 requestId) external view returns (bytes32 feedId, uint256 requestPrice);
 }

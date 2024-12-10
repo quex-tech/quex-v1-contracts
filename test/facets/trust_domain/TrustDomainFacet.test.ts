@@ -252,7 +252,7 @@ describe("TrustDomainFacet", () => {
         });
 
         it("assign expected address", async () => {
-            const expectedAddress = "0xCa614CD12D3b9515610C4d8b901De4b5641Be508";
+            const expectedAddress = ContractHelpers.TrustDomainFacet.TestData.tdAddress;
             await testObject
                 .connect(nonOwner)
                 .addTD(
