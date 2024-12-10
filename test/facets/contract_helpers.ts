@@ -3,7 +3,6 @@ import "@nomicfoundation/hardhat-ethers";
 import {
     QuexDiamond,
     TrustDomainFacetInitializer__factory,
-    P256Verifier__factory,
     TrustDomainFacet__factory,
     FeedFacet__factory,
     ITrustDomainRegistryExtended__factory,
@@ -23,10 +22,6 @@ import { TDQuoteStruct } from "../../typechain/interfaces/IV1QuoteVerifier";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 export namespace ContractHelpers {
-    export async function getOwner() { // todo: remove
-        return (await ethers.getSigners())[0];
-    }
-
     export async function getTransactionGasFee(txHash: string) {
         const txReceipt = await ethers.provider.getTransactionReceipt(txHash);
         if (txReceipt == null)
@@ -303,7 +298,6 @@ export namespace ContractHelpers {
 
             async function addResponseSchema(feedRegistry: IFeedRegistry, schema: string) {
                 const res = await feedRegistry
-                    .connect(await getOwner())
                     .addResponseSchema(schema);
                 const logs = await ethers.provider.getLogs({ blockHash: res.blockHash! });
                 return logs[0].data;
@@ -311,7 +305,6 @@ export namespace ContractHelpers {
 
             async function addJqFilter(feedRegistry: IFeedRegistry, filter: string) {
                 const res = await feedRegistry
-                    .connect(await getOwner())
                     .addJqFilter(filter);
                 const logs = await ethers.provider.getLogs({ blockHash: res.blockHash! });
                 return logs[0].data;
@@ -319,7 +312,6 @@ export namespace ContractHelpers {
 
             async function addFeed(feedRegistry: IFeedRegistry, requestId: string, patchId: string, schemaId: string, filterId: string) {
                 const res = await feedRegistry
-                    .connect(await getOwner())
                     .addFeed(requestId, patchId, schemaId, filterId);
                 const logs = await ethers.provider.getLogs({ blockHash: res.blockHash! });
                 return logs[0].data;
@@ -406,7 +398,7 @@ export namespace ContractHelpers {
 
     export namespace TestQuexResponseProcessor {
         export async function deploy() {
-            return await ethers.deployContract("TestQuexResponseProcessor", await getOwner());
+            return await ethers.deployContract("TestQuexResponseProcessor");
         }
     }
 }
