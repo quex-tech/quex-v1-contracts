@@ -33,6 +33,7 @@ describe("::FeedFacet", () => {
         [owner, nonOwner] = await ethers.getSigners();
 
         diamond = await new QuexDiamond__factory(owner).deploy();
+        await ContractHelpers.P256VerifierFacet.createAndAddToDiamond(diamond, owner);
         await ContractHelpers.TrustDomainFacet.createAndAddToDiamond(diamond, owner);
         await ContractHelpers.TrustDomainFacet.configureFully(diamond, owner);
         feedFacet = await ContractHelpers.FeedFacet.createAndAddToDiamond(diamond, owner);

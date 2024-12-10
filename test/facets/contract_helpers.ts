@@ -6,7 +6,11 @@ import {
     P256Verifier__factory,
     TrustDomainFacet__factory,
     FeedFacet__factory,
-    ITrustDomainRegistryExtended__factory, IFeedRegistry, IFeedRegistry__factory, IFeedRequestRegistryExtended
+    ITrustDomainRegistryExtended__factory,
+    IFeedRegistry,
+    IFeedRegistry__factory,
+    IFeedRequestRegistryExtended,
+    P256VerifierFacet__factory
 } from "../../typechain";
 import {
     FeedStruct,
@@ -28,6 +32,26 @@ export namespace ContractHelpers {
         if (txReceipt == null)
             return BigInt(0);
         return txReceipt.gasUsed * txReceipt.gasPrice;
+    }
+
+    export namespace P256VerifierFacet {
+        export async function createAndAddToDiamond(diamond: QuexDiamond, deployer: HardhatEthersSigner) {
+            const facet = await new P256VerifierFacet__factory(deployer).deploy();
+            await facet.waitForDeployment();
+
+            const facetCuts = [
+                {
+                    target: await facet.getAddress(),
+                    action: 0,
+                    selectors: [
+                        facet.interface.getFunction("ecdsa_verify").selector,
+                    ]
+                }
+            ];
+
+            await (await diamond.diamondCut(facetCuts, ethers.ZeroAddress, "0x")).wait();
+            return facet;
+        }
     }
 
     export namespace TrustDomainFacet {
@@ -120,15 +144,12 @@ export namespace ContractHelpers {
         }
 
         export async function createAndAddToDiamond(diamond: QuexDiamond, deployer: HardhatEthersSigner) {
-            const p256Verifier = await new P256Verifier__factory(deployer).deploy();
-            await p256Verifier.waitForDeployment();
-
             const facet = await new TrustDomainFacet__factory(deployer).deploy();
             await facet.waitForDeployment();
 
             const trustDomainFacetInitializer = await new TrustDomainFacetInitializer__factory(deployer).deploy();
             await trustDomainFacetInitializer.waitForDeployment();
-            const calldata = trustDomainFacetInitializer.interface.encodeFunctionData("init", [await p256Verifier.getAddress()]);
+            const calldata = trustDomainFacetInitializer.interface.encodeFunctionData("init");
 
             const facetCuts = [
                 {

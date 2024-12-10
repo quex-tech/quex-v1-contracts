@@ -2,6 +2,7 @@
 pragma solidity 0.8.22;
 
 import "./TrustDomainStorage.sol";
+import {IP256Verifier} from "../p256_verifier/IP256Verifier.sol";
 
 library QuoteVerifier {
     error InvalidPlatformCertificate();
@@ -172,12 +173,7 @@ library QuoteVerifier {
         uint256 x,
         uint256 y
     ) internal view returns (bool) {
-        address verifier = TrustDomainStorage.layout().p256VerifierAddress;
-        bytes memory args = abi.encode(messageHash, r, s, x, y);
-        (bool success, bytes memory ret) = verifier.staticcall(args);
-        assert(success); // never reverts, always returns 0 or 1
-
-        return abi.decode(ret, (uint256)) == 1;
+        return IP256Verifier(address(this)).ecdsa_verify(messageHash, r, s, [x, y]);
     }
 
     function _rootCertBodyHash(

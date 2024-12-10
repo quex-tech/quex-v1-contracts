@@ -10,8 +10,6 @@ library TrustDomainStorage {
     }
 
     struct Layout {
-        address p256VerifierAddress;
-
         // certs 
         ECKey rootCA;
         mapping(uint256 => ECKey) platformCAs;
