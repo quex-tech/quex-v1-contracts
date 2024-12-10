@@ -7,8 +7,6 @@ import "./TrustDomainPolicyStorage.sol";
 import "@solidstate/contracts/access/ownable/Ownable.sol";
 
 contract FeedTrustDomainPolicyFacet is IFeedTrustDomainPolicyExtended, Ownable {
-    // todo: check that TD exists
-
     function isTDAllowedForFeed(address tdAddress) external view returns (bool) {
         return TrustDomainPolicyStorage.layout().allowedTDs[tdAddress] == 1;
     }

@@ -5,7 +5,7 @@ import {
     IFeedRegistry,
     IFeedRegistry__factory,
     IFeedRequestRegistryExtended,
-    IFeedRequestRegistryExtended__factory,
+    IFeedRequestRegistryExtended__factory, IFeedTrustDomainPolicyExtended,
     IFeedTrustDomainPolicyExtended__factory,
     QuexDiamond,
     QuexDiamond__factory,
@@ -362,7 +362,66 @@ describe("::FeedFacet", () => {
         });
 
         describe("::FeedTrustDomainPolicyFacet", () => {
-            // todo
+            let testObject: IFeedTrustDomainPolicyExtended;
+            const tdAddress = ContractHelpers.TrustDomainFacet.TestData.tdAddress;
+
+            beforeEach(async () => {
+                testObject = IFeedTrustDomainPolicyExtended__factory.connect(await diamond.getAddress(), diamond.runner);
+            });
+
+            describe("#allowTDForFeed", () => {
+                it("sets allowed if was disallowed", async () => {
+                    await testObject.connect(owner).disallowTDForFeed(tdAddress);
+
+                    expect(await testObject.isTDAllowedForFeed(tdAddress)).to.be.false;
+
+                    await testObject.connect(owner).allowTDForFeed(tdAddress);
+                    expect(await testObject.isTDAllowedForFeed(tdAddress)).to.be.true;
+                });
+
+                it("remains allowed if was allowed", async () => {
+                    await testObject.connect(owner).allowTDForFeed(tdAddress);
+
+                    expect(await testObject.isTDAllowedForFeed(tdAddress)).to.be.true;
+
+                    await testObject.connect(owner).allowTDForFeed(tdAddress);
+                    expect(await testObject.isTDAllowedForFeed(tdAddress)).to.be.true;
+                });
+
+                describe("reverts if", () => {
+                    it("sender is not owner", async () => {
+                        await expect(testObject.connect(nonOwner).allowTDForFeed(tdAddress))
+                            .to.be.revertedWithCustomError(diamond, "Ownable__NotOwner");
+                    });
+                });
+            });
+
+            describe("#disallowTDForFeed", () => {
+                it("sets disallowed if was allowed", async () => {
+                    await testObject.connect(owner).allowTDForFeed(tdAddress);
+
+                    expect(await testObject.isTDAllowedForFeed(tdAddress)).to.be.true;
+
+                    await testObject.connect(owner).disallowTDForFeed(tdAddress);
+                    expect(await testObject.isTDAllowedForFeed(tdAddress)).to.be.false;
+                });
+
+                it("remains disallowed if was disallowed", async () => {
+                    await testObject.connect(owner).disallowTDForFeed(tdAddress);
+
+                    expect(await testObject.isTDAllowedForFeed(tdAddress)).to.be.false;
+
+                    await testObject.connect(owner).disallowTDForFeed(tdAddress);
+                    expect(await testObject.isTDAllowedForFeed(tdAddress)).to.be.false;
+                });
+
+                describe("reverts if", () => {
+                    it("sender is not owner", async () => {
+                        await expect(testObject.connect(nonOwner).disallowTDForFeed(tdAddress))
+                            .to.be.revertedWithCustomError(diamond, "Ownable__NotOwner");
+                    });
+                });
+            });
         });
     });
 
