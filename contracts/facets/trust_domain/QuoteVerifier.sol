@@ -43,8 +43,7 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
-        ECKey memory authorityKey = layout.processorPCKs[platformSerial][pckSerial];
+        ECKey memory authorityKey = TrustDomainStorage.certificateLayout().processorPCKs[platformSerial][pckSerial];
         if (authorityKey.x == 0) {
             revert PCKNotFound();
         }
@@ -89,7 +88,7 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        TrustDomainStorage.QELayout storage layout = TrustDomainStorage.qeLayout();
 
         bytes32 qeReportData = sha256(bytes.concat(bytes32(x), bytes32(y), authenticationData));
         if (layout.qeReports[qeId].REPORT_DATA1 != qeReportData) {
@@ -136,7 +135,7 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        ECKey memory rootCA = TrustDomainStorage.layout().rootCA;
+        ECKey memory rootCA = TrustDomainStorage.certificateLayout().rootCA;
         bytes32 hash = _rootCertBodyHash(_uintToBytesDER(serial), notBefore, x, y, extensions);
 
         if (!_verifySignatureAllowMalleability(hash, r, s, rootCA.x, rootCA.y)) {
@@ -155,7 +154,7 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        ECKey memory authorityKey = TrustDomainStorage.layout().platformCAs[authority];
+        ECKey memory authorityKey = TrustDomainStorage.certificateLayout().platformCAs[authority];
         if (authorityKey.x == 0) {
             revert PlatformCANotFound();
         }

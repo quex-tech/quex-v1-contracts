@@ -7,7 +7,6 @@ import "@solidstate/contracts/introspection/ERC165/base/ERC165Base.sol";
 
 contract TrustDomainFacetInitializer {
     function init() external {
-        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
-        layout.qeReportsCounter = 1;
+        TrustDomainStorage.qeLayout().qeReportsCounter = 1;
     }
 }

@@ -32,7 +32,7 @@ contract FeedRequestRegistryFacet is IFeedRequestRegistryExtended {
         require(tdAddress == address(0) || IFeedTrustDomainPolicy(address(this)).isTDAllowedForFeed(tdAddress), "Trust Domain is not allowed to use");
 
         requestId = _createRequestId(feedId);
-        emit FeedRequestCreated(requestId, feedId);
+        emit FeedRequestCreated(requestId);
 
         RequestStorage.layout().requests[requestId] = RequestStorage.Request(feedId, callbackAddress, callbackMethod, callbackGasLimit, requestPrice);
 
