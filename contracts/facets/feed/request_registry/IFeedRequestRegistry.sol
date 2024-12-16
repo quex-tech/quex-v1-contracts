@@ -20,7 +20,7 @@ struct DataItem {
 }
 
 interface IFeedRequestRegistry {
-    event FeedRequestCreated(bytes32 requestId, bytes32 feedId);
+    event FeedRequestCreated(bytes32 requestId);
     event FeedRequestCompleted(
         bytes32 requestId,
         address relayer,
@@ -37,5 +37,9 @@ interface IFeedRequestRegistry {
         uint32 callbackGasLimit
     ) external payable returns (bytes32 requestId, uint256 requestPrice);
 
-    function getFeedRequest(bytes32 requestId) external view returns (bytes32 feedId, uint256 requestPrice);
+    function getFeedRequest(bytes32 requestId) external view returns (
+        bytes32 feedId,
+        uint256 requestPrice,
+        uint256 callbackGasLimit
+    );
 }

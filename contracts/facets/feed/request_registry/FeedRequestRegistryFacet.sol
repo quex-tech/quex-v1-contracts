@@ -71,9 +71,9 @@ contract FeedRequestRegistryFacet is IFeedRequestRegistryExtended {
         delete layout.requests[requestId];
     }
 
-    function getFeedRequest(bytes32 requestId) external view returns (bytes32 feedId, uint256 requestPrice) {
+    function getFeedRequest(bytes32 requestId) external view returns (bytes32 feedId, uint256 requestPrice, uint256 callbackGasLimit) {
         RequestStorage.Request memory request = RequestStorage.layout().requests[requestId];
-        return (request.feedId, request.price);
+        return (request.feedId, request.price, request.callbackGasLimit);
     }
 
     function _calculateRequestPrice(uint32 callbackGasLimit) private view returns (uint256 requestPrice) {
