@@ -5,3 +5,4 @@ node_modules
 .idea
 typechain
 /ignition/deployments/chain-31337
+/ignition/deployments/*/build-info
