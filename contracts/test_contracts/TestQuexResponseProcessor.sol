@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "../../interfaces/IV1RequestRegistry.sol";
+import "../facets/feed/request_registry/IFeedRequestRegistry.sol";
 
 contract TestQuexResponseProcessor {
     function goodProcessor(bytes32 requestId, DataItem memory response) external {}

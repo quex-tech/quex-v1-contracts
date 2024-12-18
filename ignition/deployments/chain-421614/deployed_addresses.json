@@ -1,0 +1,11 @@
+{
+  "QuexDiamond#QuexDiamond": "0x2d04F4F821D3b1fcA5199F0CFc2C93e58f9613Da",
+  "FeedFacet#FeedFacet": "0x246935684C00BA0192F908Ba1b4b180FE53D2dcB",
+  "P256VerifierFacet#P256VerifierFacet": "0x46a1a2Ba78E4d4fA6acF0A92c834AD44dC981955",
+  "TrustDomainFacet#TrustDomainFacet": "0xF2B72a28AEa52de3226045A935c9214dc7eFc4d2",
+  "TrustDomainFacet#TrustDomainFacetInitializer": "0xe15e137b9553C0ba3cc81C8e9B2E91a3C9588Ade",
+  "FeedFacetConfiguration#FeedFacet": "0x2d04F4F821D3b1fcA5199F0CFc2C93e58f9613Da",
+  "FeedFacetTestConfiguration#FeedFacet": "0x2d04F4F821D3b1fcA5199F0CFc2C93e58f9613Da",
+  "TrustDomainConfiguration#TrustDomainFacet": "0x2d04F4F821D3b1fcA5199F0CFc2C93e58f9613Da",
+  "FeedFacetTestConfiguration#OnChainFeedRequestTestContract": "0x4F5c1A395b725E9E0071f86E22db87553A004Dbc"
+}
