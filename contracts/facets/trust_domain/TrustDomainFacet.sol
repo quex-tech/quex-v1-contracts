@@ -8,7 +8,11 @@ import "./QuoteVerifier.sol";
 import "@solidstate/contracts/access/ownable/Ownable.sol";
 import {DateTimeLib} from "solady/src/utils/DateTimeLib.sol";
 
+import "hardhat/console.sol";
+
 contract TrustDomainFacet is ITrustDomainRegistryExtended, Ownable {
+    error Certificate_WrongValidPeriod();
+
     function getRootKey() external view returns(ECKey memory) {
         return TrustDomainStorage.certificateLayout().rootCA;
     }
@@ -23,6 +27,12 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, Ownable {
         uint256 r,
         uint256 s
     ) external {
+        uint256 notBeforeTimestamp = _fromDERToTimestamp(notBefore);
+        uint256 notAfterTimestamp = _fromDERToTimestamp(notAfter);
+        if (notBeforeTimestamp > block.timestamp || notAfterTimestamp < block.timestamp) {
+            revert Certificate_WrongValidPeriod();
+        }
+
         QuoteVerifier.ensurePlatformCAKeyIsValid(x, y, serial, notBefore, extensions, r, s);
         TrustDomainStorage.certificateLayout().platformCAs[serial] = ECKey(x, y, _fromDERToTimestamp(notBefore), _fromDERToTimestamp(notAfter));
     }
@@ -42,10 +52,16 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, Ownable {
         uint256 r,
         uint256 s
     ) external {
+        uint256 notBeforeTimestamp = _fromDERToTimestamp(notBefore);
+        uint256 notAfterTimestamp = _fromDERToTimestamp(notAfter);
+        if (notBeforeTimestamp > block.timestamp || notAfterTimestamp < block.timestamp) {
+            revert Certificate_WrongValidPeriod();
+        }
+
         QuoteVerifier.ensurePCKIsValid(x, y, serial, notBefore, notAfter, extensions, authority, r, s);
 
         TrustDomainStorage.CertificateLayout storage layout = TrustDomainStorage.certificateLayout();
-        layout.processorPCKs[authority][serial] = ECKey(x, y, _fromDERToTimestamp(notBefore), _fromDERToTimestamp(notAfter));
+        layout.processorPCKs[authority][serial] = ECKey(x, y, notBeforeTimestamp, notAfterTimestamp);
         layout.processorPCKSerials[authority].push(serial);
     }
 

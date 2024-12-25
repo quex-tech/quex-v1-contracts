@@ -5,9 +5,11 @@ import "./TrustDomainStorage.sol";
 import {IP256Verifier} from "../p256_verifier/IP256Verifier.sol";
 
 library QuoteVerifier {
+    error RootCA_Expired();
     error InvalidPlatformCertificate();
     error InvalidPCK();
-    error PlatformCANotFound();
+    error PlatformCA_NotFound();
+    error PlatformCA_Expired();
     error PCKNotFound();
     error QEReport_InvalidSignature();
     error TDReport_InvalidQuote();
@@ -136,6 +138,10 @@ library QuoteVerifier {
         uint256 s
     ) internal view {
         ECKey memory rootCA = TrustDomainStorage.certificateLayout().rootCA;
+        if (rootCA.notAfter < block.timestamp) {
+            revert RootCA_Expired();
+        }
+
         bytes32 hash = _rootCertBodyHash(_uintToBytesDER(serial), notBefore, x, y, extensions);
 
         if (!_verifySignatureAllowMalleability(hash, r, s, rootCA.x, rootCA.y)) {
@@ -156,8 +162,12 @@ library QuoteVerifier {
     ) internal view {
         ECKey memory authorityKey = TrustDomainStorage.certificateLayout().platformCAs[authority];
         if (authorityKey.x == 0) {
-            revert PlatformCANotFound();
+            revert PlatformCA_NotFound();
         }
+        if (authorityKey.notAfter < block.timestamp) {
+            revert PlatformCA_Expired();
+        }
+
         bytes32 hash = _platformCertBodyHash(_uintToBytesDER(serial), notBefore, notAfter, x, y, extensions);
 
         if (!_verifySignatureAllowMalleability(hash, r, s, authorityKey.x, authorityKey.y)) {

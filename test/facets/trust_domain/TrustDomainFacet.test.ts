@@ -9,7 +9,7 @@ import {
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { ContractHelpers } from "../contract_helpers";
-import { SnapshotRestorer, takeSnapshot } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { SnapshotRestorer, takeSnapshot, time } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import processorPckCert = ContractHelpers.TrustDomainFacet.TestData.processorPckCert;
 import platformCaCert = ContractHelpers.TrustDomainFacet.TestData.platformCaCert;
 import rootCaKey = ContractHelpers.TrustDomainFacet.TestData.rootCaKey;
@@ -69,7 +69,6 @@ describe("TrustDomainFacet", () => {
                 platformCaCert.s
             )).not.to.be.reverted;
 
-
             const result = await testObject.getPlatformCAKey(platformCaCert.serial);
             expect(result.x).to.eq(platformCaCert.x);
             expect(result.y).to.eq(platformCaCert.y);
@@ -94,6 +93,21 @@ describe("TrustDomainFacet", () => {
                         wrongPlatformCaCert.s
                     ))
                     .to.be.revertedWithCustomError(trustDomainFacet, "InvalidPlatformCertificate");
+            });
+
+            it("platform CA is expired", async () => {
+                await time.setNextBlockTimestamp(2000285411n);
+
+                await expect(testObject.connect(owner).addPlatformCAKey(
+                    platformCaCert.x,
+                    platformCaCert.y,
+                    platformCaCert.serial,
+                    platformCaCert.notBefore,
+                    platformCaCert.notAfter,
+                    platformCaCert.extensions,
+                    platformCaCert.r,
+                    platformCaCert.s
+                )).to.be.revertedWithCustomError(trustDomainFacet, "Certificate_WrongValidPeriod");
             });
         });
     });
@@ -143,7 +157,7 @@ describe("TrustDomainFacet", () => {
                         wrongProcessorPckCert.r,
                         wrongProcessorPckCert.s
                     ))
-                    .to.be.revertedWithCustomError(trustDomainFacet, "PlatformCANotFound");
+                    .to.be.revertedWithCustomError(trustDomainFacet, "PlatformCA_NotFound");
             });
 
             it("pck's signature is wrong", async () => {
@@ -163,6 +177,24 @@ describe("TrustDomainFacet", () => {
                         wrongProcessorPckCert.s
                     ))
                     .to.be.revertedWithCustomError(trustDomainFacet, "InvalidPCK");
+            });
+
+            it("pck is expired", async () => {
+                await time.setNextBlockTimestamp(1951557865n);
+
+                await expect(testObject
+                    .connect(nonOwner)
+                    .addPCK(
+                        processorPckCert.x,
+                        processorPckCert.y,
+                        processorPckCert.serial,
+                        processorPckCert.notBefore,
+                        processorPckCert.notAfter,
+                        processorPckCert.extensions,
+                        processorPckCert.authority,
+                        processorPckCert.r,
+                        processorPckCert.s
+                    )).to.be.revertedWithCustomError(trustDomainFacet, "Certificate_WrongValidPeriod");
             });
         });
     });

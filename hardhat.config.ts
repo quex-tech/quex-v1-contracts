@@ -21,7 +21,7 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {
-      initialDate: "2024-11-01T00:00:00Z"
+      initialDate: "2024-11-05T00:00:00Z"
     },
     redBellyTestnet: {
       chainId: 153,
