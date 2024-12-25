@@ -34,7 +34,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",
-    "@solidstate/contracts": "^0.0.60"
+    "@solidstate/contracts": "^0.0.60",
+    "solady": "^0.0.285"
   },
   "resolutions": {
     "@ethereum-waffle/mock-contract/ethers": "^5.7.2"

@@ -1,5 +1,6 @@
 import { HardhatUserConfig, vars } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "hardhat-gas-reporter";
 
 const quexPrivateKey = vars.get("QUEX_PRIVATE_KEY")
 
@@ -32,6 +33,9 @@ const config: HardhatUserConfig = {
       url: "https://sepolia-rollup.arbitrum.io/rpc",
       accounts : [quexPrivateKey]
     }
+  },
+  gasReporter: {
+    enabled: true
   }
 };
 

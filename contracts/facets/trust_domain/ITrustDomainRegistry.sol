@@ -9,6 +9,7 @@ interface ITrustDomainRegistry {
         uint256 y,
         uint256 serial,
         bytes memory notBefore,
+        bytes memory notAfter,
         bytes memory extensions,
         uint256 r,
         uint256 s
