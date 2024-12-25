@@ -61,8 +61,6 @@ interface ITrustDomainRegistry {
 }
 
 interface ITrustDomainRegistryExtended is ITrustDomainRegistry {
-    function addRootKey(ECKey memory key) external;
-
     function revokePCK(uint256 platformSerial, uint256 pckSerial) external;
 
     function revokePlatformCA(uint256 serial) external;

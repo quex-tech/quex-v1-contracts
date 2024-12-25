@@ -46,44 +46,35 @@ describe("TrustDomainFacet", () => {
         await snapshot.restore();
     });
 
-    describe("#addRootKey", () => {
-        it("adds root key", async () => {
-            const rootKey = rootCaKey;
-            await expect(testObject.connect(owner).addRootKey(rootKey))
-                .not.to.be.reverted;
-
+    describe("#getRootKey", () => {
+        it("gets root key", async () => {
             const rootKeyResult = await testObject.getRootKey();
-            expect(rootKeyResult.x).to.equal(rootKey.x);
-            expect(rootKeyResult.y).to.equal(rootKey.y);
-            expect(rootKeyResult.notBefore).to.equal(rootKey.notBefore);
-            expect(rootKeyResult.notAfter).to.equal(rootKey.notAfter);
-        });
-
-        describe("revert if", () => {
-            it("sender is not owner", async () => {
-                await expect(testObject.connect(nonOwner).addRootKey(rootCaKey))
-                    .to.be.revertedWithCustomError(diamond, "Ownable__NotOwner");
-            });
+            expect(rootKeyResult.x).to.equal(rootCaKey.x);
+            expect(rootKeyResult.y).to.equal(rootCaKey.y);
+            expect(rootKeyResult.notBefore).to.equal(rootCaKey.notBefore);
+            expect(rootKeyResult.notAfter).to.equal(rootCaKey.notAfter);
         });
     });
 
     describe("#addPlatformCAKey", () => {
-        beforeEach(async () => {
-            await ContractHelpers.TrustDomainFacet.addRootKey(diamond, owner);
-        });
-
         it("adds platform CA key", async () => {
             await expect(testObject.connect(owner).addPlatformCAKey(
                 platformCaCert.x,
                 platformCaCert.y,
                 platformCaCert.serial,
                 platformCaCert.notBefore,
+                platformCaCert.notAfter,
                 platformCaCert.extensions,
                 platformCaCert.r,
                 platformCaCert.s
             )).not.to.be.reverted;
 
-            // todo: call getPlatformCA and check
+
+            const result = await testObject.getPlatformCAKey(platformCaCert.serial);
+            expect(result.x).to.eq(platformCaCert.x);
+            expect(result.y).to.eq(platformCaCert.y);
+            expect(result.notBefore).to.eq(1526899810n);
+            expect(result.notAfter).to.eq(2000285410n);
         });
 
         describe("reverts if", () => {
@@ -97,6 +88,7 @@ describe("TrustDomainFacet", () => {
                         wrongPlatformCaCert.y,
                         wrongPlatformCaCert.serial,
                         wrongPlatformCaCert.notBefore,
+                        wrongPlatformCaCert.notAfter,
                         wrongPlatformCaCert.extensions,
                         wrongPlatformCaCert.r,
                         wrongPlatformCaCert.s
@@ -108,7 +100,6 @@ describe("TrustDomainFacet", () => {
 
     describe("#addPCK", () => {
         beforeEach(async () => {
-            await ContractHelpers.TrustDomainFacet.addRootKey(diamond, owner);
             await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
         });
 
@@ -131,8 +122,8 @@ describe("TrustDomainFacet", () => {
             const result = await testObject.getPCK(processorPckCert.authority, processorPckCert.serial);
             expect(result.x).to.eq(processorPckCert.x);
             expect(result.y).to.eq(processorPckCert.y);
-            // expect(result.notBefore).to.eq(1730719464n); // todo: cert dates
-            // expect(result.notAfter).to.eq(1951557864n); // todo: cert dates
+            expect(result.notBefore).to.eq(1730719464n);
+            expect(result.notAfter).to.eq(1951557864n);
         });
 
         describe("reverts if", () => {
@@ -178,7 +169,6 @@ describe("TrustDomainFacet", () => {
 
     describe("#addQE", () => {
         beforeEach(async () => {
-            await ContractHelpers.TrustDomainFacet.addRootKey(diamond, owner);
             await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
             await ContractHelpers.TrustDomainFacet.addPCK(diamond);
         });
@@ -231,7 +221,6 @@ describe("TrustDomainFacet", () => {
 
     describe("#addTD", () => {
         beforeEach(async () => {
-            await ContractHelpers.TrustDomainFacet.addRootKey(diamond, owner);
             await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
             await ContractHelpers.TrustDomainFacet.addPCK(diamond);
             await ContractHelpers.TrustDomainFacet.addQE(diamond);
@@ -321,7 +310,6 @@ describe("TrustDomainFacet", () => {
 
     describe("#revokePCK", () => {
         beforeEach(async () => {
-            await ContractHelpers.TrustDomainFacet.addRootKey(diamond, owner);
             await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
             await ContractHelpers.TrustDomainFacet.addPCK(diamond);
         });
@@ -340,7 +328,6 @@ describe("TrustDomainFacet", () => {
 
     describe("#revokePlatformCA", () => {
         beforeEach(async () => {
-            await ContractHelpers.TrustDomainFacet.addRootKey(diamond, owner);
             await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
         });
         
