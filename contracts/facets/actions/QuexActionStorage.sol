@@ -9,11 +9,6 @@ library QuexActionStorage {
         uint256 constantQuexFee;
     }
 
-    struct FlowLayout {
-        mapping(uint256 => Flow) flows;
-        uint256 lastFlowId;
-    }
-
     struct Request {
         uint256 flowId;
         uint256 quexFee;
@@ -28,18 +23,10 @@ library QuexActionStorage {
     }
 
     bytes32 internal constant MONETARY_STORAGE_SLOT = keccak256("quex.contracts.storage.Action.Monetary");
-    bytes32 internal constant FLOW_STORAGE_SLOT = keccak256("quex.contracts.storage.Action.Flow");
     bytes32 internal constant REQUEST_STORAGE_SLOT = keccak256("quex.contracts.storage.Action.Request");
 
     function monetaryLayout() internal pure returns (MonetaryLayout storage l) {
         bytes32 slot = MONETARY_STORAGE_SLOT;
-        assembly {
-            l.slot := slot
-        }
-    }
-
-    function flowLayout() internal pure returns (FlowLayout storage l) {
-        bytes32 slot = FLOW_STORAGE_SLOT;
         assembly {
             l.slot := slot
         }

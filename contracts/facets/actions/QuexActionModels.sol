@@ -6,14 +6,6 @@ enum IdType {
     FlowId
 }
 
-struct Flow {
-    uint256 gasLimit;
-    uint256 actionId;
-    address consumer;
-    address pool;
-    bytes4 callback;
-}
-
 struct DataItem {
     uint256 timestamp;
     uint256 error;
