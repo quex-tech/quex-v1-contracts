@@ -15,14 +15,14 @@ library QuexActionStorage {
     }
 
     struct Request {
-        bytes32 flowId;
+        uint256 flowId;
         uint256 quexFee;
         uint256 relayerPremium;
         uint256 oraclePoolFee;
     }
 
     struct RequestLayout {
-        mapping(bytes32 => Request) requests;
+        mapping(uint256 => Request) requests;
         uint256 requestIdNonce;
         uint256 quexFulfillingGasCost;
     }

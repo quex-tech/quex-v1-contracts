@@ -5,20 +5,16 @@ import "./QuexActionModels.sol";
 
 import "./QuexActionStorage.sol";
 import "@solidstate/contracts/access/ownable/Ownable.sol";
+
+import {IQuexMonetary} from "../monetary/IQuexMonetary.sol";
 import {IOraclePool} from "../../core/IOraclePool.sol";
 
 interface IQuexAction {
-    function createFlow(Flow flow) external returns (uint256 flowId);
+    function createFlow(Flow memory flow) external returns (uint256 flowId);
 
-    function getFlow(uint256 flowId) external view returns (Flow);
-
-    function getQuexFee(uint256 flowId) external view returns (uint256);
+    function getFlow(uint256 flowId) external view returns (Flow memory);
 
     function getQuexGas() external view returns (uint256);
-}
-
-interface IQuexActionExtended is IQuexAction {
-    function getTreasury() external view returns (address);
 }
 
 library QuexActionLibrary {
@@ -27,7 +23,7 @@ library QuexActionLibrary {
     error TrustDomain_IsNotAllowedInOraclePool();
     error OracleMessage_SignatureIsInvalid();
 
-    function ensureOracleMessageIsValid(OracleMessage memory message, ETHSignature memory signature, Flow flow, address tdAddress) internal {
+    function ensureOracleMessageIsValid(OracleMessage memory message, ETHSignature memory signature, Flow memory flow, address tdAddress) internal view {
         if (flow.pool == address(0)) {
             revert Flow_NotFound();
         }
@@ -57,7 +53,7 @@ library QuexActionLibrary {
 }
 
 contract QuexActionCommonFacet is Ownable {
-    function createFlow(Flow flow) external returns (uint256 flowId) {
+    function createFlow(Flow memory flow) external returns (uint256 flowId) {
         QuexActionStorage.FlowLayout storage layout = QuexActionStorage.flowLayout();
         flowId = layout.lastFlowId + 1;
         layout.flows[flowId] = flow;
@@ -65,20 +61,8 @@ contract QuexActionCommonFacet is Ownable {
         return flowId;
     }
 
-    function getFlow(uint256 flowId) external view returns (Flow) {
+    function getFlow(uint256 flowId) external view returns (Flow memory) {
         return QuexActionStorage.flowLayout().flows[flowId];
-    }
-
-    function getQuexFee(uint256 flowId) external view returns (uint256) {
-        return QuexActionStorage.monetaryLayout().constantQuexFee;
-    }
-
-    function getTreasury() external view returns (address) {
-        return QuexActionStorage.monetaryLayout().treasuryAddress;
-    }
-
-    function setTreasury(address treasuryAddress) external onlyOwner {
-        QuexActionStorage.monetaryLayout().treasuryAddress = treasuryAddress;
     }
 }
 
@@ -93,13 +77,13 @@ contract QuexPushActionFacet {
         Flow memory flow = QuexActionStorage.flowLayout().flows[flowId];
         QuexActionLibrary.ensureOracleMessageIsValid(message, signature, flow, tdAddress);
 
-        IQuexActionExtended quexActions = IQuexActionExtended(address(this));
-        uint quexFee = quexActions.getQuexFee(flowId);
+        IQuexMonetary quexMonetary = IQuexMonetary(address(this));
+        uint quexFee = quexMonetary.getQuexFee(flowId);
         if (msg.value < quexFee) {
             revert InsufficientValue();
         }
 
-        payable(quexActions.getTreasury()).transfer(quexFee);
+        payable(quexMonetary.getTreasury()).transfer(quexFee);
         // todo: what we do with change? Transfer it back to msg sender?
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, flowId, message.dataItem, IdType.FlowId);
@@ -119,8 +103,8 @@ contract QuexRequestActionFacet is Ownable {
     error Request_NotFound();
     error InsufficientValue();
 
-    event RequestCreated(bytes32 requestId, uint256 flowId, address oraclePool);
-    event RequestFulfilled(bytes32 requestId, uint256 flowId, address relayer, bool isSuccessful, uint256 quexFee, uint256 oraclePoolFee, uint256 relayerPremium);
+    event RequestCreated(uint256 requestId, uint256 flowId, address oraclePool);
+    event RequestFulfilled(uint256 requestId, uint256 flowId, address relayer, bool isSuccessful, uint256 quexFee, uint256 oraclePoolFee, uint256 relayerPremium);
 
     function createRequest(uint256 flowId) external payable returns (uint256 requestId) {
         // todo: think between external call and storage usage
@@ -130,8 +114,9 @@ contract QuexRequestActionFacet is Ownable {
             revert Flow_NotFound();
         }
 
+        IQuexMonetary quexMonetary = IQuexMonetary(address(this));
         IQuexAction quexActions = IQuexAction(address(this));
-        uint256 quexFee = quexActions.getQuexFee();
+        uint256 quexFee = quexMonetary.getQuexFee(flowId);
         uint256 relayerPremium = (flow.gasLimit + quexActions.getQuexGas()) * tx.gasprice;
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
         uint256 requestPrice = quexFee + relayerPremium + oraclePoolFee;
@@ -161,18 +146,18 @@ contract QuexRequestActionFacet is Ownable {
 
     function fulfillRequest(OracleMessage memory message, ETHSignature memory signature, uint256 requestId, address tdAddress) external {
         // todo: think between external call and storage usage
-        QuexActionStorage.RequestLayout layout = QuexActionStorage.requestLayout();
+        QuexActionStorage.RequestLayout storage layout = QuexActionStorage.requestLayout();
         QuexActionStorage.Request memory request = layout.requests[requestId];
         if (request.flowId == 0) {
             revert Request_NotFound();
         }
         delete layout.requests[requestId];
 
-        Flow memory flow = QuexActionStorage.flowLayout().flows[request];
+        Flow memory flow = QuexActionStorage.flowLayout().flows[request.flowId];
         QuexActionLibrary.ensureOracleMessageIsValid(message, signature, flow, tdAddress);
 
-        IQuexActionExtended quexActions = IQuexActionExtended(address(this));
-        payable(quexActions.getTreasury()).transfer(request.quexFee);
+        IQuexMonetary quexMonetary = IQuexMonetary(address(this));
+        payable(quexMonetary.getTreasury()).transfer(request.quexFee);
         payable(IOraclePool(flow.pool).getTreasury()).transfer(request.oraclePoolFee);
         payable(msg.sender).transfer(request.relayerPremium);
 
@@ -201,7 +186,7 @@ contract QuexRequestActionFacet is Ownable {
     // todo: maybe include gas payment here?
     function getRequestFee(uint256 flowId) external view returns (uint256) {
         Flow memory flow = QuexActionStorage.flowLayout().flows[flowId];
-        uint256 quexFee = IQuexAction(address(this)).getQuexFee();
+        uint256 quexFee = IQuexMonetary(address(this)).getQuexFee(flowId);
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
         return quexFee + oraclePoolFee;
     }
@@ -210,10 +195,10 @@ contract QuexRequestActionFacet is Ownable {
         return callbackGasLimit * tx.gasprice;
     }
 
-    function _createRequestId(uint256 flowId, address poolAddress) private returns (bytes32 requestId) {
+    function _createRequestId(uint256 flowId, address poolAddress) private returns (uint256 requestId) {
         // todo: maybe use consequent ids?
         QuexActionStorage.RequestLayout storage layout = QuexActionStorage.requestLayout();
         ++layout.requestIdNonce;
-        return keccak256(abi.encode(flowId, poolAddress, msg.sender, block.timestamp, block.number, layout.requestIdNonce));
+        return uint256(keccak256(abi.encode(flowId, poolAddress, msg.sender, block.timestamp, block.number, layout.requestIdNonce)));
     }
 }
