@@ -87,6 +87,8 @@ interface ITrustDomainRegistry {
 
     function getPCK(uint256 platformSerial, uint256 pckSerial) external view returns (ECKey memory);
 
+    function isTDValid(address tdAddress) external view returns (bool);
+
     function getTD(address tdAddress) external view returns (TDQuote memory);
 
     function getQE(uint256 qeId) external view returns (QEReport memory);

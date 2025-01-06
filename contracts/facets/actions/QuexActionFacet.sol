@@ -8,6 +8,7 @@ import "../../interfaces/core/IQuexActionRegistry.sol";
 import "./QuexActionStorage.sol";
 
 import "@solidstate/contracts/access/ownable/Ownable.sol";
+import {ITrustDomainRegistry} from "../../interfaces/core/ITrustDomainRegistry.sol";
 
 contract QuexActionFacet is IQuexActionRegistry, Ownable {
     // push events
@@ -79,7 +80,6 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
     }
 
     function fulfillRequest(OracleMessage memory message, ETHSignature memory signature, uint256 requestId, address tdAddress) external {
-        // todo: think between external call and storage usage
         QuexActionStorage.Layout storage layout = QuexActionStorage.layout();
         QuexActionStorage.Request memory request = layout.requests[requestId];
         if (request.flowId == 0) {
@@ -113,7 +113,7 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
         return QuexActionStorage.layout().quexFulfillingGasCost;
     }
 
-    function setQuexGas(uint quexGas) external onlyOwner {
+    function setQuexGas(uint256 quexGas) external onlyOwner {
         QuexActionStorage.layout().quexFulfillingGasCost = quexGas;
     }
 
@@ -134,9 +134,11 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
             revert Action_MismatchIds();
         }
 
-        // todo: check if TD is registered and still valid
-        IOraclePool oraclePool = IOraclePool(address(flow.pool));
-        if (!oraclePool.isInPool(tdAddress)) {
+        if (ITrustDomainRegistry(address(this)).isTDValid(tdAddress)) {
+            revert TrustDomain_NotValid();
+        }
+
+        if (!IOraclePool(address(flow.pool)).isInPool(tdAddress)) {
             revert TrustDomain_IsNotAllowedInOraclePool();
         }
 

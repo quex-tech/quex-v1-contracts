@@ -27,6 +27,7 @@ interface IQuexActionRegistry {
     error Flow_NotFound();
     error Request_NotFound();
     error Action_MismatchIds();
+    error TrustDomain_NotValid();
     error TrustDomain_IsNotAllowedInOraclePool();
     error OracleMessage_SignatureIsInvalid();
     error InsufficientValue();

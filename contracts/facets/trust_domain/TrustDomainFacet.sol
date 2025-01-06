@@ -118,6 +118,12 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, Ownable {
         return tdAddress;
     }
 
+    function isTDValid(address tdAddress) external view returns (bool) {
+        // todo: check QE/certs validity?
+        // todo: different mapping to reduce read gas cost
+        return TrustDomainStorage.tdLayout().tdQuotes[tdAddress].REPORT_DATA1 != 0;
+    }
+
     function getTD(address tdAddress) external view returns (TDQuote memory) {
         return TrustDomainStorage.tdLayout().tdQuotes[tdAddress];
     }
