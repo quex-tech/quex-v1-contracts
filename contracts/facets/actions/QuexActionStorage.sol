@@ -4,11 +4,6 @@ pragma solidity 0.8.22;
 import "./QuexActionModels.sol";
 
 library QuexActionStorage {
-    struct MonetaryLayout {
-        address treasuryAddress;
-        uint256 constantQuexFee;
-    }
-
     struct Request {
         uint256 flowId;
         uint256 quexFee;
@@ -22,20 +17,13 @@ library QuexActionStorage {
         uint256 quexFulfillingGasCost;
     }
 
-    bytes32 internal constant MONETARY_STORAGE_SLOT = keccak256("quex.contracts.storage.Action.Monetary");
     bytes32 internal constant REQUEST_STORAGE_SLOT = keccak256("quex.contracts.storage.Action.Request");
-
-    function monetaryLayout() internal pure returns (MonetaryLayout storage l) {
-        bytes32 slot = MONETARY_STORAGE_SLOT;
-        assembly {
-            l.slot := slot
-        }
-    }
 
     function requestLayout() internal pure returns (RequestLayout storage l) {
         bytes32 slot = REQUEST_STORAGE_SLOT;
         assembly {
             l.slot := slot
         }
+        return l;
     }
 }

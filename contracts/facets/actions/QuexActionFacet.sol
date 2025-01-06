@@ -1,67 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
+import "../../core/IOraclePool.sol";
+import "../flow/IFlowRegistry.sol";
+import "../monetary/IQuexMonetary.sol";
+import "./IQuexActionRegistry.sol";
 import "./QuexActionModels.sol";
-
 import "./QuexActionStorage.sol";
+
 import "@solidstate/contracts/access/ownable/Ownable.sol";
 
-import "../monetary/IQuexMonetary.sol";
-import "../flow/IFlowRegistry.sol";
-
-import "../../core/IOraclePool.sol";
-
-interface IQuexAction {
-    function getQuexGas() external view returns (uint256);
-}
-
-library QuexActionLibrary {
-    error Flow_NotFound();
-    error Action_MismatchIds();
-    error TrustDomain_IsNotAllowedInOraclePool();
-    error OracleMessage_SignatureIsInvalid();
-
-    function ensureOracleMessageIsValid(OracleMessage memory message, ETHSignature memory signature, Flow memory flow, address tdAddress) internal view {
-        if (flow.pool == address(0)) {
-            revert Flow_NotFound();
-        }
-
-        if (flow.actionId != message.actionId) {
-            revert Action_MismatchIds();
-        }
-
-        // todo: check if TD is registered and still valid
-        IOraclePool oraclePool = IOraclePool(address(flow.pool));
-        if (!oraclePool.isInPool(tdAddress)) {
-            revert TrustDomain_IsNotAllowedInOraclePool();
-        }
-
-        if (!_isSignatureValid(message, signature, tdAddress)) {
-            revert OracleMessage_SignatureIsInvalid();
-        }
-    }
-
-    function _isSignatureValid(OracleMessage memory oracleMessage, ETHSignature memory signature, address tdAddress) private pure returns (bool) {
-        // todo: validate that message to sign in TD will be the same
-        bytes memory message = abi.encode(oracleMessage);
-        bytes32 messageHash = keccak256(message);
-        bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
-        return ecrecover(ethSignedMessageHash, signature.v, signature.r, signature.s) == tdAddress;
-    }
-}
-
-contract QuexActionCommonFacet is Ownable {
-}
-
-contract QuexPushActionFacet {
-    error InsufficientValue();
-
+contract QuexActionFacet is IQuexActionRegistry, Ownable {
+    // push events
     event DataPushed(uint256 flowId, address sender);
     event DataPushingFailed(uint256 flowId, address sender);
 
+    // request events
+    event RequestFulfilled(uint256 requestId, uint256 flowId, address relayer, bool isSuccessful, uint256 quexFee, uint256 oraclePoolFee, uint256 relayerPremium);
+
     function pushData(OracleMessage memory message, ETHSignature memory signature, uint256 flowId, address tdAddress) external payable {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
-        QuexActionLibrary.ensureOracleMessageIsValid(message, signature, flow, tdAddress);
+        _ensureOracleMessageIsValid(message, signature, flow, tdAddress);
 
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
         uint quexFee = quexMonetary.getQuexFee(flowId);
@@ -82,15 +41,6 @@ contract QuexPushActionFacet {
             emit DataPushingFailed(flowId, msg.sender);
         }
     }
-}
-
-contract QuexRequestActionFacet is Ownable {
-    error Flow_NotFound();
-    error Request_NotFound();
-    error InsufficientValue();
-
-    event RequestCreated(uint256 requestId, uint256 flowId, address oraclePool);
-    event RequestFulfilled(uint256 requestId, uint256 flowId, address relayer, bool isSuccessful, uint256 quexFee, uint256 oraclePoolFee, uint256 relayerPremium);
 
     function createRequest(uint256 flowId) external payable returns (uint256 requestId) {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
@@ -100,7 +50,7 @@ contract QuexRequestActionFacet is Ownable {
         }
 
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
-        IQuexAction quexActions = IQuexAction(address(this));
+        IQuexActionRegistry quexActions = IQuexActionRegistry(address(this));
         uint256 quexFee = quexMonetary.getQuexFee(flowId);
         uint256 relayerPremium = (flow.gasLimit + quexActions.getQuexGas()) * tx.gasprice;
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
@@ -139,7 +89,7 @@ contract QuexRequestActionFacet is Ownable {
         delete layout.requests[requestId];
 
         Flow memory flow = IFlowRegistry(address(this)).getFlow(request.flowId);
-        QuexActionLibrary.ensureOracleMessageIsValid(message, signature, flow, tdAddress);
+        _ensureOracleMessageIsValid(message, signature, flow, tdAddress);
 
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
         payable(quexMonetary.getTreasury()).transfer(request.quexFee);
@@ -174,6 +124,34 @@ contract QuexRequestActionFacet is Ownable {
         uint256 quexFee = IQuexMonetary(address(this)).getQuexFee(flowId);
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
         return quexFee + oraclePoolFee;
+    }
+
+    function _ensureOracleMessageIsValid(OracleMessage memory message, ETHSignature memory signature, Flow memory flow, address tdAddress) private view {
+        if (flow.pool == address(0)) {
+            revert Flow_NotFound();
+        }
+
+        if (flow.actionId != message.actionId) {
+            revert Action_MismatchIds();
+        }
+
+        // todo: check if TD is registered and still valid
+        IOraclePool oraclePool = IOraclePool(address(flow.pool));
+        if (!oraclePool.isInPool(tdAddress)) {
+            revert TrustDomain_IsNotAllowedInOraclePool();
+        }
+
+        if (!_isSignatureValid(message, signature, tdAddress)) {
+            revert OracleMessage_SignatureIsInvalid();
+        }
+    }
+
+    function _isSignatureValid(OracleMessage memory oracleMessage, ETHSignature memory signature, address tdAddress) private pure returns (bool) {
+        // todo: validate that message to sign in TD will be the same
+        bytes memory message = abi.encode(oracleMessage);
+        bytes32 messageHash = keccak256(message);
+        bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
+        return ecrecover(ethSignedMessageHash, signature.v, signature.r, signature.s) == tdAddress;
     }
 
     function _calculateRequestPrice(uint32 callbackGasLimit) private view returns (uint256 requestPrice) {
