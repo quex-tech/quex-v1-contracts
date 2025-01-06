@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 import "./TrustDomainStorage.sol";
-import "./ITrustDomainRegistry.sol";
+import "../../interfaces/core/ITrustDomainRegistry.sol";
 import "./QuoteVerifier.sol";
 
 import "@solidstate/contracts/access/ownable/Ownable.sol";

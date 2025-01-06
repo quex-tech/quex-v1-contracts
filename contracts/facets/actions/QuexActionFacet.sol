@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "../../core/IOraclePool.sol";
-import "../flow/IFlowRegistry.sol";
-import "../monetary/IQuexMonetary.sol";
-import "./IQuexActionRegistry.sol";
-import "./QuexActionModels.sol";
+import "../../interfaces/core/IOraclePool.sol";
+import "../flow/FlowFacet.sol";
+import "../../interfaces/core/IQuexMonetary.sol";
+import "../../interfaces/core/IQuexActionRegistry.sol";
 import "./QuexActionStorage.sol";
 
 import "@solidstate/contracts/access/ownable/Ownable.sol";
@@ -63,7 +62,7 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
         requestId = _createRequestId(flowId, flow.pool);
         emit RequestCreated(requestId, flowId, flow.pool);
 
-        QuexActionStorage.requestLayout().requests[requestId] = QuexActionStorage.Request(
+        QuexActionStorage.layout().requests[requestId] = QuexActionStorage.Request(
             flowId,
             quexFee,
             relayerPremium,
@@ -81,7 +80,7 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
 
     function fulfillRequest(OracleMessage memory message, ETHSignature memory signature, uint256 requestId, address tdAddress) external {
         // todo: think between external call and storage usage
-        QuexActionStorage.RequestLayout storage layout = QuexActionStorage.requestLayout();
+        QuexActionStorage.Layout storage layout = QuexActionStorage.layout();
         QuexActionStorage.Request memory request = layout.requests[requestId];
         if (request.flowId == 0) {
             revert Request_NotFound();
@@ -111,11 +110,11 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
     }
 
     function getQuexGas() external view returns (uint256) {
-        return QuexActionStorage.requestLayout().quexFulfillingGasCost;
+        return QuexActionStorage.layout().quexFulfillingGasCost;
     }
 
     function setQuexGas(uint quexGas) external onlyOwner {
-        QuexActionStorage.requestLayout().quexFulfillingGasCost = quexGas;
+        QuexActionStorage.layout().quexFulfillingGasCost = quexGas;
     }
 
     // todo: maybe include gas payment here?
@@ -160,7 +159,7 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
 
     function _createRequestId(uint256 flowId, address poolAddress) private returns (uint256 requestId) {
         // todo: maybe use consequent ids?
-        QuexActionStorage.RequestLayout storage layout = QuexActionStorage.requestLayout();
+        QuexActionStorage.Layout storage layout = QuexActionStorage.layout();
         ++layout.requestIdNonce;
         return uint256(keccak256(abi.encode(flowId, poolAddress, msg.sender, block.timestamp, block.number, layout.requestIdNonce)));
     }

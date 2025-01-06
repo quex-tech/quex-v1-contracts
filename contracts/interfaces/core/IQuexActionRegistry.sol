@@ -1,7 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "./QuexActionModels.sol";
+enum IdType {
+    RequestId,
+    FlowId
+}
+
+struct DataItem {
+    uint256 timestamp;
+    uint256 error;
+    bytes value;
+}
+
+struct OracleMessage {
+    uint256 actionId;
+    DataItem dataItem;
+}
+
+struct ETHSignature {
+    bytes32 r;
+    bytes32 s;
+    uint8 v;
+}
 
 interface IQuexActionRegistry {
     error Flow_NotFound();

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "./QuexActionModels.sol";
-
 library QuexActionStorage {
     struct Request {
         uint256 flowId;
@@ -11,16 +9,16 @@ library QuexActionStorage {
         uint256 oraclePoolFee;
     }
 
-    struct RequestLayout {
+    struct Layout {
         mapping(uint256 => Request) requests;
         uint256 requestIdNonce;
         uint256 quexFulfillingGasCost;
     }
 
-    bytes32 internal constant REQUEST_STORAGE_SLOT = keccak256("quex.contracts.storage.Action.Request");
+    bytes32 internal constant STORAGE_SLOT = keccak256("quex.contracts.storage.Action");
 
-    function requestLayout() internal pure returns (RequestLayout storage l) {
-        bytes32 slot = REQUEST_STORAGE_SLOT;
+    function layout() internal pure returns (Layout storage l) {
+        bytes32 slot = STORAGE_SLOT;
         assembly {
             l.slot := slot
         }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "./TrustDomainModels.sol";
+import "../../interfaces/core/ITrustDomainRegistry.sol";
 
 library TrustDomainStorage {
     struct QEAuthority {
@@ -36,6 +36,7 @@ library TrustDomainStorage {
         assembly {
             l.slot := slot
         }
+        return l;
     }
 
     function qeLayout() internal pure returns (QELayout storage l) {
@@ -43,11 +44,14 @@ library TrustDomainStorage {
         assembly {
             l.slot := slot
         }
+        return l;
     }
+
     function tdLayout() internal pure returns (TDLayout storage l) {
         bytes32 slot = TD_STORAGE_SLOT;
         assembly {
             l.slot := slot
         }
+        return l;
     }
 }
