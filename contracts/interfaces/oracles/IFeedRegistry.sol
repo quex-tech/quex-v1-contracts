@@ -69,12 +69,17 @@ interface IFeedRegistry {
 
     function addResponseSchema(string memory responseSchema) external returns (bytes32 schemaId);
 
-    function addFeedAction(
+    function addFlow(
         bytes32 requestId,
         bytes32 patchId,
+        bytes32 schemaId,
         bytes32 filterId,
-        bytes32 schemaId
-    ) external returns (uint256 actionId);
+        address consumer,
+        bytes4 callback,
+        uint256 gasLimit
+    ) external returns (uint256 flowId);
 
     function getAction(uint256 actionId) external view returns (address tdAddress, bytes memory);
+
+    function createRequest(uint256 actionId) external returns (uint256 requestId);
 }

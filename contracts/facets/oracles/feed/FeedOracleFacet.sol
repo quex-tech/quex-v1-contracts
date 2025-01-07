@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
+import "../../../interfaces/core/IFlowRegistry.sol";
+import "../../../interfaces/core/IQuexActionRegistry.sol";
 import "../../../interfaces/oracles/IFeedRegistry.sol";
 import "./FeedOracleStorage.sol";
+import "@solidstate/contracts/access/ownable/Ownable.sol";
 
-contract FeedActionFacet is IFeedRegistry {
+contract FeedActionFacet is IFeedRegistry, Ownable {
     error FeedRequestNotFound();
     error FeedPrivatePatchNotFound();
     error FeedJqFilterNotFound();
@@ -48,12 +51,15 @@ contract FeedActionFacet is IFeedRegistry {
         return schemaId;
     }
 
-    function addFeedAction(
+    function addFlow(
         bytes32 requestId,
         bytes32 patchId,
         bytes32 schemaId,
-        bytes32 filterId
-    ) external returns (uint256 feedId) {
+        bytes32 filterId,
+        address consumer,
+        bytes4 callback,
+        uint256 gasLimit
+    ) external returns (uint256 flowId) {
         FeedOracleStorage.Layout storage layout = FeedOracleStorage.layout();
         FeedOracleStorage.FeedInternal memory feedInternal = FeedOracleStorage.FeedInternal(requestId, patchId, schemaId, filterId);
 
@@ -73,10 +79,12 @@ contract FeedActionFacet is IFeedRegistry {
             revert FeedJqFilterNotFound();
         }
 
-        feedId = _calculateFeedId(feed);
+        uint256 feedId = _calculateFeedId(feed);
         layout.feeds[feedId] = feedInternal;
         emit FeedAdded(feedId);
-        return feedId;
+
+        Flow memory flow = Flow(gasLimit, feedId, consumer, address(this), callback);
+        return IFlowRegistry(getQuexAddress()).createFlow(flow);
     }
 
     function getAction(uint256 actionId) external view returns (address tdAddress, bytes memory action) {
@@ -86,6 +94,20 @@ contract FeedActionFacet is IFeedRegistry {
         Feed memory feed = _getFeed(feedInternal);
         tdAddress = layout.privatePatchTdAddresses[feedInternal.patchId];
         return (tdAddress, abi.encode(feed));
+    }
+
+    function createRequest(uint256 flowId) external returns (uint256 requestId) {
+        return IQuexActionRegistry(getQuexAddress()).createRequest(flowId);
+    }
+
+    // todo: extract to common facet
+    function setQuexAddress(address quexAddress) external onlyOwner {
+        FeedOracleStorage.layout().quexAddress = quexAddress;
+    }
+
+    // todo: extract to common facet
+    function getQuexAddress() internal view returns (address) {
+        return FeedOracleStorage.layout().quexAddress;
     }
 
     function _getFeed(FeedOracleStorage.FeedInternal memory feedInternal) private view returns (Feed memory feed) {
