@@ -60,7 +60,7 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
             revert InsufficientValue();
         }
 
-        requestId = _createRequestId(flowId, flow.pool);
+        requestId = ++QuexActionStorage.layout().lastRequestId;
         emit RequestCreated(requestId, flowId, flow.pool);
 
         QuexActionStorage.layout().requests[requestId] = QuexActionStorage.Request(
@@ -153,16 +153,5 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
         bytes32 messageHash = keccak256(message);
         bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
         return ecrecover(ethSignedMessageHash, signature.v, signature.r, signature.s) == tdAddress;
-    }
-
-    function _calculateRequestPrice(uint32 callbackGasLimit) private view returns (uint256 requestPrice) {
-        return callbackGasLimit * tx.gasprice;
-    }
-
-    function _createRequestId(uint256 flowId, address poolAddress) private returns (uint256 requestId) {
-        // todo: maybe use consequent ids?
-        QuexActionStorage.Layout storage layout = QuexActionStorage.layout();
-        ++layout.requestIdNonce;
-        return uint256(keccak256(abi.encode(flowId, poolAddress, msg.sender, block.timestamp, block.number, layout.requestIdNonce)));
     }
 }

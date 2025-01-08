@@ -11,7 +11,7 @@ library QuexActionStorage {
 
     struct Layout {
         mapping(uint256 => Request) requests;
-        uint256 requestIdNonce;
+        uint256 lastRequestId;
         uint256 quexFulfillingGasCost;
     }
 
