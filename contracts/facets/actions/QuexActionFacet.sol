@@ -29,11 +29,13 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
         }
 
         payable(quexMonetary.getTreasury()).transfer(quexFee);
-        // todo: what we do with change? Transfer it back to msg sender?
+        if (msg.value > quexFee) {
+            // todo: process situation when msg.sender is not payable
+            payable(msg.sender).transfer(msg.value - quexFee);
+        }
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, flowId, message.dataItem, IdType.FlowId);
         (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
-        // todo: what we do if callback is failed?
 
         if (success) {
             emit DataPushed(flowId, msg.sender);
@@ -69,7 +71,6 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
             oraclePoolFee
         );
 
-        // todo: what do we do with the change?
         if (msg.value > requestPrice) {
             // todo: process situation when msg.sender is not payable
             payable(msg.sender).transfer(msg.value - requestPrice);
