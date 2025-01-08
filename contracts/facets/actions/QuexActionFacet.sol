@@ -153,7 +153,6 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
     }
 
     function _isSignatureValid(OracleMessage memory oracleMessage, ETHSignature memory signature, address tdAddress) private pure returns (bool) {
-        // todo: validate that message to sign in TD will be the same
         bytes memory message = abi.encode(oracleMessage);
         bytes32 messageHash = keccak256(message);
         bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
