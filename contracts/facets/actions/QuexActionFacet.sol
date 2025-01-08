@@ -50,9 +50,8 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
         }
 
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
-        IQuexActionRegistry quexActions = IQuexActionRegistry(address(this));
         uint256 quexFee = quexMonetary.getQuexFee(flowId);
-        uint256 relayerPremium = (flow.gasLimit + quexActions.getQuexGas()) * tx.gasprice;
+        uint256 relayerPremium = (flow.gasLimit + QuexActionStorage.layout().quexFulfillingGasCost) * tx.gasprice;
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
         uint256 requestPrice = quexFee + relayerPremium + oraclePoolFee;
 
@@ -109,6 +108,10 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
         );
     }
 
+    function getRequest(uint256 requestId) external view returns (QuexActionStorage.Request memory) {
+        return QuexActionStorage.layout().requests[requestId];
+    }
+
     function getQuexGas() external view returns (uint256) {
         return QuexActionStorage.layout().quexFulfillingGasCost;
     }
@@ -117,12 +120,13 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
         QuexActionStorage.layout().quexFulfillingGasCost = quexGas;
     }
 
-    // todo: maybe include gas payment here?
-    function getRequestFee(uint256 flowId) external view returns (uint256) {
+    function getRequestFee(uint256 flowId) external view returns (uint256 nativeFee, uint256 gasFee) {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
         uint256 quexFee = IQuexMonetary(address(this)).getQuexFee(flowId);
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
-        return quexFee + oraclePoolFee;
+
+        uint256 quexFulfillingGasCost = QuexActionStorage.layout().quexFulfillingGasCost;
+        return (quexFee + oraclePoolFee, flow.gasLimit + quexFulfillingGasCost);
     }
 
     function _ensureOracleMessageIsValid(OracleMessage memory message, ETHSignature memory signature, Flow memory flow, address tdAddress) private view {
