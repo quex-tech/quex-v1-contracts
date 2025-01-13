@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 import "./TrustDomainStorage.sol";
-import {IP256Verifier} from "../p256_verifier/IP256Verifier.sol";
+import {IP256Verifier} from "../../interfaces/core/IP256Verifier.sol";
 
 library QuoteVerifier {
     error RootCA_Expired();
