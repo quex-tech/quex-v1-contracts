@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 import "./TrustDomainStorage.sol";
-import "./ITrustDomainRegistry.sol";
+import "../../interfaces/core/ITrustDomainRegistry.sol";
 import "./QuoteVerifier.sol";
 
 import "@solidstate/contracts/access/ownable/Ownable.sol";
@@ -116,6 +116,12 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, Ownable {
         layout.tdQuotes[tdAddress] = tdQuote;
         layout.tdToQe[tdAddress] = qeId;
         return tdAddress;
+    }
+
+    function isTDValid(address tdAddress) external view returns (bool) {
+        // todo: check QE/certs validity?
+        // todo: different mapping to reduce read gas cost
+        return TrustDomainStorage.tdLayout().tdQuotes[tdAddress].REPORT_DATA1 != 0;
     }
 
     function getTD(address tdAddress) external view returns (TDQuote memory) {

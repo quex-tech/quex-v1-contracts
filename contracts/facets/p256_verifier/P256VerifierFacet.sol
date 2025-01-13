@@ -2,7 +2,7 @@
 // Force a specific Solidity version for reproducibility.
 pragma solidity 0.8.22;
 
-import "./IP256Verifier.sol";
+import "../../interfaces/core/IP256Verifier.sol";
 
 /**
  * This contract verifies P256 (secp256r1) signatures. It matches the exact
