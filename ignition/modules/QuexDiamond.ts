@@ -32,7 +32,6 @@ const TrustDomainFacetModule = buildModule("TrustDomainFacet", (m) => {
             action: 0,
             selectors: [
                 // add
-                facetInterface.getFunction("addRootKey").selector,
                 facetInterface.getFunction("addPlatformCAKey").selector,
                 facetInterface.getFunction("addPCK").selector,
                 facetInterface.getFunction("addQE").selector,

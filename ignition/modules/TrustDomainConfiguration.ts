@@ -1,13 +1,6 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import QuexDiamondModule from "./QuexDiamond";
 
-export const rootCaKey = {
-    x: BigInt("0x0ba9c4c0c0c86193a3fe23d6b02cda10a8bbd4e88e48b4458561a36e705525f5"),
-    y: BigInt("0x67918e2edc88e40d860bd0cc4ee26aacc988e505a953558c453f6b0904ae7394"),
-    notBefore: "0x3138303532313130343531305a",
-    notAfter: "0x3439313233313233353935395a"
-};
-
 export const platformCaCert = {
     x: BigInt("24030003042588091771170974992323049441734798737906192722609658704857607787826"),
     y: BigInt("106254777459282516381561500528085635876136725707838022931959366032360701572062"),
@@ -90,8 +83,6 @@ export default buildModule("TrustDomainConfiguration", (m) => {
     const quexDiamond = m.useModule(QuexDiamondModule).quexDiamond;
     const trustDomainWrap = m.contractAt("TrustDomainFacet", quexDiamond);
 
-    const addRootKey = m.call(trustDomainWrap, "addRootKey", [rootCaKey]);
-
     const addPlatformCAKey = m.call(trustDomainWrap, "addPlatformCAKey", [
         platformCaCert.x,
         platformCaCert.y,
@@ -100,7 +91,7 @@ export default buildModule("TrustDomainConfiguration", (m) => {
         platformCaCert.extensions,
         platformCaCert.r,
         platformCaCert.s
-    ], {after: [addRootKey]});
+    ]);
 
     const addPCK = m.call(trustDomainWrap, "addPCK", [
         processorPckCert.x,
