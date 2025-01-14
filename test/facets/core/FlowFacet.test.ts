@@ -41,7 +41,7 @@ describe("FlowFacet", () => {
                 consumer: await consumer.getAddress(),
                 gasLimit: 1,
                 pool: await pool.getAddress(),
-            }
+            };
 
             await expect(testObject.createFlow(flow))
                 .not.to.be.reverted;

@@ -16,7 +16,8 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
     event DataPushingFailed(uint256 flowId, address sender);
 
     // request events
-    event RequestFulfilled(uint256 requestId, uint256 flowId, address relayer, bool isSuccessful, uint256 quexFee, uint256 oraclePoolFee, uint256 relayerPremium);
+    event RequestFulfilled(uint256 requestId, uint256 flowId, address relayer);
+    event RequestFulfillingFailed(uint256 requestId, uint256 flowId, address relayer);
 
     function pushData(OracleMessage memory message, ETHSignature memory signature, uint256 flowId, address tdAddress) external payable {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
@@ -98,15 +99,20 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
         (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
 
-        emit RequestFulfilled(
-            requestId,
-            request.flowId,
-            msg.sender,
-            success,
-            request.quexFee,
-            request.oraclePoolFee,
-            request.relayerPremium
-        );
+        if (success) {
+            emit RequestFulfilled(
+                requestId,
+                request.flowId,
+                msg.sender
+            );
+        } else {
+            emit RequestFulfillingFailed(
+                requestId,
+                request.flowId,
+                msg.sender
+            );
+
+        }
     }
 
     function getRequest(uint256 requestId) external view returns (QuexActionStorage.Request memory) {
@@ -139,7 +145,7 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
             revert Action_MismatchIds();
         }
 
-        if (ITrustDomainRegistry(address(this)).isTDValid(tdAddress)) {
+        if (!ITrustDomainRegistry(address(this)).isTDValid(tdAddress)) {
             revert TrustDomain_NotValid();
         }
 
@@ -157,5 +163,9 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
         bytes32 messageHash = keccak256(message);
         bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
         return ecrecover(ethSignedMessageHash, signature.v, signature.r, signature.s) == tdAddress;
+    }
+
+    function transferChange(address payable sender, uint256 amount) private {
+        sender.transfer(amount);
     }
 }

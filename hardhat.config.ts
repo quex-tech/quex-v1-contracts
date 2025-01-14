@@ -1,5 +1,6 @@
 import { HardhatUserConfig, vars } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-foundry";
 import "hardhat-gas-reporter";
 
 const quexPrivateKey = vars.get("QUEX_PRIVATE_KEY")
