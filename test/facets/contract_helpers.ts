@@ -166,7 +166,8 @@ export namespace ContractHelpers {
                         facet.interface.getFunction("getPlatformCAKey").selector,
                         facet.interface.getFunction("getPCK").selector,
                         facet.interface.getFunction("getQE").selector,
-                        facet.interface.getFunction("getTD").selector
+                        facet.interface.getFunction("getTD").selector,
+                        facet.interface.getFunction("isTDValid").selector
                     ]
                 }
             ];

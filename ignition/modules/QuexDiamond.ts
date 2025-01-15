@@ -46,7 +46,8 @@ const TrustDomainFacetModule = buildModule("TrustDomainFacet", (m) => {
                 facetInterface.getFunction("getPlatformCAKey").selector,
                 facetInterface.getFunction("getPCK").selector,
                 facetInterface.getFunction("getQE").selector,
-                facetInterface.getFunction("getTD").selector
+                facetInterface.getFunction("getTD").selector,
+                facetInterface.getFunction("isTDValid").selector
             ]
         }
     ];
