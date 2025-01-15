@@ -3,7 +3,6 @@ pragma solidity 0.8.22;
 
 import "../../interfaces/core/ITrustDomainRegistry.sol";
 import "./TrustDomainStorage.sol";
-import "./TrustDomainModels.sol";
 
 contract TrustDomainFacetInitializer {
     function init() external {

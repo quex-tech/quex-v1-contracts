@@ -164,8 +164,4 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
         bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
         return ecrecover(ethSignedMessageHash, signature.v, signature.r, signature.s) == tdAddress;
     }
-
-    function transferChange(address payable sender, uint256 amount) private {
-        sender.transfer(amount);
-    }
 }
