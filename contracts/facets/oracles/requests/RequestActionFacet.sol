@@ -3,11 +3,11 @@ pragma solidity 0.8.22;
 
 import "../../../interfaces/core/IFlowRegistry.sol";
 import "../../../interfaces/core/IQuexActionRegistry.sol";
-import "../../../interfaces/oracles/IFeedRegistry.sol";
-import "./FeedOracleStorage.sol";
-import "@solidstate/contracts/access/ownable/Ownable.sol";
+import "../../../interfaces/oracles/IRequestOraclePool.sol";
+import "../common/quex_address/IQuexAddressRegistry.sol";
+import "./RequestOracleStorage.sol";
 
-contract FeedActionFacet is IFeedRegistry, Ownable {
+contract RequestActionFacet is IRequestOraclePool {
     error FeedRequestNotFound();
     error FeedPrivatePatchNotFound();
     error FeedJqFilterNotFound();
@@ -17,7 +17,7 @@ contract FeedActionFacet is IFeedRegistry, Ownable {
         require(bytes(request.host).length > 0, "Host is required");
 
         requestId = keccak256(abi.encode(request));
-        FeedOracleStorage.layout().requests[requestId] = request;
+        RequestOracleStorage.layout().requests[requestId] = request;
         emit RequestAdded(requestId);
         return requestId;
     }
@@ -27,7 +27,8 @@ contract FeedActionFacet is IFeedRegistry, Ownable {
             ? bytes32(0)
             : keccak256(abi.encodePacked(tdAddress, abi.encode(privatePatch)));
         if (patchId != 0) {
-            FeedOracleStorage.Layout storage layout = FeedOracleStorage.layout();
+            require(tdAddress != address(0));
+            RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
             layout.privatePatches[patchId] = privatePatch;
             layout.privatePatchTdAddresses[patchId] = tdAddress;
         }
@@ -38,7 +39,7 @@ contract FeedActionFacet is IFeedRegistry, Ownable {
     function addJqFilter(string memory jqFilter) external returns (bytes32 filterId) {
         require(bytes(jqFilter).length > 0, "Filter couldn't be empty");
         filterId = keccak256(bytes(jqFilter));
-        FeedOracleStorage.layout().jqFilters[filterId] = jqFilter;
+        RequestOracleStorage.layout().jqFilters[filterId] = jqFilter;
         emit JqFilterAdded(filterId);
         return filterId;
     }
@@ -46,7 +47,7 @@ contract FeedActionFacet is IFeedRegistry, Ownable {
     function addResponseSchema(string memory responseSchema) external returns (bytes32 schemaId) {
         require(bytes(responseSchema).length > 0, "Schema couldn't be empty");
         schemaId = keccak256(bytes(responseSchema));
-        FeedOracleStorage.layout().resultSchemas[schemaId] = responseSchema;
+        RequestOracleStorage.layout().resultSchemas[schemaId] = responseSchema;
         emit ResultSchemaAdded(schemaId);
         return schemaId;
     }
@@ -60,8 +61,8 @@ contract FeedActionFacet is IFeedRegistry, Ownable {
         bytes4 callback,
         uint256 gasLimit
     ) external returns (uint256 flowId) {
-        FeedOracleStorage.Layout storage layout = FeedOracleStorage.layout();
-        FeedOracleStorage.FeedInternal memory feedInternal = FeedOracleStorage.FeedInternal(requestId, patchId, schemaId, filterId);
+        RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
+        RequestOracleStorage.FeedInternal memory feedInternal = RequestOracleStorage.FeedInternal(requestId, patchId, schemaId, filterId);
 
         Feed memory feed = _getFeed(feedInternal);
         address tdAddress = layout.privatePatchTdAddresses[patchId];
@@ -83,35 +84,30 @@ contract FeedActionFacet is IFeedRegistry, Ownable {
         layout.feeds[feedId] = feedInternal;
         emit FeedAdded(feedId);
 
-        Flow memory flow = Flow(gasLimit, feedId, consumer, address(this), callback);
-        return IFlowRegistry(getQuexAddress()).createFlow(flow);
+        Flow memory flow = Flow(gasLimit, feedId, address(this), consumer, callback);
+        return IFlowRegistry(IQuexAddressRegistry(address(this)).getQuexAddress()).createFlow(flow);
     }
 
-    function getAction(uint256 actionId) external view returns (address tdAddress, bytes memory action) {
-        FeedOracleStorage.Layout storage layout = FeedOracleStorage.layout();
-        FeedOracleStorage.FeedInternal memory feedInternal = layout.feeds[actionId];
+    function getAction(uint256 actionId) external view returns (bytes memory action) {
+        RequestOracleStorage.FeedInternal memory feedInternal = RequestOracleStorage.layout().feeds[actionId];
 
         Feed memory feed = _getFeed(feedInternal);
-        tdAddress = layout.privatePatchTdAddresses[feedInternal.patchId];
-        return (tdAddress, abi.encode(feed));
+        return abi.encode(feed);
+    }
+
+    function getActionTD(uint256 actionId) external view returns (address tdAddress) {
+        RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
+        RequestOracleStorage.FeedInternal memory feedInternal = layout.feeds[actionId];
+
+        return layout.privatePatchTdAddresses[feedInternal.patchId];
     }
 
     function createRequest(uint256 flowId) external returns (uint256 requestId) {
-        return IQuexActionRegistry(getQuexAddress()).createRequest(flowId);
+        return IQuexActionRegistry(IQuexAddressRegistry(address(this)).getQuexAddress()).createRequest(flowId);
     }
 
-    // todo: extract to common facet
-    function setQuexAddress(address quexAddress) external onlyOwner {
-        FeedOracleStorage.layout().quexAddress = quexAddress;
-    }
-
-    // todo: extract to common facet
-    function getQuexAddress() internal view returns (address) {
-        return FeedOracleStorage.layout().quexAddress;
-    }
-
-    function _getFeed(FeedOracleStorage.FeedInternal memory feedInternal) private view returns (Feed memory feed) {
-        FeedOracleStorage.Layout storage layout = FeedOracleStorage.layout();
+    function _getFeed(RequestOracleStorage.FeedInternal memory feedInternal) private view returns (Feed memory feed) {
+        RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
         return Feed(
             layout.requests[feedInternal.requestId],
             layout.privatePatches[feedInternal.patchId],
@@ -121,7 +117,7 @@ contract FeedActionFacet is IFeedRegistry, Ownable {
     }
 
     function _calculateFeedId(Feed memory feed) private pure returns (uint256) {
-        return uint256(keccak256(abi.encode(feed)));
+        return uint256(keccak256(abi.encode(feed.request, feed.patch, feed.schema, feed.filter)));
     }
 
     function _isEmptyPatch(HTTPPrivatePatch memory patch) private pure returns (bool) {

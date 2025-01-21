@@ -5,7 +5,7 @@ import "./TreasuryStorage.sol";
 import "@solidstate/contracts/access/ownable/Ownable.sol";
 
 contract TreasuryFacet is Ownable {
-    function getTreasury(uint256 actionId) external view returns (address) {
+    function getTreasury() external view returns (address) {
         return TreasuryStorage.layout().treasuryAddress;
     }
 

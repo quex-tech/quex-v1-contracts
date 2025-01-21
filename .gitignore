@@ -7,3 +7,4 @@ typechain
 /ignition/deployments/chain-31337
 /ignition/deployments/*/build-info
 /out/
+/cache_forge/

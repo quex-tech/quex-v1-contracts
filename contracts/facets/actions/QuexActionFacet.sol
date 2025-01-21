@@ -7,10 +7,10 @@ import "../../interfaces/core/IQuexMonetary.sol";
 import "../../interfaces/core/IQuexActionRegistry.sol";
 import "./QuexActionStorage.sol";
 
-import "@solidstate/contracts/access/ownable/Ownable.sol";
+import {OwnableInternal} from "@solidstate/contracts/access/ownable/OwnableInternal.sol";
 import {ITrustDomainRegistry} from "../../interfaces/core/ITrustDomainRegistry.sol";
 
-contract QuexActionFacet is IQuexActionRegistry, Ownable {
+contract QuexActionFacet is IQuexActionRegistry, OwnableInternal {
     // push events
     event DataPushed(uint256 flowId, address sender);
     event DataPushingFailed(uint256 flowId, address sender);

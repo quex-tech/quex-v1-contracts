@@ -54,7 +54,7 @@ struct Feed {
     string filter;
 }
 
-interface IFeedRegistry {
+interface IRequestOraclePool {
     event RequestAdded(bytes32 requestId);
     event PrivatePatchAdded(bytes32 patchId);
     event JqFilterAdded(bytes32 filterId);
@@ -79,7 +79,9 @@ interface IFeedRegistry {
         uint256 gasLimit
     ) external returns (uint256 flowId);
 
-    function getAction(uint256 actionId) external view returns (address tdAddress, bytes memory);
+    function getAction(uint256 actionId) external view returns (bytes memory);
 
-    function createRequest(uint256 actionId) external returns (uint256 requestId);
+    function getActionTD(uint256 actionId) external view returns (address tdAddress);
+
+    function createRequest(uint256 flowId) external returns (uint256 requestId);
 }
