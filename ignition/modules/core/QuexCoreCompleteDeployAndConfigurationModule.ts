@@ -1,7 +1,6 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import DeployQuexCoreDiamondModule from "./DeployQuexCoreDiamondModule";
 import AddP256VerifierFacetToQuexCoreModule from "./AddP256VerifierFacetToQuexCoreModule";
-import AddTrustDomainFacetToQuexCoreModule from "./AddTrustDomainFacetToQuexCoreModule";
 import AddFlowFacetToQuexCoreModule from "./AddFlowFacetToQuexCoreModule";
 import AddQuexMonetaryFacetToQuexCoreModule from "./AddQuexMonetaryFacetToQuexCoreModule";
 import AddQuexActionFacetToQuexCoreModule from "./AddQuexActionFacetToQuexCoreModule";

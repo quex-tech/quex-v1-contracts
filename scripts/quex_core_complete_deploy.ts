@@ -18,6 +18,8 @@ async function run() {
     const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
 
     await validate_interfaces(diamond);
+
+    // todo: set quex fee
 }
 
 async function validate_interfaces(diamond: QuexDiamond) {
@@ -29,8 +31,6 @@ async function validate_interfaces(diamond: QuexDiamond) {
 
     const selectors = (await diamond.facets.staticCall())
         .reduce((acc: string[], v) => acc.concat(v.selectors), []);
-
-    console.log(selectors.sort());
 
     IFlowRegistry__factory.createInterface().forEachFunction(x => validate_function(x));
     IP256Verifier__factory.createInterface().forEachFunction(x => validate_function(x));
