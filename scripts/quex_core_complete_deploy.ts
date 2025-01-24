@@ -11,13 +11,19 @@ import {
 import QuexCoreCompleteDeployAndConfigurationModule
     from "../ignition/modules/core/QuexCoreCompleteDeployAndConfigurationModule";
 import { FunctionFragment } from "ethers";
+import QuexDiamondModule from "../ignition/modules/QuexDiamond";
 
 async function run() {
-    const { quexCoreDiamond } = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule);
+    const { quexDiamond } = await ignition.deploy(QuexDiamondModule);
+    const diamond = QuexDiamond__factory.connect(await quexDiamond.getAddress(), quexDiamond.runner);
+    console.log(await diamond.facets.staticCall());
 
-    const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
-
-    await validate_interfaces(diamond);
+    //
+    // const { quexCoreDiamond } = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule);
+    //
+    // const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
+    //
+    // await validate_interfaces(diamond);
 
     // todo: set quex fee
 }

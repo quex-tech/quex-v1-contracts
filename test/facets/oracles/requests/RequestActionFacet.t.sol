@@ -8,7 +8,7 @@ import "forge-std/console.sol";
 import "@solidstate/contracts/interfaces/IERC2535DiamondCutInternal.sol";
 import "@solidstate/contracts/cryptography/ECDSA.sol";
 import {QuexActionFacet} from "../../../../contracts/facets/actions/QuexActionFacet.sol";
-import {QuexDiamond} from "../../../../contracts/QuexDiamond.sol";
+import {QuexDiamond} from "../../../../contracts/diamond/QuexDiamond.sol";
 import {RequestActionFacet} from "../../../../contracts/facets/oracles/requests/RequestActionFacet.sol";
 import {IQuexAddressRegistry} from "../../../../contracts/facets/oracles/common/quex_address/IQuexAddressRegistry.sol";
 import {Flow, IFlowRegistry} from "../../../../contracts/interfaces/core/IFlowRegistry.sol";
@@ -24,6 +24,7 @@ contract RequestActionFacetTest is Test {
 
     function setUp() public virtual {
         diamond = new QuexDiamond();
+        diamond.init();
         RequestActionFacet facet = new RequestActionFacet();
         IERC2535DiamondCutInternal.FacetCut[] memory cuts = new IERC2535DiamondCutInternal.FacetCut[](1);
         bytes4[] memory selectors = new bytes4[](8);

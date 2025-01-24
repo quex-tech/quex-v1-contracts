@@ -6,7 +6,7 @@ import "forge-std/Test.sol";
 import "@solidstate/contracts/interfaces/IERC2535DiamondCutInternal.sol";
 import "@solidstate/contracts/cryptography/ECDSA.sol";
 import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
-import {QuexDiamond} from "../../../contracts/QuexDiamond.sol";
+import {QuexDiamond} from "../../../contracts/diamond/QuexDiamond.sol";
 import {IdType, DataItem, OracleMessage, ETHSignature, IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
 import {IQuexMonetary} from "../../../contracts/interfaces/core/IQuexMonetary.sol";
@@ -31,6 +31,7 @@ abstract contract QuexActionFacetTestBase is Test {
 
     function setUp() public virtual {
         diamond = new QuexDiamond();
+        diamond.init();
         QuexActionFacet t = new QuexActionFacet();
         IERC2535DiamondCutInternal.FacetCut[] memory cuts = new IERC2535DiamondCutInternal.FacetCut[](1);
         bytes4[] memory selectors = new bytes4[](6);
