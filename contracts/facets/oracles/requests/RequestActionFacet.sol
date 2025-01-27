@@ -8,10 +8,12 @@ import "../common/quex_address/IQuexAddressRegistry.sol";
 import "./RequestOracleStorage.sol";
 
 contract RequestActionFacet is IRequestOraclePool {
-    error FeedRequestNotFound();
-    error FeedPrivatePatchNotFound();
-    error FeedJqFilterNotFound();
-    error FeedResponseSchemaNotFound();
+    struct RequestAction {
+        HTTPRequest request;
+        HTTPPrivatePatch patch;
+        string schema;
+        string filter;
+    }
 
     function addRequest(HTTPRequest memory request) external returns (bytes32 requestId) {
         require(bytes(request.host).length > 0, "Host is required");
@@ -62,62 +64,62 @@ contract RequestActionFacet is IRequestOraclePool {
         uint256 gasLimit
     ) external returns (uint256 flowId) {
         RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
-        RequestOracleStorage.FeedInternal memory feedInternal = RequestOracleStorage.FeedInternal(requestId, patchId, schemaId, filterId);
+        RequestOracleStorage.RequestActionInternal memory requestActionInternal = RequestOracleStorage.RequestActionInternal(requestId, patchId, schemaId, filterId);
 
-        Feed memory feed = _getFeed(feedInternal);
+        RequestAction memory requestAction = _getRequestAction(requestActionInternal);
         address tdAddress = layout.privatePatchTdAddresses[patchId];
 
-        if (bytes(feed.request.host).length == 0) {
-            revert FeedRequestNotFound();
+        if (bytes(requestAction.request.host).length == 0) {
+            revert RequestNotFound();
         }
         if (patchId != 0 && tdAddress == address(0)) {
-            revert FeedPrivatePatchNotFound();
+            revert PrivatePatchNotFound();
         }
-        if (bytes(feed.schema).length == 0) {
-            revert FeedResponseSchemaNotFound();
+        if (bytes(requestAction.schema).length == 0) {
+            revert ResponseSchemaNotFound();
         }
-        if (bytes(feed.filter).length == 0) {
-            revert FeedJqFilterNotFound();
+        if (bytes(requestAction.filter).length == 0) {
+            revert JqFilterNotFound();
         }
 
-        uint256 feedId = _calculateFeedId(feed);
-        layout.feeds[feedId] = feedInternal;
-        emit FeedAdded(feedId);
+        uint256 actionId = _calculateActionId(requestAction);
+        layout.requestActions[actionId] = requestActionInternal;
+        emit RequestActionAdded(actionId);
 
-        Flow memory flow = Flow(gasLimit, feedId, address(this), consumer, callback);
+        Flow memory flow = Flow(gasLimit, actionId, address(this), consumer, callback);
         return IFlowRegistry(IQuexAddressRegistry(address(this)).getQuexAddress()).createFlow(flow);
     }
 
     function getAction(uint256 actionId) external view returns (bytes memory action) {
-        RequestOracleStorage.FeedInternal memory feedInternal = RequestOracleStorage.layout().feeds[actionId];
+        RequestOracleStorage.RequestActionInternal memory requestActionInternal = RequestOracleStorage.layout().requestActions[actionId];
 
-        Feed memory feed = _getFeed(feedInternal);
-        return abi.encode(feed);
+        RequestAction memory requestAction = _getRequestAction(requestActionInternal);
+        return abi.encode(requestAction);
     }
 
     function getActionTD(uint256 actionId) external view returns (address tdAddress) {
         RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
-        RequestOracleStorage.FeedInternal memory feedInternal = layout.feeds[actionId];
+        RequestOracleStorage.RequestActionInternal memory requestActionInternal = layout.requestActions[actionId];
 
-        return layout.privatePatchTdAddresses[feedInternal.patchId];
+        return layout.privatePatchTdAddresses[requestActionInternal.patchId];
     }
 
-    function createRequest(uint256 flowId) external returns (uint256 requestId) {
+    function startRequest(uint256 flowId) external returns (uint256 requestRunId) {
         return IQuexActionRegistry(IQuexAddressRegistry(address(this)).getQuexAddress()).createRequest(flowId);
     }
 
-    function _getFeed(RequestOracleStorage.FeedInternal memory feedInternal) private view returns (Feed memory feed) {
+    function _getRequestAction(RequestOracleStorage.RequestActionInternal memory requestActionInternal) private view returns (RequestAction memory requestAction) {
         RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
-        return Feed(
-            layout.requests[feedInternal.requestId],
-            layout.privatePatches[feedInternal.patchId],
-            layout.resultSchemas[feedInternal.schemaId],
-            layout.jqFilters[feedInternal.filterId]
+        return RequestAction(
+            layout.requests[requestActionInternal.requestId],
+            layout.privatePatches[requestActionInternal.patchId],
+            layout.resultSchemas[requestActionInternal.schemaId],
+            layout.jqFilters[requestActionInternal.filterId]
         );
     }
 
-    function _calculateFeedId(Feed memory feed) private pure returns (uint256) {
-        return uint256(keccak256(abi.encode(feed.request, feed.patch, feed.schema, feed.filter)));
+    function _calculateActionId(RequestAction memory requestAction) private pure returns (uint256) {
+        return uint256(keccak256(abi.encode(requestAction.request, requestAction.patch, requestAction.schema, requestAction.filter)));
     }
 
     function _isEmptyPatch(HTTPPrivatePatch memory patch) private pure returns (bool) {

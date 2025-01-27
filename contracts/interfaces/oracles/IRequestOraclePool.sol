@@ -47,19 +47,18 @@ struct HTTPPrivatePatch {
     bytes body;
 }
 
-struct Feed {
-    HTTPRequest request;
-    HTTPPrivatePatch patch;
-    string schema;
-    string filter;
-}
-
 interface IRequestOraclePool {
+    error RequestNotFound();
+    error PrivatePatchNotFound();
+    error JqFilterNotFound();
+    error ResponseSchemaNotFound();
+
     event RequestAdded(bytes32 requestId);
     event PrivatePatchAdded(bytes32 patchId);
     event JqFilterAdded(bytes32 filterId);
     event ResultSchemaAdded(bytes32 schemaId);
-    event FeedAdded(uint256 feedId);
+    
+    event RequestActionAdded(uint256 feedId);
 
     function addRequest(HTTPRequest memory request) external returns (bytes32 requestId);
 
@@ -83,5 +82,5 @@ interface IRequestOraclePool {
 
     function getActionTD(uint256 actionId) external view returns (address tdAddress);
 
-    function createRequest(uint256 flowId) external returns (uint256 requestId);
+    function startRequest(uint256 flowId) external returns (uint256 requestRunId);
 }

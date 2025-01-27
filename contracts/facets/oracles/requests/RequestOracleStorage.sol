@@ -4,7 +4,7 @@ pragma solidity 0.8.22;
 import "../../../interfaces/oracles/IRequestOraclePool.sol";
 
 library RequestOracleStorage {
-    struct FeedInternal {
+    struct RequestActionInternal {
         bytes32 requestId;
         bytes32 patchId;
         bytes32 schemaId;
@@ -17,7 +17,7 @@ library RequestOracleStorage {
         mapping(bytes32 => address) privatePatchTdAddresses;
         mapping(bytes32 => string) jqFilters;
         mapping(bytes32 => string) resultSchemas;
-        mapping(uint256 => FeedInternal) feeds;
+        mapping(uint256 => RequestActionInternal) requestActions;
     }
 
     bytes32 internal constant STORAGE_SLOT = keccak256("quex.pools.request");

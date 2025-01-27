@@ -413,7 +413,6 @@ describe("TrustDomainFacet", () => {
 
         describe("#isTDValid", () => {
             beforeEach(async () => {
-                await ContractHelpers.TrustDomainFacet.addRootKey(diamond, owner);
                 await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
                 await ContractHelpers.TrustDomainFacet.addPCK(diamond);
                 await ContractHelpers.TrustDomainFacet.addQE(diamond);

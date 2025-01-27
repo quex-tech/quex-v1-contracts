@@ -33,7 +33,7 @@ contract RequestActionFacetTest is Test {
         selectors[2] = RequestActionFacet.addPrivatePatch.selector;
         selectors[3] = RequestActionFacet.addRequest.selector;
         selectors[4] = RequestActionFacet.addResponseSchema.selector;
-        selectors[5] = RequestActionFacet.createRequest.selector;
+        selectors[5] = RequestActionFacet.startRequest.selector;
         selectors[6] = RequestActionFacet.getAction.selector;
         selectors[7] = RequestActionFacet.getActionTD.selector;
 
@@ -100,7 +100,7 @@ contract RequestActionFacetTest is Test {
         (bytes32 requestId, bytes32 patchId, bytes32 schemaId, bytes32 filterId) = _createRequestParts(requestSpec);
 
         vm.expectEmit(true, false, false, true);
-        emit IRequestOraclePool.FeedAdded(requestSpec.actionId);
+        emit IRequestOraclePool.RequestActionAdded(requestSpec.actionId);
         testObject.addFlow(
             requestId,
             patchId,
