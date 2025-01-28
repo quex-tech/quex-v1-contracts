@@ -24,10 +24,10 @@ contract QuexActionFacet is IQuexActionRegistry, OwnableInternal, ReentrancyGuar
         OracleMessage memory message,
         ETHSignature memory signature,
         uint256 flowId,
-        address tdAddress
+        uint256 tdId
     ) external payable nonReentrant {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
-        _ensureOracleMessageIsValid(message, signature, flow, tdAddress);
+        _ensureOracleMessageIsValid(message, signature, flow, tdId);
 
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
         uint quexFee = quexMonetary.getQuexFee(flowId);
@@ -90,7 +90,7 @@ contract QuexActionFacet is IQuexActionRegistry, OwnableInternal, ReentrancyGuar
         OracleMessage memory message,
         ETHSignature memory signature,
         uint256 requestId,
-        address tdAddress
+        uint256 tdId
     ) external nonReentrant {
         QuexActionStorage.Layout storage layout = QuexActionStorage.layout();
         QuexActionStorage.Request memory request = layout.requests[requestId];
@@ -100,7 +100,7 @@ contract QuexActionFacet is IQuexActionRegistry, OwnableInternal, ReentrancyGuar
         delete layout.requests[requestId];
 
         Flow memory flow = IFlowRegistry(address(this)).getFlow(request.flowId);
-        _ensureOracleMessageIsValid(message, signature, flow, tdAddress);
+        _ensureOracleMessageIsValid(message, signature, flow, tdId);
 
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
         payable(quexMonetary.getTreasury()).transfer(request.quexFee);
@@ -142,7 +142,7 @@ contract QuexActionFacet is IQuexActionRegistry, OwnableInternal, ReentrancyGuar
         OracleMessage memory message,
         ETHSignature memory signature,
         Flow memory flow,
-        address tdAddress
+        uint256 tdId
     ) private view {
         if (flow.pool == address(0)) {
             revert Flow_NotFound();
@@ -152,14 +152,15 @@ contract QuexActionFacet is IQuexActionRegistry, OwnableInternal, ReentrancyGuar
             revert Action_MismatchIds();
         }
 
-        if (!ITrustDomainRegistry(address(this)).isTDValid(tdAddress)) {
+        if (!ITrustDomainRegistry(address(this)).isTDValid(tdId)) {
             revert TrustDomain_NotValid();
         }
 
-        if (!IOraclePool(address(flow.pool)).isInPool(tdAddress)) {
+        if (!IOraclePool(address(flow.pool)).isInPool(tdId)) {
             revert TrustDomain_IsNotAllowedInOraclePool();
         }
 
+        address tdAddress = ITrustDomainRegistry(address(this)).getTDSignerAddress(tdId);
         if (!_isSignatureValid(message, signature, tdAddress)) {
             revert OracleMessage_SignatureIsInvalid();
         }

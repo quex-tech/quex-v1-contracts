@@ -276,19 +276,9 @@ describe("TrustDomainFacet", () => {
 
         it("assign expected address", async () => {
             const expectedAddress = ContractHelpers.TrustDomainFacet.TestData.tdAddress;
-            await testObject
-                .connect(nonOwner)
-                .addTD(
-                    tdQuote,
-                    1,
-                    attestationKey.x,
-                    attestationKey.y,
-                    qeAuthenticationData,
-                    quoteSignature.r,
-                    quoteSignature.s
-                );
+            const tdId = await ContractHelpers.TrustDomainFacet.addTD(diamond);
 
-            expect((await testObject.getTD(expectedAddress)).TEE_TCB_SVN).not.to.be.eq("0x00000000000000000000000000000000");
+            expect((await testObject.getTDSignerAddress(tdId))).to.be.eq(expectedAddress);
         })
 
         describe("reverts if", () => {
@@ -420,14 +410,15 @@ describe("TrustDomainFacet", () => {
             });
     
             it("returns true if TD is registered", async () => {
-                await ContractHelpers.TrustDomainFacet.addTD(diamond);
+                const tdId = await ContractHelpers.TrustDomainFacet.addTD(diamond);
 
-                expect(await testObject.isTDValid(ContractHelpers.TrustDomainFacet.TestData.tdAddress))
+                expect(await testObject.isTDValid(tdId))
                     .to.be.true;
             });
     
             it("returns false if TD is not registered", async () => {
-                expect(await testObject.isTDValid(ContractHelpers.TrustDomainFacet.TestData.tdAddress))
+                const tdId = 123
+                expect(await testObject.isTDValid(tdId))
                     .to.be.false;
             });
         });

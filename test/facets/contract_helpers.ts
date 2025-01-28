@@ -9,6 +9,7 @@ import {
 } from "../../typechain";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { TDQuoteStruct } from "../../typechain/contracts/facets/trust_domain/TrustDomainFacet";
+import { EventLog } from "ethers";
 
 export namespace ContractHelpers {
     export namespace P256VerifierFacet {
@@ -118,6 +119,7 @@ export namespace ContractHelpers {
             };
 
             export const tdAddress = "0xCa614CD12D3b9515610C4d8b901De4b5641Be508";
+            export const tdId = 1n;
         }
 
         export async function createAndAddToDiamond(diamond: QuexDiamond, deployer: HardhatEthersSigner) {
@@ -149,7 +151,8 @@ export namespace ContractHelpers {
                         facet.interface.getFunction("getPCK").selector,
                         facet.interface.getFunction("getQE").selector,
                         facet.interface.getFunction("getTD").selector,
-                        facet.interface.getFunction("isTDValid").selector
+                        facet.interface.getFunction("isTDValid").selector,
+                        facet.interface.getFunction("getTDSignerAddress").selector,
                     ]
                 }
             ];
@@ -203,7 +206,7 @@ export namespace ContractHelpers {
 
         export async function addTD(diamond: QuexDiamond) {
             const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
-            await tdRegistry
+            const tx = await tdRegistry
                 .addTD(
                     TestData.tdQuote,
                     1,
@@ -213,6 +216,8 @@ export namespace ContractHelpers {
                     TestData.quoteSignature.r,
                     TestData.quoteSignature.s
                 );
+            const txReceipt = await tx.wait();
+            return (<EventLog>txReceipt?.logs[0]).args[0];
         }
 
         export async function configureFully(diamond: QuexDiamond) {

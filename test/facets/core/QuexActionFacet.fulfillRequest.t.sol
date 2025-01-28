@@ -28,7 +28,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
             1
         );
 
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
     }
 
     function test_TransfersTokensToQuex() public {
@@ -41,7 +41,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
 
         uint256 initialBalance = quexTreasury.balance;
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
         assertEq(quexTreasury.balance, initialBalance + quexFee);
     }
@@ -56,7 +56,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         _mockRevertedCallback(requestId, message.dataItem, IdType.RequestId);
 
         uint256 initialBalance = quexTreasury.balance;
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
         assertEq(quexTreasury.balance, initialBalance + quexFee);
     }
@@ -71,7 +71,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
 
         uint256 initialBalance = oraclePoolTreasury.balance;
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
         assertEq(oraclePoolTreasury.balance, initialBalance + oraclePoolFee);
     }
@@ -86,7 +86,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         _mockRevertedCallback(requestId, message.dataItem, IdType.RequestId);
 
         uint256 initialBalance = oraclePoolTreasury.balance;
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
         assertEq(oraclePoolTreasury.balance, initialBalance + oraclePoolFee);
     }
@@ -103,7 +103,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         (, uint256 gasFee) = testObject.getRequestFee(flowId);
 
         uint256 initialBalance = address(this).balance;
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
         assertEq(address(this).balance, initialBalance + gasFee * tx.gasprice);
     }
@@ -120,7 +120,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         (, uint256 gasFee) = testObject.getRequestFee(flowId);
 
         uint256 initialBalance = address(this).balance;
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
         assertEq(address(this).balance, initialBalance + gasFee * tx.gasprice);
     }
@@ -135,7 +135,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
 
         vm.expectEmit(true, false, false, true);
         emit QuexActionFacet.RequestFulfilled(requestId, flowId, address(this));
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
     }
 
     function test_EmitsRequestFulfillingFailedEventIf_CallbackIsFailed() public {
@@ -148,7 +148,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
 
         vm.expectEmit(true, false, false, true);
         emit QuexActionFacet.RequestFulfillingFailed(requestId, flowId, address(this));
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);}
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);}
 
     function test_RevertsIf_RequestNotFound() public {
         uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
@@ -158,7 +158,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectRevert(IQuexActionRegistry.Request_NotFound.selector);
-        testObject.fulfillRequest(message, signature, requestId + 1, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId + 1, td.tdId);
     }
 
     function test_RevertsIf_ActionIdsMismatched() public {
@@ -169,7 +169,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectRevert(IQuexActionRegistry.Action_MismatchIds.selector);
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
     }
 
     function test_RevertsIf_TrustDomainIsNotValid() public {
@@ -180,7 +180,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectRevert(IQuexActionRegistry.TrustDomain_NotValid.selector);
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
     }
 
     function test_RevertsIf_TrustDomainIsNotInOraclePool() public {
@@ -191,7 +191,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectRevert(IQuexActionRegistry.TrustDomain_IsNotAllowedInOraclePool.selector);
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
     }
 
     function test_RevertsIf_SignatureIsInvalid() public {
@@ -203,7 +203,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         ETHSignature memory signature = _signOracleMessage(message, signerTD);
 
         vm.expectRevert(IQuexActionRegistry.OracleMessage_SignatureIsInvalid.selector);
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
     }
 
     function test_RevertsIf_CallbackReenter() public {
@@ -228,7 +228,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         vm.expectEmit(true, false, false, true);
         emit QuexActionFacet.RequestFulfillingFailed(requestId, flowId, address(this));
 
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
     }
 
     function callback_Reenter(uint256 requestId, DataItem memory dataItem, IdType /* idType */) public {
@@ -238,7 +238,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         OracleMessage memory message = OracleMessage(actionId, dataItem);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
-        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
     }
 
     function _getMinimumRequestPrice(uint256 flowId) private view returns (uint256) {
