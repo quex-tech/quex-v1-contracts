@@ -4,9 +4,9 @@ pragma solidity 0.8.22;
 import "../../interfaces/core/IQuexMonetary.sol";
 import "./QuexMonetaryStorage.sol";
 
-import "@solidstate/contracts/access/ownable/Ownable.sol";
+import "@solidstate/contracts/access/ownable/OwnableInternal.sol";
 
-contract QuexMonetaryFacet is IQuexMonetary, Ownable {
+contract QuexMonetaryFacet is IQuexMonetary, OwnableInternal {
     function getQuexFee(uint256 /* flowId */) external view returns (uint256) {
         return QuexMonetaryStorage.layout().constantQuexFee;
     }
