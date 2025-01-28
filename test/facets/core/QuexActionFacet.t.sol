@@ -62,13 +62,13 @@ abstract contract QuexActionFacetTestBase is Test {
 
         vm.mockCall(
             address(diamond),
-            abi.encodeWithSelector(IQuexMonetary.getQuexFee.selector, flowId),
+            abi.encodeWithSelector(IQuexMonetary.getQuexFee.selector),
             abi.encode(quexFee)
         );
 
         vm.mockCall(
             oraclePoolAddress,
-            abi.encodeWithSelector(IOraclePool.getActionFee.selector, actionId),
+            abi.encodeWithSelector(IOraclePool.getActionFee.selector),
             abi.encode(oraclePoolFee)
         );
 
