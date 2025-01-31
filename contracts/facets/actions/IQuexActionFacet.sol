@@ -1,0 +1,10 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.22;
+
+import "../../interfaces/core/IQuexActionRegistry.sol";
+
+interface IQuexActionFacet is IQuexActionRegistry {
+    function getQuexGas() external view returns (uint256);
+
+    function setQuexGas(uint256 quexGas) external;
+}

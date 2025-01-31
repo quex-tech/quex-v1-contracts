@@ -4,16 +4,24 @@ pragma solidity 0.8.22;
 import "./TrustDomainPolicyStorage.sol";
 import "@solidstate/contracts/access/ownable/OwnableInternal.sol";
 
-contract TrustDomainPolicyFacet is OwnableInternal {
-    function isInPool(address tdAddress) external view returns (bool) {
-        return TrustDomainPolicyStorage.layout().allowedTDs[tdAddress] == 1;
+interface ITrustDomainPolicyFacet {
+    function isInPool(uint256 tdId) external view returns (bool);
+
+    function addToPoll(uint256 tdId) external;
+
+    function removeFromPool(uint256 tdId) external;
+}
+
+contract TrustDomainPolicyFacet is ITrustDomainPolicyFacet, OwnableInternal {
+    function isInPool(uint256 tdId) external view returns (bool) {
+        return TrustDomainPolicyStorage.layout().allowedTDs[tdId] == 1;
     }
 
-    function addToPoll(address tdAddress) external onlyOwner {
-        TrustDomainPolicyStorage.layout().allowedTDs[tdAddress] = 1;
+    function addToPoll(uint256 tdId) external onlyOwner {
+        TrustDomainPolicyStorage.layout().allowedTDs[tdId] = 1;
     }
 
-    function removeFromPool(address tdAddress) external onlyOwner {
-        TrustDomainPolicyStorage.layout().allowedTDs[tdAddress] = 0;
+    function removeFromPool(uint256 tdId) external onlyOwner {
+        TrustDomainPolicyStorage.layout().allowedTDs[tdId] = 0;
     }
 }

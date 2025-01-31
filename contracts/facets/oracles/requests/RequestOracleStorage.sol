@@ -14,7 +14,7 @@ library RequestOracleStorage {
     struct Layout {
         mapping(bytes32 => HTTPRequest) requests;
         mapping(bytes32 => HTTPPrivatePatch) privatePatches;
-        mapping(bytes32 => address) privatePatchTdAddresses;
+        mapping(bytes32 => uint256) privatePatchTdId;
         mapping(bytes32 => string) jqFilters;
         mapping(bytes32 => string) resultSchemas;
         mapping(uint256 => RequestActionInternal) requestActions;

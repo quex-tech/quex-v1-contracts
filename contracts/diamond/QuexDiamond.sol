@@ -20,8 +20,7 @@ contract QuexDiamond is
     DiamondReadable,
     DiamondWritable,
     SafeOwnable,
-    Initializable,
-    ReentrancyGuard
+    Initializable
 {
     function init() external initializer {
         bytes4[] memory selectors = new bytes4[](11);

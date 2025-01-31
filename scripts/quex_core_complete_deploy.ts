@@ -6,43 +6,55 @@ import {
     IQuexMonetary__factory,
     ITrustDomainRegistry__factory,
     QuexDiamond,
-    QuexDiamond__factory
+    QuexDiamond__factory,
+    IQuexMonetaryFacet__factory,
+    IQuexActionFacet__factory
 } from "../typechain";
-import QuexCoreCompleteDeployAndConfigurationModule
-    from "../ignition/modules/core/QuexCoreCompleteDeployAndConfigurationModule";
+import QuexCoreCompleteDeployAndConfigurationModule from "../ignition/modules/core/QuexCoreCompleteDeployAndConfigurationModule";
 import { FunctionFragment } from "ethers";
-import QuexDiamondModule from "../ignition/modules/QuexDiamond";
+
+import env from "hardhat";
+import { quexConfig, QuexNetworkConfig, QuexCoreNetworkConfig } from "./quex_config";
 
 async function run() {
-    const { quexDiamond } = await ignition.deploy(QuexDiamondModule);
-    const diamond = QuexDiamond__factory.connect(await quexDiamond.getAddress(), quexDiamond.runner);
-    console.log(await diamond.facets.staticCall());
+    const quexNetworkConfig: QuexNetworkConfig = quexConfig[env.network.name];
 
-    //
-    // const { quexCoreDiamond } = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule);
-    //
-    // const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
-    //
-    // await validate_interfaces(diamond);
+    const { quexCoreDiamond } = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule);
 
-    // todo: set quex fee
+    const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
+
+    await validate_interfaces(diamond);
+    await set_config_values(diamond, quexNetworkConfig.core);
 }
 
 async function validate_interfaces(diamond: QuexDiamond) {
     function validate_function(func: FunctionFragment) {
-        if (selectors.includes(func.selector))
-            return;
+        if (selectors.includes(func.selector)) return;
         console.error(`Function ${func.name} (selector ${func.selector}) is not registered in QuexCore`);
     }
 
-    const selectors = (await diamond.facets.staticCall())
-        .reduce((acc: string[], v) => acc.concat(v.selectors), []);
+    const selectors = (await diamond.facets.staticCall()).reduce((acc: string[], v) => acc.concat(v.selectors), []);
 
-    IFlowRegistry__factory.createInterface().forEachFunction(x => validate_function(x));
-    IP256Verifier__factory.createInterface().forEachFunction(x => validate_function(x));
-    IQuexActionRegistry__factory.createInterface().forEachFunction(x => validate_function(x));
-    IQuexMonetary__factory.createInterface().forEachFunction(x => validate_function(x));
-    ITrustDomainRegistry__factory.createInterface().forEachFunction(x => validate_function(x));
+    IFlowRegistry__factory.createInterface().forEachFunction((x) => validate_function(x));
+    IP256Verifier__factory.createInterface().forEachFunction((x) => validate_function(x));
+    IQuexActionRegistry__factory.createInterface().forEachFunction((x) => validate_function(x));
+    IQuexMonetary__factory.createInterface().forEachFunction((x) => validate_function(x));
+    ITrustDomainRegistry__factory.createInterface().forEachFunction((x) => validate_function(x));
+}
+
+async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
+    const quexMonetary = IQuexMonetaryFacet__factory.connect(await diamond.getAddress(), diamond.runner);
+    if ((await quexMonetary.getQuexFee(1)) != config.quexFee) {
+        await quexMonetary.setQuexFee(config.quexFee);
+    }
+    if ((await quexMonetary.getTreasury()) != config.treasuryAddress) {
+        await quexMonetary.setTreasury(config.treasuryAddress);
+    }
+
+    const quexActions = IQuexActionFacet__factory.connect(await diamond.getAddress(), diamond.runner);
+    if (await quexActions.getQuexGas() != config.quexFulfillingGasCost) {
+        await quexActions.setQuexGas(config.quexFulfillingGasCost);
+    }
 }
 
 run().catch(console.error);

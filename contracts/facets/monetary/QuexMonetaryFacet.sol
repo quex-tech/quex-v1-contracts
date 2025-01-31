@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "../../interfaces/core/IQuexMonetary.sol";
+import "./IQuexMonetaryFacet.sol";
 import "./QuexMonetaryStorage.sol";
 
 import "@solidstate/contracts/access/ownable/OwnableInternal.sol";

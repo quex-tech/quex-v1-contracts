@@ -4,14 +4,14 @@ pragma solidity 0.8.22;
 import "../../interfaces/core/IFlowRegistry.sol";
 import "../../interfaces/core/IOraclePool.sol";
 import "../../interfaces/core/IQuexMonetary.sol";
-import "../../interfaces/core/IQuexActionRegistry.sol";
+import "./IQuexActionFacet.sol";
 import "./QuexActionStorage.sol";
 
 import {OwnableInternal} from "@solidstate/contracts/access/ownable/OwnableInternal.sol";
 import {ReentrancyGuard} from "@solidstate/contracts/security/reentrancy_guard/ReentrancyGuard.sol";
 import {ITrustDomainRegistry} from "../../interfaces/core/ITrustDomainRegistry.sol";
 
-contract QuexActionFacet is IQuexActionRegistry, OwnableInternal, ReentrancyGuard {
+contract QuexActionFacet is IQuexActionFacet, OwnableInternal, ReentrancyGuard {
     // push events
     event DataPushed(uint256 flowId, address sender);
     event DataPushingFailed(uint256 flowId, address sender);

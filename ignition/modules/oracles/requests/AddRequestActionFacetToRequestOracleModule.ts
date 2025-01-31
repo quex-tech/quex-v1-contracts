@@ -19,7 +19,7 @@ const AddRequestActionFacetToRequestOracleModule = buildModule("AddRequestAction
                 facetInterface.getFunction("addPrivatePatch").selector,
                 facetInterface.getFunction("addResponseSchema").selector,
                 facetInterface.getFunction("addJqFilter").selector,
-                facetInterface.getFunction("createRequest").selector,
+                facetInterface.getFunction("startRequest").selector,
                 facetInterface.getFunction("getAction").selector,
                 facetInterface.getFunction("getActionTD").selector,
             ]

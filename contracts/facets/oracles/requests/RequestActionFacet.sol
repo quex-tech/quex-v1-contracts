@@ -24,15 +24,15 @@ contract RequestActionFacet is IRequestOraclePool {
         return requestId;
     }
 
-    function addPrivatePatch(address tdAddress, HTTPPrivatePatch memory privatePatch) external returns (bytes32 patchId) {
+    function addPrivatePatch(uint256 tdId, HTTPPrivatePatch memory privatePatch) external returns (bytes32 patchId) {
         patchId = _isEmptyPatch(privatePatch)
             ? bytes32(0)
-            : keccak256(abi.encodePacked(tdAddress, abi.encode(privatePatch)));
+            : keccak256(abi.encodePacked(tdId, abi.encode(privatePatch)));
         if (patchId != 0) {
-            require(tdAddress != address(0));
+            require(tdId != 0);
             RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
             layout.privatePatches[patchId] = privatePatch;
-            layout.privatePatchTdAddresses[patchId] = tdAddress;
+            layout.privatePatchTdId[patchId] = tdId;
         }
         emit PrivatePatchAdded(patchId);
         return patchId;
@@ -67,12 +67,12 @@ contract RequestActionFacet is IRequestOraclePool {
         RequestOracleStorage.RequestActionInternal memory requestActionInternal = RequestOracleStorage.RequestActionInternal(requestId, patchId, schemaId, filterId);
 
         RequestAction memory requestAction = _getRequestAction(requestActionInternal);
-        address tdAddress = layout.privatePatchTdAddresses[patchId];
+        uint256 tdId = layout.privatePatchTdId[patchId];
 
         if (bytes(requestAction.request.host).length == 0) {
             revert RequestNotFound();
         }
-        if (patchId != 0 && tdAddress == address(0)) {
+        if (patchId != 0 && tdId == 0) {
             revert PrivatePatchNotFound();
         }
         if (bytes(requestAction.schema).length == 0) {
@@ -97,15 +97,15 @@ contract RequestActionFacet is IRequestOraclePool {
         return abi.encode(requestAction);
     }
 
-    function getActionTD(uint256 actionId) external view returns (address tdAddress) {
+    function getActionTD(uint256 actionId) external view returns (uint256 tdId) {
         RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
         RequestOracleStorage.RequestActionInternal memory requestActionInternal = layout.requestActions[actionId];
 
-        return layout.privatePatchTdAddresses[requestActionInternal.patchId];
+        return layout.privatePatchTdId[requestActionInternal.patchId];
     }
 
-    function startRequest(uint256 flowId) external returns (uint256 requestRunId) {
-        return IQuexActionRegistry(IQuexAddressRegistry(address(this)).getQuexAddress()).createRequest(flowId);
+    function startRequest(uint256 flowId) external payable returns (uint256 requestRunId) {
+        return IQuexActionRegistry(IQuexAddressRegistry(address(this)).getQuexAddress()).createRequest{value:msg.value}(flowId);
     }
 
     function _getRequestAction(RequestOracleStorage.RequestActionInternal memory requestActionInternal) private view returns (RequestAction memory requestAction) {
@@ -119,7 +119,7 @@ contract RequestActionFacet is IRequestOraclePool {
     }
 
     function _calculateActionId(RequestAction memory requestAction) private pure returns (uint256) {
-        return uint256(keccak256(abi.encode(requestAction.request, requestAction.patch, requestAction.schema, requestAction.filter)));
+        return uint256(keccak256(abi.encode(requestAction)));
     }
 
     function _isEmptyPatch(HTTPPrivatePatch memory patch) private pure returns (bool) {

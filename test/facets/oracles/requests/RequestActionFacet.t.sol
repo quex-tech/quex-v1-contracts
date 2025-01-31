@@ -19,7 +19,7 @@ contract RequestActionFacetTest is Test {
     IRequestOraclePool internal testObject;
 
     address internal quexCoreAddress = vm.createWallet("quexCore").addr;
-    address patchTDAddress = address(100);
+    uint256 patchTDId = 100;
     uint256 createdFlowId = 12345;
 
     function setUp() public virtual {
@@ -113,13 +113,13 @@ contract RequestActionFacetTest is Test {
         );
     }
 
-    function testFuzz_addPrivatePatch_RevertsIf_ZeroTDAddress(
+    function testFuzz_addPrivatePatch_RevertsIf_ZeroTDId(
         FuzzTestCase memory testCase,
         PatchFuzzTestCase memory patchTestCase
     ) public {
         RequestSpec memory requestSpec = _createRequestSpec(testCase, patchTestCase, true);
         vm.expectRevert();
-        testObject.addPrivatePatch(address(0), requestSpec.patch);
+        testObject.addPrivatePatch(0, requestSpec.patch);
     }
 
     function test_addRequest_RevertsIf_HostIsEmpty() public {
@@ -145,7 +145,7 @@ contract RequestActionFacetTest is Test {
         testObject.addResponseSchema("");
     }
 
-    function testFuzz_getActionTD_ReturnsTDAddress_IfPatchExist_OtherwiseZeroAddress(
+    function testFuzz_getActionTD_ReturnsTDAddress_IfPatchExist_OtherwiseZeroId(
         FuzzTestCase memory testCase,
         PatchFuzzTestCase memory patchTestCase,
         CallbackSpec memory callbackSpec,
@@ -164,7 +164,7 @@ contract RequestActionFacetTest is Test {
             callbackSpec.gasLimit
         );
 
-        vm.assertEq(testObject.getActionTD(requestSpec.actionId), withPatch ? patchTDAddress : address(0));
+        vm.assertEq(testObject.getActionTD(requestSpec.actionId), withPatch ? patchTDId : 0);
     }
 
     struct FuzzTestCase {
@@ -202,8 +202,15 @@ contract RequestActionFacetTest is Test {
         HTTPPrivatePatch patch;
         string schema;
         string filter;
-        address tdAddress;
+        uint256 tdId;
         uint256 actionId;
+    }
+
+    struct RequestAction {
+        HTTPRequest request;
+        HTTPPrivatePatch patch;
+        string schema;
+        string filter;
     }
 
     function _createRequestSpec(
@@ -256,7 +263,7 @@ contract RequestActionFacetTest is Test {
             patch = HTTPPrivatePatch(patchTestCase.pathSuffix, patchHeaders, patchParameters, patchTestCase.body);
         }
 
-        uint256 actionId = uint256(keccak256(abi.encode(request, patch, testCase.schema, testCase.filter)));
+        uint256 actionId = uint256(keccak256(abi.encode(RequestAction(request, patch, testCase.schema, testCase.filter))));
 
         return
             RequestSpec(
@@ -264,7 +271,7 @@ contract RequestActionFacetTest is Test {
                 patch,
                 testCase.schema,
                 testCase.filter,
-                patchTDAddress,
+                patchTDId,
                 actionId
             );
     }
@@ -273,7 +280,7 @@ contract RequestActionFacetTest is Test {
         RequestSpec memory requestSpec
     ) private returns (bytes32 requestId, bytes32 patchId, bytes32 schemaId, bytes32 filterId) {
         requestId = testObject.addRequest(requestSpec.request);
-        patchId = testObject.addPrivatePatch(requestSpec.tdAddress, requestSpec.patch);
+        patchId = testObject.addPrivatePatch(requestSpec.tdId, requestSpec.patch);
         schemaId = testObject.addResponseSchema(requestSpec.schema);
         filterId = testObject.addJqFilter(requestSpec.filter);
         return (requestId, patchId, schemaId, filterId);
