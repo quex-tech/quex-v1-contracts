@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
+import "../../../../QuexRoles.sol";
 import "./ConstantPriceMonetaryStorage.sol";
-import "@solidstate/contracts/access/ownable/OwnableInternal.sol";
+import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 
 interface IConstantPriceMonetaryFacet {
     function getActionFee(uint256 actionId) external view returns (uint256);
     function setActionFee(uint256 fee) external;
 }
 
-contract ConstantPriceMonetaryFacet is IConstantPriceMonetaryFacet, OwnableInternal {
+contract ConstantPriceMonetaryFacet is IConstantPriceMonetaryFacet, AccessControlInternal {
     function getActionFee(uint256 /* actionId */) external view returns (uint256) {
         return ConstantPriceMonetaryStorage.layout().actionFee;
     }
 
-    function setActionFee(uint256 fee) external onlyOwner {
+    function setActionFee(uint256 fee) external onlyRole(QuexRoles.Manager) {
         ConstantPriceMonetaryStorage.layout().actionFee = fee;
     }
 }

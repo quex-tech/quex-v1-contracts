@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
+import "../../../../QuexRoles.sol";
 import "./QuexAddressStorage.sol";
-import "@solidstate/contracts/access/ownable/OwnableInternal.sol";
+import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 
 interface IQuexAddressFacet {
     function setQuexAddress(address quexAddress) external;
@@ -10,8 +11,8 @@ interface IQuexAddressFacet {
     function getQuexAddress() external view returns (address);
 }
 
-contract QuexAddressFacet is OwnableInternal {
-    function setQuexAddress(address quexAddress) external onlyOwner {
+contract QuexAddressFacet is AccessControlInternal {
+    function setQuexAddress(address quexAddress) external onlyRole(QuexRoles.Manager) {
         QuexAddressStorage.layout().quexAddress = quexAddress;
     }
 

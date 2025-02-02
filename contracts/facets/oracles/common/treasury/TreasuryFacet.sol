@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
+import "../../../../QuexRoles.sol";
 import "./TreasuryStorage.sol";
-import "@solidstate/contracts/access/ownable/OwnableInternal.sol";
+import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 
 interface ITreasuryFacet {
     function getTreasury() external view returns (address);
@@ -10,12 +11,12 @@ interface ITreasuryFacet {
     function setTreasury(address treasuryAddress) external;
 }
 
-contract TreasuryFacet is ITreasuryFacet, OwnableInternal {
+contract TreasuryFacet is ITreasuryFacet, AccessControlInternal {
     function getTreasury() external view returns (address) {
         return TreasuryStorage.layout().treasuryAddress;
     }
 
-    function setTreasury(address treasuryAddress) external onlyOwner {
+    function setTreasury(address treasuryAddress) external onlyRole(QuexRoles.Manager) {
         TreasuryStorage.layout().treasuryAddress = treasuryAddress;
     }
 }

@@ -11,6 +11,7 @@ import {DiamondReadable} from "@solidstate/contracts/proxy/diamond/readable/Diam
 
 import {DiamondWritable} from "./DiamondWritable.sol";
 
+import {AccessControl} from "@solidstate/contracts/access/access_control/AccessControl.sol";
 import {Initializable} from "@solidstate/contracts/security/initializable/Initializable.sol";
 import {ReentrancyGuard} from "@solidstate/contracts/security/reentrancy_guard/ReentrancyGuard.sol";
 
@@ -20,7 +21,8 @@ contract QuexDiamond is
     DiamondReadable,
     DiamondWritable,
     SafeOwnable,
-    Initializable
+    Initializable,
+    AccessControl
 {
     function init() external initializer {
         bytes4[] memory selectors = new bytes4[](11);
@@ -78,5 +80,12 @@ contract QuexDiamond is
         returns (address implementation)
     {
         implementation = super._getImplementation();
+    }
+
+    function createRole(bytes32 roleId, bytes32 roleAdminId, address roleAdmin) external onlyOwner {
+        require(_getRoleAdmin(roleId) == 0x0);
+        require(_getRoleMemberCount(roleAdminId) == 0);
+        _grantRole(roleAdminId, roleAdmin);
+        _setRoleAdmin(roleId, roleAdminId);
     }
 }

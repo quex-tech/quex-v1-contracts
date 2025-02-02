@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
+import "../../QuexRoles.sol";
 import "../../interfaces/core/IFlowRegistry.sol";
 import "../../interfaces/core/IOraclePool.sol";
 import "../../interfaces/core/IQuexMonetary.sol";
 import "./IQuexActionFacet.sol";
 import "./QuexActionStorage.sol";
 
-import {OwnableInternal} from "@solidstate/contracts/access/ownable/OwnableInternal.sol";
+import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 import {ReentrancyGuard} from "@solidstate/contracts/security/reentrancy_guard/ReentrancyGuard.sol";
 import {ITrustDomainRegistry} from "../../interfaces/core/ITrustDomainRegistry.sol";
 
-contract QuexActionFacet is IQuexActionFacet, OwnableInternal, ReentrancyGuard {
+contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyGuard {
     // push events
     event DataPushed(uint256 flowId, address sender);
     event DataPushingFailed(uint256 flowId, address sender);
@@ -125,7 +126,7 @@ contract QuexActionFacet is IQuexActionFacet, OwnableInternal, ReentrancyGuard {
         return QuexActionStorage.layout().quexFulfillingGasCost;
     }
 
-    function setQuexGas(uint256 quexGas) external onlyOwner {
+    function setQuexGas(uint256 quexGas) external onlyRole(QuexRoles.Manager) {
         QuexActionStorage.layout().quexFulfillingGasCost = quexGas;
     }
 
