@@ -105,7 +105,13 @@ contract RequestActionFacet is IRequestOraclePool {
     }
 
     function startRequest(uint256 flowId) external payable returns (uint256 requestRunId) {
-        return IQuexActionRegistry(IQuexAddressRegistry(address(this)).getQuexAddress()).createRequest{value:msg.value}(flowId);
+        IQuexActionRegistry quexActionRegistry = IQuexActionRegistry(IQuexAddressRegistry(address(this)).getQuexAddress());
+        (uint256 nativeFee, uint256 gasFee) = quexActionRegistry.getRequestFee(flowId);
+        uint256 totalNativeFee = nativeFee + gasFee * tx.gasprice;
+        if (msg.value > totalNativeFee) {
+            payable(msg.sender).transfer(msg.value - totalNativeFee);
+        }
+        return IQuexActionRegistry(IQuexAddressRegistry(address(this)).getQuexAddress()).createRequest{value:totalNativeFee}(flowId);
     }
 
     function _getRequestAction(RequestOracleStorage.RequestActionInternal memory requestActionInternal) private view returns (RequestAction memory requestAction) {
