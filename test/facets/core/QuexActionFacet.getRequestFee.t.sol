@@ -32,6 +32,7 @@ contract QuexActionFacet_getRequestFee is QuexActionFacetTestBase {
             abi.encode(poolFee)
         );
 
+        vm.prank(manager.addr);
         (bool success, ) = address(diamond).call(abi.encodeWithSelector(QuexActionFacet.setQuexGas.selector, quexGas));
         assert(success);
 

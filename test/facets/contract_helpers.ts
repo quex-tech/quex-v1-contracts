@@ -12,6 +12,11 @@ import { TDQuoteStruct } from "../../typechain/contracts/facets/trust_domain/Tru
 import { EventLog } from "ethers";
 
 export namespace ContractHelpers {
+    export namespace QuexRoles {
+        export const Manager = "0xc8935964ff9a146a753e867ea3890f562b75604c6d6883305d776151177a5a74";
+        export const ManagerAdmin = "0x022a473c59122cd9fd402a419eab4b7f67a55c9f8c5f6a76193742a43bc8db48";
+    }
+
     export namespace P256VerifierFacet {
         export async function createAndAddToDiamond(diamond: QuexDiamond, deployer: HardhatEthersSigner) {
             const facet = await new P256VerifierFacet__factory(deployer).deploy();

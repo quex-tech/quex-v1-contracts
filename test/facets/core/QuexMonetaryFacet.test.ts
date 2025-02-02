@@ -1,13 +1,15 @@
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
-import { QuexMonetaryFacet, QuexMonetaryFacet__factory } from "../../../typechain";
+import { QuexDiamond__factory, QuexMonetaryFacet, QuexMonetaryFacet__factory } from "../../../typechain";
 import { ethers, ignition } from "hardhat";
 import { expect } from "chai";
 import { SnapshotRestorer, takeSnapshot } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import DeployQuexMonetaryFacetModule from "../../../ignition/modules/core/DeployQuexMonetaryFacetModule";
 import AddQuexMonetaryFacetToQuexCoreModule from "../../../ignition/modules/core/AddQuexMonetaryFacetToQuexCoreModule";
+import { ContractHelpers } from "../contract_helpers";
+import QuexRoles = ContractHelpers.QuexRoles;
 
 describe("QuexMonetaryFacet", () => {
     let owner: SignerWithAddress;
+    let manager: SignerWithAddress;
     let nonOwner: SignerWithAddress;
     let someAddress: SignerWithAddress;
 
@@ -16,11 +18,16 @@ describe("QuexMonetaryFacet", () => {
     let snapshot: SnapshotRestorer;
 
     before(async () => {
-        [owner, nonOwner, someAddress] = await ethers.getSigners();
+        [owner, manager, nonOwner, someAddress] = await ethers.getSigners();
     });
 
     beforeEach(async () => {
         const { quexCoreDiamond } = await ignition.deploy(AddQuexMonetaryFacetToQuexCoreModule, {defaultSender: await owner.getAddress()});
+        const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
+        await diamond
+            .connect(owner)
+            .createRole(QuexRoles.Manager, QuexRoles.ManagerAdmin, manager);
+        await diamond.connect(manager).grantRole(QuexRoles.Manager, manager);
         testObject = QuexMonetaryFacet__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
         snapshot = await takeSnapshot();
     });
@@ -34,18 +41,25 @@ describe("QuexMonetaryFacet", () => {
             const quexFee = Math.round(Math.random() * 1000000);
             const flowId = Math.round(Math.random() * 1000000);
 
-            await expect(testObject.connect(owner).setQuexFee(quexFee))
+            await expect(testObject.connect(manager).setQuexFee(quexFee))
                 .not.to.be.reverted;
 
             expect(await testObject.getQuexFee(flowId)).to.equal(quexFee);
         });
 
         describe("revert if", () => {
-            it("sender is not owner", async () => {
+            it("sender is not manager", async () => {
                 const quexFee = Math.round(Math.random() * 1000000);
 
                 await expect(testObject.connect(nonOwner).setQuexFee(quexFee))
-                    .to.be.revertedWithCustomError(testObject, "Ownable__NotOwner");
+                    .to.be.revertedWith(RegExp("AccessControl:.*"));
+            });
+
+            it("sender is owner but not manager", async () => {
+                const quexFee = Math.round(Math.random() * 1000000);
+
+                await expect(testObject.connect(nonOwner).setQuexFee(quexFee))
+                    .to.be.revertedWith(RegExp("AccessControl:.*"));
             });
         });
     });
@@ -54,18 +68,25 @@ describe("QuexMonetaryFacet", () => {
         it("sets treasury", async () => {
             const treasuryAddress = await someAddress.getAddress();
 
-            await expect(testObject.connect(owner).setTreasury(treasuryAddress))
+            await expect(testObject.connect(manager).setTreasury(treasuryAddress))
                 .not.to.be.reverted;
 
             expect(await testObject.getTreasury()).to.equal(treasuryAddress);
         });
 
         describe("revert if", () => {
-            it("sender is not owner", async () => {
+            it("sender is not manager", async () => {
                 const treasuryAddress = await someAddress.getAddress();
 
                 await expect(testObject.connect(nonOwner).setTreasury(treasuryAddress))
-                    .to.be.revertedWithCustomError(testObject, "Ownable__NotOwner");
+                    .to.be.revertedWith(RegExp("AccessControl:.*"));
+            });
+
+            it("sender is owner but not manager", async () => {
+                const treasuryAddress = await someAddress.getAddress();
+
+                await expect(testObject.connect(owner).setTreasury(treasuryAddress))
+                    .to.be.revertedWith(RegExp("AccessControl:.*"));
             });
         });
     });
