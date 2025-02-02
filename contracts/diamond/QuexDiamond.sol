@@ -25,7 +25,7 @@ contract QuexDiamond is
     AccessControl
 {
     function init() external initializer {
-        bytes4[] memory selectors = new bytes4[](11);
+        bytes4[] memory selectors = new bytes4[](19);
         uint256 selectorIndex;
 
         // register DiamondFallback
@@ -50,6 +50,16 @@ contract QuexDiamond is
         selectors[selectorIndex++] = SafeOwnable.nomineeOwner.selector;
         selectors[selectorIndex++] = Ownable.transferOwnership.selector;
         selectors[selectorIndex++] = SafeOwnable.acceptOwnership.selector;
+
+        // register AccessControl
+        selectors[selectorIndex++] = this.createRole.selector;
+        selectors[selectorIndex++] = AccessControl.grantRole.selector;
+        selectors[selectorIndex++] = AccessControl.getRoleAdmin.selector;
+        selectors[selectorIndex++] = AccessControl.getRoleMember.selector;
+        selectors[selectorIndex++] = AccessControl.getRoleMemberCount.selector;
+        selectors[selectorIndex++] = AccessControl.hasRole.selector;
+        selectors[selectorIndex++] = AccessControl.renounceRole.selector;
+        selectors[selectorIndex++] = AccessControl.revokeRole.selector;
 
         // diamond cut
 
