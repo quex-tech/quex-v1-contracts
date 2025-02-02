@@ -4,13 +4,13 @@ import AddP256VerifierFacetToQuexCoreModule from "./AddP256VerifierFacetToQuexCo
 import AddFlowFacetToQuexCoreModule from "./AddFlowFacetToQuexCoreModule";
 import AddQuexMonetaryFacetToQuexCoreModule from "./AddQuexMonetaryFacetToQuexCoreModule";
 import AddQuexActionFacetToQuexCoreModule from "./AddQuexActionFacetToQuexCoreModule";
-import ConfigureTrustDomainModule from "./ConfigureTrustDomainModule";
+import AddTrustDomainFacetToQuexCoreModule from "./AddTrustDomainFacetToQuexCoreModule";
 
 const QuexCoreCompleteDeployAndConfigurationModule = buildModule("ValidateQuexCoreInterfacesModule", (m) => {
     const quexCoreDiamond = m.useModule(DeployQuexCoreDiamondModule).quexCoreDiamond;
 
     m.useModule(AddP256VerifierFacetToQuexCoreModule);
-    m.useModule(ConfigureTrustDomainModule);
+    m.useModule(AddTrustDomainFacetToQuexCoreModule);
     m.useModule(AddFlowFacetToQuexCoreModule);
     m.useModule(AddQuexMonetaryFacetToQuexCoreModule);
     m.useModule(AddQuexActionFacetToQuexCoreModule);

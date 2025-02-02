@@ -14,6 +14,7 @@ import { AddressLike, Contract, EventLog, FunctionFragment } from "ethers";
 import RequestOracleDeployAndConfigurationModule from "../ignition/modules/oracles/requests/RequestOracleDeployAndConfigurationModule";
 import { quexConfig, QuexNetworkConfig, RequestOracleConfig } from "./quex_config";
 import DeployQuexCoreDiamondModule from "../ignition/modules/core/DeployQuexCoreDiamondModule";
+import { assert } from "console";
 
 async function run() {
     const quexNetworkConfig: QuexNetworkConfig = quexConfig[env.network.name];
@@ -49,16 +50,19 @@ async function set_config_values(diamond: QuexDiamond, config: RequestOracleConf
     if ((await constantPriceMonetaryFacet.getActionFee(0)) != config.actionFee) {
         await constantPriceMonetaryFacet.setActionFee(config.actionFee);
     }
+    assert((await constantPriceMonetaryFacet.getActionFee(0)) == config.actionFee);
 
     const treasuryFacet = ITreasuryFacet__factory.connect(await diamond.getAddress(), diamond.runner);
     if ((await treasuryFacet.getTreasury()) != config.treasuryAddress) {
         await treasuryFacet.setTreasury(config.treasuryAddress);
     }
+    assert((await treasuryFacet.getTreasury()) == config.treasuryAddress);
 
     const quexAddressFacet = IQuexAddressFacet__factory.connect(await diamond.getAddress(), diamond.runner);
     if ((await quexAddressFacet.getQuexAddress()) != quexCoreAddress) {
         await quexAddressFacet.setQuexAddress(quexCoreAddress);
     }
+    assert((await quexAddressFacet.getQuexAddress()) == quexCoreAddress);
 }
 
 async function add_td(quexCoreDiamond: Contract, diamond: QuexDiamond) {
