@@ -1,11 +1,18 @@
 {
-  "QuexDiamond#QuexDiamond": "0x2d04F4F821D3b1fcA5199F0CFc2C93e58f9613Da",
-  "FeedFacet#FeedFacet": "0x246935684C00BA0192F908Ba1b4b180FE53D2dcB",
-  "P256VerifierFacet#P256VerifierFacet": "0x46a1a2Ba78E4d4fA6acF0A92c834AD44dC981955",
-  "TrustDomainFacet#TrustDomainFacet": "0xF2B72a28AEa52de3226045A935c9214dc7eFc4d2",
-  "TrustDomainFacet#TrustDomainFacetInitializer": "0xe15e137b9553C0ba3cc81C8e9B2E91a3C9588Ade",
-  "FeedFacetConfiguration#FeedFacet": "0x2d04F4F821D3b1fcA5199F0CFc2C93e58f9613Da",
-  "FeedFacetTestConfiguration#FeedFacet": "0x2d04F4F821D3b1fcA5199F0CFc2C93e58f9613Da",
-  "TrustDomainConfiguration#TrustDomainFacet": "0x2d04F4F821D3b1fcA5199F0CFc2C93e58f9613Da",
-  "FeedFacetTestConfiguration#OnChainFeedRequestTestContract": "0x4F5c1A395b725E9E0071f86E22db87553A004Dbc"
+  "DeployFlowFacetModule#FlowFacet": "0x547Fd6e56AE9173Ed26876F4696C55c6Ad999943",
+  "QuexDiamond#QuexDiamond": "0x500a6cB742Ad9dc639e51ed20b7170679991Eb52",
+  "AddTrustDomainFacetToQuexCoreModule#TrustDomainFacetInitializer": "0xF44CB5D67178605f36267f7aa1712C2fC774De38",
+  "DeployP256VerifierFacetModule#P256VerifierFacet": "0xF703797fA3Fa90c7f883bbcc75c8f5ebf437DB06",
+  "DeployQuexActionFacetModule#QuexActionFacet": "0x93549aae688C68B252A59E0777D450D590296C20",
+  "DeployQuexMonetaryFacetModule#QuexMonetaryFacet": "0x9a86f7e633564Eee6999E574CE4BFbc9da8eECea",
+  "DeployTrustDomainFacetModule#TrustDomainFacet": "0x4a45e9eeD7be20E16956aCf5aE9fd4680adFd93B",
+  "ConfigureTrustDomainModule#TrustDomainFacet": "0x500a6cB742Ad9dc639e51ed20b7170679991Eb52",
+  "ProxyFactory#ProxyFactory": "0x2869FFe1b6E59C37b976679625CA88a1CB8e6db5",
+  "DeployConstantPriceMonetaryFacetModule#ConstantPriceMonetaryFacet": "0x17C65e6EB818cbf58409F3b11A91C310626D0C26",
+  "DeployQuexAddressFacetModule#QuexAddressFacet": "0x9F5aafd6578DE6a3E939f385257eDE47bb3c4d4E",
+  "DeployRequestActionFacetModule#RequestActionFacet": "0xd5FCd6654E52CF7Ba8c1BcEFe493d28d6176Eb78",
+  "DeployTreasuryFacetModule#TreasuryFacet": "0xBdeeAe1E3731353543BEe870d7e492F82fcEaC91",
+  "DeployTrustDomainPolicyFacetModule#TrustDomainPolicyFacet": "0x7081A26020f10849Fb106259Fa931a8a7Cf9AC49",
+  "DeployRequestOracleDiamondModule#QuexDiamond": "0x6D9456aEfCF9cDAb20C491c8351Af429bD553095",
+  "DeployRequestActionTestContractModule#RequestActionTestContract": "0x668deb5308B05D529700104b523d36731b631B59"
 }
