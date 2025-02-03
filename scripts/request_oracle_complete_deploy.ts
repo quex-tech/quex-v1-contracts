@@ -26,8 +26,10 @@ async function run() {
     const { quexCoreDiamond } = await ignition.deploy(DeployQuexCoreDiamondModule);
 
     await validate_interfaces(diamond);
-    await set_config_values(diamond, quexNetworkConfig.request, await quexCoreDiamond.getAddress());
-    await add_td(quexCoreDiamond, diamond);
+    // await configure_manager(diamond, quexNetworkConfig.request);
+    // await set_config_values(diamond, quexNetworkConfig.request, await quexCoreDiamond.getAddress());
+    // await add_td(quexCoreDiamond, diamond);
+    await add_td2(quexCoreDiamond, diamond);
 }
 
 async function validate_interfaces(diamond: QuexDiamond) {
@@ -42,28 +44,37 @@ async function validate_interfaces(diamond: QuexDiamond) {
     IRequestOraclePool__factory.createInterface().forEachFunction((x) => validate_function(x));
 }
 
+async function configure_manager(diamond: QuexDiamond, config: RequestOracleConfig) {
+    const manager = "0xc8935964ff9a146a753e867ea3890f562b75604c6d6883305d776151177a5a74";
+    const managerAdmin = "0x022a473c59122cd9fd402a419eab4b7f67a55c9f8c5f6a76193742a43bc8db48";
+    await diamond.createRole(manager, managerAdmin, config.managerAddress);
+    await diamond.grantRole(manager, config.managerAddress, {from: config.managerAddress});
+}
+
 async function set_config_values(diamond: QuexDiamond, config: RequestOracleConfig, quexCoreAddress: AddressLike) {
     const constantPriceMonetaryFacet = IConstantPriceMonetaryFacet__factory.connect(
         await diamond.getAddress(),
         diamond.runner
     );
     if ((await constantPriceMonetaryFacet.getActionFee(0)) != config.actionFee) {
-        await constantPriceMonetaryFacet.setActionFee(config.actionFee);
+        await constantPriceMonetaryFacet.setActionFee(config.actionFee, {from: config.managerAddress});
     }
     assert((await constantPriceMonetaryFacet.getActionFee(0)) == config.actionFee);
 
     const treasuryFacet = ITreasuryFacet__factory.connect(await diamond.getAddress(), diamond.runner);
     if ((await treasuryFacet.getTreasury()) != config.treasuryAddress) {
-        await treasuryFacet.setTreasury(config.treasuryAddress);
+        await treasuryFacet.setTreasury(config.treasuryAddress, {from: config.managerAddress});
     }
     assert((await treasuryFacet.getTreasury()) == config.treasuryAddress);
 
     const quexAddressFacet = IQuexAddressFacet__factory.connect(await diamond.getAddress(), diamond.runner);
     if ((await quexAddressFacet.getQuexAddress()) != quexCoreAddress) {
-        await quexAddressFacet.setQuexAddress(quexCoreAddress);
+        await quexAddressFacet.setQuexAddress(quexCoreAddress, {from: config.managerAddress});
     }
     assert((await quexAddressFacet.getQuexAddress()) == quexCoreAddress);
 }
+
+
 
 async function add_td(quexCoreDiamond: Contract, diamond: QuexDiamond) {
     const platformCaCert = {
@@ -185,6 +196,60 @@ async function add_td(quexCoreDiamond: Contract, diamond: QuexDiamond) {
     );
     const txReceipt = await tx.wait();
     const tdId = (<EventLog>txReceipt?.logs[0]).args[0];
+
+    const tdPolicy = ITrustDomainPolicyFacet__factory.connect(await diamond.getAddress(), diamond.runner);
+    await tdPolicy.addToPoll(tdId);
+}
+
+async function add_td2(quexCoreDiamond: Contract, diamond: QuexDiamond) {
+    const attestationKey = {
+        x: BigInt("0xe677c409ec1f7632b791c907cdb2955c032b4972b971c005bb6711a2f7da7881"),
+        y: BigInt("0x1590a686922b5a24191c92595806084b833b659e4aee627f82b60140a131372c"),
+    };
+    const qeAuthenticationData = "0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
+
+    const quoteSignature = {
+        r: BigInt("0xf272958967637dbfaf173de36969f4bc762686eaac064ac40930a7911fbec820"),
+        s: BigInt("0x9dbf7c464bf3641cbf085b97ed52318a1509a4f460f34b36efd7b43f42fb5ebe"),
+    };
+
+    const tdQuote = {
+        USER_DATA: "0x9e7915cba6b92a808258e5db174b6f2d00000000",
+        TEE_TCB_SVN: "0x05010200000000000000000000000000",
+        MRSEAM: "0x1cc6a17ab799e9a693fac7536be61c12ee1e0fabada82d0c999e08ccee2aa86de77b0870f558c570e7ffe55d6d47fa04",
+        MRSIGNERSEAM:
+            "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        SEAMATTRIBUTES: "0x0000000000000000",
+        TDATTRIBUTES: "0x0000001000000000",
+        XFAM: "0xe702060000000000",
+        MRTD: "0x91eb2b44d141d4ece09f0c75c2c53d247a3c68edd7fafe8a3520c942a604a407de03ae6dc5f87f27428b2538873118b7",
+        MRCONFIGID:
+            "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        MROWNER: "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        MROWNERCONFIG:
+            "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        RTMR0: "0xa91e5df4becc050129b3a6c398466c951ef225ab018b6c75e45d9dde0665aeb0a2fc2e76c0e3287bf666fa5b5a9e88d9",
+        RTMR1: "0x8cf683634765dacc0d47a71d47d1f250c78994879510aca7551e2d1fdeb4c90c9fb549f6f498c7ff3fc603e5794cad16",
+        RTMR2: "0x7c03261485d0f5a72108395ce740852c6cdd01897756e69151d3a745fd111fb2b36809daecb8bd935c1c249fe36737cc",
+        RTMR3: "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        REPORT_DATA1: "0x9e3864fb08e1a844860e2d2782e3f76787b68563d34853b9eb12f4415db1a854",
+        REPORT_DATA2: "0x4d9057766c8a51da5fe6344514f70e69ab665cf60f4641e31c298a58a9cbb8f2",
+    };
+
+    const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
+
+    const tx = await tdRegistry.addTD(
+        tdQuote,
+        1,
+        attestationKey.x,
+        attestationKey.y,
+        qeAuthenticationData,
+        quoteSignature.r,
+        quoteSignature.s
+    );
+    const txReceipt = await tx.wait();
+    const tdId = (<EventLog>txReceipt?.logs[0]).args[0];
+    console.log(tdId);
 
     const tdPolicy = ITrustDomainPolicyFacet__factory.connect(await diamond.getAddress(), diamond.runner);
     await tdPolicy.addToPoll(tdId);

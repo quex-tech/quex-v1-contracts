@@ -4,11 +4,13 @@ export interface QuexCoreNetworkConfig {
     quexFee: bigint;
     quexFulfillingGasCost: bigint;
     treasuryAddress: AddressLike;
+    managerAddress: AddressLike;
 }
 
 export interface RequestOracleConfig {
     actionFee: bigint;
     treasuryAddress: AddressLike;
+    managerAddress: AddressLike;
 }
 
 export interface QuexNetworkConfig {
@@ -21,22 +23,26 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         core: {
             quexFee: 1000n,
             quexFulfillingGasCost: 100n,
-            treasuryAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071"
+            treasuryAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071",
+            managerAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071"
         },
         request: {
             actionFee: 250n,
-            treasuryAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071"
+            treasuryAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071",
+            managerAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071"
         }
     },
     arbitrumSepolia: {
         core: {
             quexFee: 1000n,
             quexFulfillingGasCost: 100n,
-            treasuryAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071"
+            treasuryAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071",
+            managerAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071"
         },
         request: {
             actionFee: 250n,
-            treasuryAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071"
+            treasuryAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071",
+            managerAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071"
         }
     }
 }

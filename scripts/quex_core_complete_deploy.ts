@@ -24,6 +24,7 @@ async function run() {
     const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
 
     await validate_interfaces(diamond);
+    await configure_manager(diamond, quexNetworkConfig.core);
     await set_config_values(diamond, quexNetworkConfig.core);
 }
 
@@ -42,18 +43,26 @@ async function validate_interfaces(diamond: QuexDiamond) {
     ITrustDomainRegistry__factory.createInterface().forEachFunction((x) => validate_function(x));
 }
 
+async function configure_manager(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
+    const manager = "0xc8935964ff9a146a753e867ea3890f562b75604c6d6883305d776151177a5a74";
+    const managerAdmin = "0x022a473c59122cd9fd402a419eab4b7f67a55c9f8c5f6a76193742a43bc8db48";
+    await diamond.createRole(manager, managerAdmin, config.managerAddress);
+    await diamond.grantRole(manager, config.managerAddress, {from: config.managerAddress});
+}
+
 async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
     const quexMonetary = IQuexMonetaryFacet__factory.connect(await diamond.getAddress(), diamond.runner);
     if ((await quexMonetary.getQuexFee(1)) != config.quexFee) {
-        await quexMonetary.setQuexFee(config.quexFee);
+        await quexMonetary.setQuexFee(config.quexFee, {from: config.managerAddress});
     }
+
     if ((await quexMonetary.getTreasury()) != config.treasuryAddress) {
-        await quexMonetary.setTreasury(config.treasuryAddress);
+        await quexMonetary.setTreasury(config.treasuryAddress, {from: config.managerAddress});
     }
 
     const quexActions = IQuexActionFacet__factory.connect(await diamond.getAddress(), diamond.runner);
     if (await quexActions.getQuexGas() != config.quexFulfillingGasCost) {
-        await quexActions.setQuexGas(config.quexFulfillingGasCost);
+        await quexActions.setQuexGas(config.quexFulfillingGasCost, {from: config.managerAddress});
     }
 }
 
