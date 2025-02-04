@@ -12,6 +12,7 @@ import {
 } from "../typechain";
 import QuexCoreCompleteDeployAndConfigurationModule from "../ignition/modules/core/QuexCoreCompleteDeployAndConfigurationModule";
 import { FunctionFragment } from "ethers";
+import { ethers } from "hardhat";
 
 import env from "hardhat";
 import { quexConfig, QuexNetworkConfig, QuexCoreNetworkConfig } from "./quex_config";
@@ -46,23 +47,32 @@ async function validate_interfaces(diamond: QuexDiamond) {
 async function configure_manager(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
     const manager = "0xc8935964ff9a146a753e867ea3890f562b75604c6d6883305d776151177a5a74";
     const managerAdmin = "0x022a473c59122cd9fd402a419eab4b7f67a55c9f8c5f6a76193742a43bc8db48";
+    // todo: check if role is already created and configured
     await diamond.createRole(manager, managerAdmin, config.managerAddress);
-    await diamond.grantRole(manager, config.managerAddress, {from: config.managerAddress});
+    await diamond
+        .connect(await ethers.getSigner(<string>config.managerAddress))
+        .grantRole(manager, config.managerAddress);
 }
 
 async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
     const quexMonetary = IQuexMonetaryFacet__factory.connect(await diamond.getAddress(), diamond.runner);
     if ((await quexMonetary.getQuexFee(1)) != config.quexFee) {
-        await quexMonetary.setQuexFee(config.quexFee, {from: config.managerAddress});
+        await quexMonetary
+            .connect(await ethers.getSigner(<string>config.managerAddress))
+            .setQuexFee(config.quexFee);
     }
 
     if ((await quexMonetary.getTreasury()) != config.treasuryAddress) {
-        await quexMonetary.setTreasury(config.treasuryAddress, {from: config.managerAddress});
+        await quexMonetary
+            .connect(await ethers.getSigner(<string>config.managerAddress))
+            .setTreasury(config.treasuryAddress);
     }
 
     const quexActions = IQuexActionFacet__factory.connect(await diamond.getAddress(), diamond.runner);
     if (await quexActions.getQuexGas() != config.quexFulfillingGasCost) {
-        await quexActions.setQuexGas(config.quexFulfillingGasCost, {from: config.managerAddress});
+        await quexActions
+            .connect(await ethers.getSigner(<string>config.managerAddress))
+            .setQuexGas(config.quexFulfillingGasCost);
     }
 }
 

@@ -13,7 +13,7 @@ async function run() {
 
     const prevLastResponse = await testContract.getLastResponse();
 
-    await testContract.createRequest({value: 10_000_000_000_000_000n, gasLimit: 1_500_000});
+    await testContract.createRequest({value: 1_000_000_000_000_000n, gasLimit: 1_500_000});
 
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

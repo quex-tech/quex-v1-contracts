@@ -3,7 +3,8 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-foundry";
 import "hardhat-gas-reporter";
 
-const quexPrivateKey = vars.get("QUEX_PRIVATE_KEY")
+const quexDeployerPrivateKey = vars.get("QUEX_DEPLOYER_PRIVATE_KEY");
+const quexManagerPrivateKey = vars.get("QUEX_MANAGER_PRIVATE_KEY");
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -27,12 +28,17 @@ const config: HardhatUserConfig = {
     redBellyTestnet: {
       chainId: 153,
       url: "https://governors.testnet.redbelly.network",
-      accounts : [quexPrivateKey]
+      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     },
     arbitrumSepolia: {
       chainId: 421614,
       url: "https://sepolia-rollup.arbitrum.io/rpc",
-      accounts : [quexPrivateKey]
+      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    },
+    arbitrumOne: {
+      chainId: 42161,
+      url: "https://arb1.arbitrum.io/rpc",
+      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     }
   },
   gasReporter: {
@@ -41,7 +47,7 @@ const config: HardhatUserConfig = {
   ignition: {
     strategyConfig: {
       create2: {
-        salt: "0x29b1da12264f86ca7aa41516ff68f9fbae4086ddca5a5cdf0274984451220c9d"
+        salt: "0x19b1da12264f86ca7aa41516ff68f9fbae4086ddca5a5cdf0274984451220c9d"
       }
     }
   }
