@@ -108,7 +108,7 @@ describe("TrustDomainFacet", () => {
                     platformCaCert.extensions,
                     platformCaCert.r,
                     platformCaCert.s
-                )).to.be.revertedWithCustomError(trustDomainFacet, "Certificate_WrongValidPeriod");
+                )).to.be.revertedWithCustomError(trustDomainFacet, "Certificate_WrongValidityPeriod");
             });
         });
     });
@@ -195,7 +195,7 @@ describe("TrustDomainFacet", () => {
                         processorPckCert.authority,
                         processorPckCert.r,
                         processorPckCert.s
-                    )).to.be.revertedWithCustomError(trustDomainFacet, "Certificate_WrongValidPeriod");
+                    )).to.be.revertedWithCustomError(trustDomainFacet, "Certificate_WrongValidityPeriod");
             });
         });
     });

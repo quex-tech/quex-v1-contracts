@@ -8,7 +8,7 @@ import {AccessControlInternal} from "@solidstate/contracts/access/access_control
 interface ITrustDomainPolicyFacet {
     function isInPool(uint256 tdId) external view returns (bool);
 
-    function addToPoll(uint256 tdId) external;
+    function addToPool(uint256 tdId) external;
 
     function removeFromPool(uint256 tdId) external;
 }
@@ -18,7 +18,7 @@ contract TrustDomainPolicyFacet is ITrustDomainPolicyFacet, AccessControlInterna
         return TrustDomainPolicyStorage.layout().allowedTDs[tdId] == 1;
     }
 
-    function addToPoll(uint256 tdId) external onlyRole(QuexRoles.Manager) {
+    function addToPool(uint256 tdId) external onlyRole(QuexRoles.Manager) {
         TrustDomainPolicyStorage.layout().allowedTDs[tdId] = 1;
     }
 

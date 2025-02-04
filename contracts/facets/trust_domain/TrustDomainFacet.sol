@@ -9,7 +9,7 @@ import "@solidstate/contracts/access/ownable/OwnableInternal.sol";
 import {DateTimeLib} from "solady/src/utils/DateTimeLib.sol";
 
 contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
-    error Certificate_WrongValidPeriod();
+    error Certificate_WrongValidityPeriod();
 
     function getRootKey() external view returns(ECKey memory) {
         return TrustDomainStorage.certificateLayout().rootCA;
@@ -28,7 +28,7 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         uint256 notBeforeTimestamp = _fromDERToTimestamp(notBefore);
         uint256 notAfterTimestamp = _fromDERToTimestamp(notAfter);
         if (notBeforeTimestamp > block.timestamp || notAfterTimestamp < block.timestamp) {
-            revert Certificate_WrongValidPeriod();
+            revert Certificate_WrongValidityPeriod();
         }
 
         QuoteVerifier.ensurePlatformCAKeyIsValid(x, y, serial, notBefore, extensions, r, s);
@@ -53,7 +53,7 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         uint256 notBeforeTimestamp = _fromDERToTimestamp(notBefore);
         uint256 notAfterTimestamp = _fromDERToTimestamp(notAfter);
         if (notBeforeTimestamp > block.timestamp || notAfterTimestamp < block.timestamp) {
-            revert Certificate_WrongValidPeriod();
+            revert Certificate_WrongValidityPeriod();
         }
 
         QuoteVerifier.ensurePCKIsValid(x, y, serial, notBefore, notAfter, extensions, authority, r, s);

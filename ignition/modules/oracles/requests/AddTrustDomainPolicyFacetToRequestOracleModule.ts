@@ -15,7 +15,7 @@ const AddTrustDomainPolicyFacetToRequestOracleModule = buildModule("AddTrustDoma
             action: 0,
             selectors: [
                 facetInterface.getFunction("isInPool").selector,
-                facetInterface.getFunction("addToPoll").selector,
+                facetInterface.getFunction("addToPool").selector,
                 facetInterface.getFunction("removeFromPool").selector
             ]
         }
