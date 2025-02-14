@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
+import "../interfaces/core/IFlowRegistry.sol";
 import "../interfaces/core/IQuexActionRegistry.sol";
 import "../interfaces/oracles/IRequestOraclePool.sol";
 
@@ -46,20 +47,21 @@ contract RequestActionTestContract {
             "[.lastUpdateId] + ([.bids, .asks] | map(map(map(tonumber*100000000|floor))))"
         );
 
-        uint256 flowId = requestOracle.addFlow(
+        uint256 actionId = requestOracle.addActionByParts(
             requestId,
             patchId,
             schemaId,
-            filterId,
-            address(this),
-            this.fulfillRequest.selector,
-            1000000
+            filterId
         );
+
+        IFlowRegistry flowRegistry = IFlowRegistry(quexCoreAddress);
+        Flow memory flow = Flow(1000000, actionId, oraclePoolAddress, address(this), this.fulfillRequest.selector);
+        uint256 flowId = flowRegistry.createFlow(flow);
 
         IQuexActionRegistry actionRegistry = IQuexActionRegistry(quexCoreAddress);
         (uint256 nativeFee, uint256 gasFee) = actionRegistry.getRequestFee(flowId);
         uint256 totalRequestPrice = nativeFee + gasFee * tx.gasprice;
-        lastRequestId = requestOracle.startRequest{value: totalRequestPrice}(flowId);
+        lastRequestId = actionRegistry.createRequest{value: totalRequestPrice}(flowId);
 
         if (msg.value > totalRequestPrice) {
             payable(msg.sender).transfer(msg.value - totalRequestPrice);

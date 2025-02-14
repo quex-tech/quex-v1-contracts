@@ -14,13 +14,12 @@ library RequestOracleStorage {
     struct Layout {
         mapping(bytes32 => HTTPRequest) requests;
         mapping(bytes32 => HTTPPrivatePatch) privatePatches;
-        mapping(bytes32 => uint256) privatePatchTdId;
         mapping(bytes32 => string) jqFilters;
         mapping(bytes32 => string) resultSchemas;
         mapping(uint256 => RequestActionInternal) requestActions;
     }
 
-    bytes32 internal constant STORAGE_SLOT = keccak256("quex.pools.request");
+    bytes32 internal constant STORAGE_SLOT = keccak256("quex.pools.request.v2");
 
     function layout() internal pure returns (Layout storage l) {
         bytes32 slot = STORAGE_SLOT;

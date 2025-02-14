@@ -14,14 +14,13 @@ const AddRequestActionFacetToRequestOracleModule = buildModule("AddRequestAction
             target: facet,
             action: 0,
             selectors: [
-                facetInterface.getFunction("addFlow").selector,
+                facetInterface.getFunction("addAction").selector,
+                facetInterface.getFunction("addActionByParts").selector,
                 facetInterface.getFunction("addRequest").selector,
                 facetInterface.getFunction("addPrivatePatch").selector,
                 facetInterface.getFunction("addResponseSchema").selector,
                 facetInterface.getFunction("addJqFilter").selector,
-                facetInterface.getFunction("startRequest").selector,
                 facetInterface.getFunction("getAction").selector,
-                facetInterface.getFunction("getActionTD").selector,
             ]
         }
     ];
