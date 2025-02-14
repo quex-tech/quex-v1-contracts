@@ -10,6 +10,7 @@ contract FlowFacet is IFlowRegistry {
         flowId = layout.lastFlowId + 1;
         layout.flows[flowId] = flow;
         layout.lastFlowId = flowId;
+        emit FlowAdded(flowId);
         return flowId;
     }
 

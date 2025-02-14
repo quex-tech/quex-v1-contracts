@@ -6,7 +6,6 @@ import {
 import { ethers, ignition } from "hardhat";
 import { expect } from "chai";
 import { SnapshotRestorer, takeSnapshot } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import DeployFlowFacetModule from "../../../ignition/modules/core/DeployFlowFacetModule";
 import { FlowStruct } from "../../../typechain/contracts/facets/flow/FlowFacet";
 import AddFlowFacetToQuexCoreModule from "../../../ignition/modules/core/AddFlowFacetToQuexCoreModule";
 
@@ -54,5 +53,19 @@ describe("FlowFacet", () => {
             expect(flowResult.gasLimit).to.equal(flow.gasLimit);
             expect(flowResult.pool).to.equal(flow.pool);
         });
+
+        it("emits FlowAdded event", async () => {
+            const flow: FlowStruct = {
+                actionId: 1,
+                callback: "0x00112233",
+                consumer: await consumer.getAddress(),
+                gasLimit: 1,
+                pool: await pool.getAddress(),
+            };
+
+            await expect(testObject.createFlow(flow))
+                .to.emit(testObject, "FlowAdded");
+
+        })
     });
 });
