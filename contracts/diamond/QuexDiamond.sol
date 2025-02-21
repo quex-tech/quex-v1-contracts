@@ -14,6 +14,7 @@ import {DiamondWritable} from "./DiamondWritable.sol";
 import {AccessControl} from "@solidstate/contracts/access/access_control/AccessControl.sol";
 import {Initializable} from "@solidstate/contracts/security/initializable/Initializable.sol";
 import {ReentrancyGuard} from "@solidstate/contracts/security/reentrancy_guard/ReentrancyGuard.sol";
+import {QuexRoles} from "../QuexRoles.sol";
 
 contract QuexDiamond is
     DiamondBase,
@@ -25,7 +26,7 @@ contract QuexDiamond is
     AccessControl
 {
     function init() external initializer {
-        bytes4[] memory selectors = new bytes4[](19);
+        bytes4[] memory selectors = new bytes4[](18);
         uint256 selectorIndex;
 
         // register DiamondFallback
@@ -52,7 +53,6 @@ contract QuexDiamond is
         selectors[selectorIndex++] = SafeOwnable.acceptOwnership.selector;
 
         // register AccessControl
-        selectors[selectorIndex++] = this.createRole.selector;
         selectors[selectorIndex++] = AccessControl.grantRole.selector;
         selectors[selectorIndex++] = AccessControl.getRoleAdmin.selector;
         selectors[selectorIndex++] = AccessControl.getRoleMember.selector;
@@ -72,6 +72,7 @@ contract QuexDiamond is
         // set owner
 
         _setOwner(msg.sender);
+        _grantRole(QuexRoles.DefaultAdminRole, msg.sender);
     }
 
     receive() external payable {}
@@ -90,12 +91,5 @@ contract QuexDiamond is
         returns (address implementation)
     {
         implementation = super._getImplementation();
-    }
-
-    function createRole(bytes32 roleId, bytes32 roleAdminId, address roleAdmin) external onlyOwner {
-        require(_getRoleAdmin(roleId) == 0x0);
-        require(_getRoleMemberCount(roleAdminId) == 0);
-        _grantRole(roleAdminId, roleAdmin);
-        _setRoleAdmin(roleId, roleAdminId);
     }
 }

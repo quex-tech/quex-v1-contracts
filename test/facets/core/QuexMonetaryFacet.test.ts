@@ -24,10 +24,7 @@ describe("QuexMonetaryFacet", () => {
     beforeEach(async () => {
         const { quexCoreDiamond } = await ignition.deploy(AddQuexMonetaryFacetToQuexCoreModule, {defaultSender: await owner.getAddress()});
         const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
-        await diamond
-            .connect(owner)
-            .createRole(QuexRoles.Manager, QuexRoles.ManagerAdmin, manager);
-        await diamond.connect(manager).grantRole(QuexRoles.Manager, manager);
+        await diamond.connect(owner).grantRole(QuexRoles.Manager, manager);
         testObject = QuexMonetaryFacet__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
         snapshot = await takeSnapshot();
     });
@@ -58,7 +55,7 @@ describe("QuexMonetaryFacet", () => {
             it("sender is owner but not manager", async () => {
                 const quexFee = Math.round(Math.random() * 1000000);
 
-                await expect(testObject.connect(nonOwner).setQuexFee(quexFee))
+                await expect(testObject.connect(owner).setQuexFee(quexFee))
                     .to.be.revertedWith(RegExp("AccessControl:.*"));
             });
         });

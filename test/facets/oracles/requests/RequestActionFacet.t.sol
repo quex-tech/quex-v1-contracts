@@ -3,8 +3,6 @@ pragma solidity 0.8.22;
 
 import "forge-std/Script.sol";
 import "forge-std/Test.sol";
-import {stdJson} from "forge-std/StdJson.sol";
-import "forge-std/console.sol";
 import "@solidstate/contracts/interfaces/IERC2535DiamondCutInternal.sol";
 import "@solidstate/contracts/cryptography/ECDSA.sol";
 import {QuexActionFacet} from "../../../../contracts/facets/actions/QuexActionFacet.sol";

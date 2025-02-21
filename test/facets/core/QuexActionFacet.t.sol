@@ -23,7 +23,7 @@ abstract contract QuexActionFacetTestBase is Test {
     Vm.Wallet internal manager = vm.createWallet("manager");
     bytes4 internal callbackSignature = 0x12345678;
     uint256 actionId = 15;
-    uint256 internal flowId = 1;
+    uint256 internal flowId = 111;
     Flow flow = Flow(100, actionId, oraclePoolAddress, consumerAddress, callbackSignature);
 
     uint256 internal unknownFlowId = 2;
@@ -34,8 +34,6 @@ abstract contract QuexActionFacetTestBase is Test {
     function setUp() public virtual {
         diamond = new QuexDiamond();
         diamond.init();
-        diamond.createRole(QuexRoles.Manager, QuexRoles.ManagerAdmin, manager.addr);
-        vm.prank(manager.addr);
         diamond.grantRole(QuexRoles.Manager, manager.addr);
         QuexActionFacet t = new QuexActionFacet();
         IERC2535DiamondCutInternal.FacetCut[] memory cuts = new IERC2535DiamondCutInternal.FacetCut[](1);

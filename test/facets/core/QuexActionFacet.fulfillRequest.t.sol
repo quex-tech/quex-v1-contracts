@@ -206,7 +206,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
     }
 
-    function test_RevertsIf_CallbackReenter() public {
+    function test_CallbackFailIf_CallbackReenter() public {
         uint256 flowId = uint256(keccak256("test_RevertsIf_CallbackReenter_flowId"));
         uint256 actionId = uint256(keccak256("test_RevertsIf_CallbackReenter_actionId"));
         Flow memory flow = Flow(1000000, actionId, oraclePoolAddress, address(this), this.callback_Reenter.selector);

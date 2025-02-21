@@ -2,7 +2,10 @@
 pragma solidity 0.8.22;
 
 import {IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
+import {IOraclePool} from "../../../contracts/interfaces/core/IOraclePool.sol";
+import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
 import {QuexActionFacetTestBase} from "./QuexActionFacet.t.sol";
+import "forge-std/console.sol";
 
 contract QuexActionFacet_createRequest is QuexActionFacetTestBase {
     function setUp() public override {
@@ -41,5 +44,24 @@ contract QuexActionFacet_createRequest is QuexActionFacetTestBase {
     function _getMinimumRequestPrice() private view returns (uint256) {
         (uint256 nativeFee, uint256 gasFee) = testObject.getRequestFee(flowId);
         return nativeFee + gasFee * tx.gasprice;
+    }
+}
+
+contract OraclePoolWithReenterToCreateRequest {
+    address internal quexCoreAddress;
+    uint256 internal flowId;
+
+    constructor(address quexCoreAddress_, uint256 flowId_) {
+        quexCoreAddress = quexCoreAddress_;
+        flowId = flowId_;
+        console.log(quexCoreAddress);
+        console.log(flowId);
+    }
+
+    function getActionFee(uint256 actionId) external returns (uint256) {
+        console.log(quexCoreAddress);
+        console.log(flowId);
+        IQuexActionRegistry(quexCoreAddress).createRequest(flowId);
+        return 0;
     }
 }

@@ -46,11 +46,7 @@ async function validate_interfaces(diamond: QuexDiamond) {
 
 async function configure_manager(diamond: QuexDiamond, config: RequestOracleConfig) {
     const manager = "0xc8935964ff9a146a753e867ea3890f562b75604c6d6883305d776151177a5a74";
-    const managerAdmin = "0x022a473c59122cd9fd402a419eab4b7f67a55c9f8c5f6a76193742a43bc8db48";
-    await diamond.createRole(manager, managerAdmin, config.managerAddress);
-    await diamond
-        .connect(await ethers.getSigner(<string>config.managerAddress))
-        .grantRole(manager, config.managerAddress);
+    await diamond.grantRole(manager, config.managerAddress);
 }
 
 async function set_config_values(diamond: QuexDiamond, config: RequestOracleConfig, quexCoreAddress: AddressLike) {
