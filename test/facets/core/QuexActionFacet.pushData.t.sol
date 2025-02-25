@@ -23,7 +23,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
             1
         );
 
-        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdAddress);
+        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
     }
 
     function test_TransfersTokensToQuex() public {
@@ -35,7 +35,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         _mockSuccessfulCallback(flowId, message.dataItem, IdType.FlowId);
 
         uint256 initialQuexTreasuryBalance = quexTreasury.balance;
-        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdAddress);
+        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
 
         assertEq(quexTreasury.balance, initialQuexTreasuryBalance + quexFee);
     }
@@ -49,7 +49,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         _mockRevertedCallback(flowId, message.dataItem, IdType.FlowId);
 
         uint256 initialQuexTreasuryBalance = quexTreasury.balance;
-        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdAddress);
+        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
 
         assertEq(quexTreasury.balance, initialQuexTreasuryBalance + quexFee);
     }
@@ -64,7 +64,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
 
         vm.expectEmit(true, false, false, true);
         emit QuexActionFacet.DataPushed(flowId, address(this));
-        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdAddress);
+        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
     }
 
     function test_EmitsDataPushingFailedEventIf_CallbackIsFailed() public {
@@ -77,7 +77,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
 
         vm.expectEmit(true, false, false, true);
         emit QuexActionFacet.DataPushingFailed(flowId, address(this));
-        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdAddress);
+        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
     }
 
     function test_RevertsIf_FlowNotFound() public {
@@ -87,7 +87,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectRevert(IQuexActionRegistry.Flow_NotFound.selector);
-        testObject.pushData{value: pushFee}(message, signature, unknownFlowId, td.tdAddress);
+        testObject.pushData{value: pushFee}(message, signature, unknownFlowId, td.tdId);
     }
 
     function test_RevertsIf_InsufficientFee() public {
@@ -97,7 +97,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectRevert(IQuexActionRegistry.InsufficientValue.selector);
-        testObject.pushData{value: pushFee - 1}(message, signature, flowId, td.tdAddress);
+        testObject.pushData{value: pushFee - 1}(message, signature, flowId, td.tdId);
     }
 
     function test_RevertsIf_ActionIdsMismatched() public {
@@ -107,7 +107,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectRevert(IQuexActionRegistry.Action_MismatchIds.selector);
-        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdAddress);
+        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
     }
 
     function test_RevertsIf_TrustDomainIsNotValid() public {
@@ -117,7 +117,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectRevert(IQuexActionRegistry.TrustDomain_NotValid.selector);
-        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdAddress);
+        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
     }
 
     function test_RevertsIf_TrustDomainIsNotInOraclePool() public {
@@ -127,7 +127,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectRevert(IQuexActionRegistry.TrustDomain_IsNotAllowedInOraclePool.selector);
-        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdAddress);
+        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
     }
 
     function test_RevertsIf_SignatureIsInvalid() public {
@@ -138,7 +138,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         ETHSignature memory signature = _signOracleMessage(message, signerTD);
 
         vm.expectRevert(IQuexActionRegistry.OracleMessage_SignatureIsInvalid.selector);
-        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdAddress);
+        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
     }
 
     function test_RevertsIf_CallbackReenter() public {
@@ -161,7 +161,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         vm.expectEmit(true, false, false, true);
         emit QuexActionFacet.DataPushingFailed(flowId, address(this));
 
-        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdAddress);
+        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
     }
 
     function callback_Reenter(uint256 flowId, DataItem memory dataItem, IdType /* idType */) public {
@@ -171,6 +171,6 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         OracleMessage memory message = OracleMessage(actionId, dataItem);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
-        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdAddress);
+        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
     }
 }

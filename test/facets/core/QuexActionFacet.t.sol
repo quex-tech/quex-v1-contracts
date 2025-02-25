@@ -83,6 +83,7 @@ contract QuexActionFacetTestDataBase is QuexActionFacetTestBase {
     struct TDTestData {
         uint256 privateKey;
         address tdAddress;
+        uint256 tdId;
     }
 
     TDTestData internal TD_validInQuex_inOraclePool;
@@ -97,29 +98,51 @@ contract QuexActionFacetTestDataBase is QuexActionFacetTestBase {
         QuexActionFacetTestBase.setUp();
 
         uint256 privateKey1 = 0x123abc;
-        TD_validInQuex_inOraclePool = TDTestData(privateKey1, vm.addr(privateKey1));
+        TD_validInQuex_inOraclePool = TDTestData(privateKey1, vm.addr(privateKey1) ,1);
 
         uint256 privateKey2 = 0x987fed;
-        TD_validInQuex_notInOraclePool = TDTestData(privateKey2, vm.addr(privateKey2));
+        TD_validInQuex_notInOraclePool = TDTestData(privateKey2, vm.addr(privateKey2), 2);
 
         uint256 privateKey3 = 0x112233;
-        TD_notValidInQuex_inOraclePool = TDTestData(privateKey3, vm.addr(privateKey3));
+        TD_notValidInQuex_inOraclePool = TDTestData(privateKey3, vm.addr(privateKey3), 3);
 
         uint256 privateKey4 = 0xaabbcc;
-        TD_notValidInQuex_notInOraclePool = TDTestData(privateKey4, vm.addr(privateKey4));
+        TD_notValidInQuex_notInOraclePool = TDTestData(privateKey4, vm.addr(privateKey4), 4);
 
         vm.label(quexTreasury, "QuexTreasury");
         vm.label(oraclePoolTreasury, "OraclePoolTreasury");
 
+        // mock ITrustDomainRegistry.getTDSignerAddress
+        vm.mockCall(
+            address(diamond),
+            abi.encodeWithSelector(ITrustDomainRegistry.getTDSignerAddress.selector, TD_validInQuex_inOraclePool.tdId),
+            abi.encode(TD_validInQuex_inOraclePool.tdAddress)
+        );
+        vm.mockCall(
+            address(diamond),
+            abi.encodeWithSelector(ITrustDomainRegistry.getTDSignerAddress.selector, TD_validInQuex_notInOraclePool.tdId),
+            abi.encode(TD_validInQuex_notInOraclePool.tdAddress)
+        );
+        vm.mockCall(
+            address(diamond),
+            abi.encodeWithSelector(ITrustDomainRegistry.getTDSignerAddress.selector, TD_notValidInQuex_inOraclePool.tdId),
+            abi.encode(TD_notValidInQuex_inOraclePool.tdAddress)
+        );
+        vm.mockCall(
+            address(diamond),
+            abi.encodeWithSelector(ITrustDomainRegistry.getTDSignerAddress.selector, TD_notValidInQuex_notInOraclePool.tdId),
+            abi.encode(TD_notValidInQuex_notInOraclePool.tdAddress)
+        );
+
         // mock ITrustDomainRegistry.isTDValid
         vm.mockCall(
             address(diamond),
-            abi.encodeWithSelector(ITrustDomainRegistry.isTDValid.selector, TD_validInQuex_inOraclePool.tdAddress),
+            abi.encodeWithSelector(ITrustDomainRegistry.isTDValid.selector, TD_validInQuex_inOraclePool.tdId),
             abi.encode(true)
         );
         vm.mockCall(
             address(diamond),
-            abi.encodeWithSelector(ITrustDomainRegistry.isTDValid.selector, TD_validInQuex_notInOraclePool.tdAddress),
+            abi.encodeWithSelector(ITrustDomainRegistry.isTDValid.selector, TD_validInQuex_notInOraclePool.tdId),
             abi.encode(true)
         );
         vm.mockCall(
@@ -131,12 +154,12 @@ contract QuexActionFacetTestDataBase is QuexActionFacetTestBase {
         // mock IOraclePool.isInPool
         vm.mockCall(
             address(oraclePoolAddress),
-            abi.encodeWithSelector(IOraclePool.isInPool.selector, TD_validInQuex_inOraclePool.tdAddress),
+            abi.encodeWithSelector(IOraclePool.isInPool.selector, TD_validInQuex_inOraclePool.tdId),
             abi.encode(true)
         );
         vm.mockCall(
             address(oraclePoolAddress),
-            abi.encodeWithSelector(IOraclePool.isInPool.selector, TD_notValidInQuex_inOraclePool.tdAddress),
+            abi.encodeWithSelector(IOraclePool.isInPool.selector, TD_notValidInQuex_inOraclePool.tdId),
             abi.encode(true)
         );
         vm.mockCall(

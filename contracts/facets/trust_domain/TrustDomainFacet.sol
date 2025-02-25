@@ -101,6 +101,8 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         layout.qeReports[qeId] = qeReport;
         layout.qeReportsCounter++;
 
+        emit QEReportAdded(qeId);
+
         return qeId;
     }
 
@@ -112,34 +114,44 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         bytes32 authenticationData,
         uint256 r,
         uint256 s
-    ) external returns (address tdAddress) {
+    ) external returns (uint256 tdId) {
         QuoteVerifier.ensureTDQuoteIsValid(tdQuote, qeId, x, y, authenticationData, r, s);
         TrustDomainStorage.TDLayout storage layout = TrustDomainStorage.tdLayout();
 
+        tdId = _calculateTDId(tdQuote);
+
         bytes memory publicKey = abi.encodePacked(tdQuote.REPORT_DATA1, tdQuote.REPORT_DATA2);
-        tdAddress = _convertPublicKeyToAddress(publicKey);
+        address tdAddress = _convertPublicKeyToAddress(publicKey);
 
         // TODO Optimize storage
-        layout.tdQuotes[tdAddress] = tdQuote;
-        layout.tdToQe[tdAddress] = qeId;
-        return tdAddress;
+        layout.tdQuotes[tdId] = tdQuote;
+        layout.tdToQe[tdId] = qeId;
+        layout.tdSignerAddress[tdId] = tdAddress;
+
+        emit TDReportAdded(tdId);
+
+        return tdId;
     }
 
-    function isTDValid(address tdAddress) external view returns (bool) {
+    function isTDValid(uint256 tdId) external view returns (bool) {
         // todo: check QE/certs validity?
-        return TrustDomainStorage.tdLayout().tdQuotes[tdAddress].REPORT_DATA1 != 0;
+        return TrustDomainStorage.tdLayout().tdQuotes[tdId].REPORT_DATA1 != 0;
     }
 
-    function getTD(address tdAddress) external view returns (TDQuote memory) {
-        return TrustDomainStorage.tdLayout().tdQuotes[tdAddress];
+    function getTDSignerAddress(uint256 tdId) external view returns (address) {
+        return TrustDomainStorage.tdLayout().tdSignerAddress[tdId];
+    }
+
+    function getTD(uint256 tdId) external view returns (TDQuote memory) {
+        return TrustDomainStorage.tdLayout().tdQuotes[tdId];
     }
 
     function getQE(uint256 qeId) external view returns (QEReport memory) {
         return TrustDomainStorage.qeLayout().qeReports[qeId];
     }
 
-    function getQEId(address tdAddress) external view returns (uint256 qeId) {
-        return TrustDomainStorage.tdLayout().tdToQe[tdAddress];
+    function getQEId(uint256 tdId) external view returns (uint256 qeId) {
+        return TrustDomainStorage.tdLayout().tdToQe[tdId];
     }
 
     function getQEAuthority(uint256 qeId) external view returns (uint256 platformSerial, uint256 pckSerial) {
@@ -151,6 +163,10 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         require(publicKey.length == 64, "Invalid public key length");
         bytes32 hash = keccak256(publicKey);
         return address(uint160(uint256(hash)));
+    }
+
+    function _calculateTDId(TDQuote memory tdQuote) private pure returns (uint256 tdId) {
+        return uint256(keccak256(abi.encode(tdQuote)));
     }
 
     /*

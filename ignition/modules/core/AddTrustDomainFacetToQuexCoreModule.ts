@@ -34,7 +34,8 @@ const AddTrustDomainFacetToQuexCoreModule = buildModule("AddTrustDomainFacetToQu
                 facetInterface.getFunction("getQEAuthority").selector,
                 facetInterface.getFunction("getQEId").selector,
                 facetInterface.getFunction("getTD").selector,
-                facetInterface.getFunction("isTDValid").selector
+                facetInterface.getFunction("isTDValid").selector,
+                facetInterface.getFunction("getTDSignerAddress").selector,
             ]
         }
     ];
