@@ -3,7 +3,8 @@ import { QuexMonetaryFacet, QuexMonetaryFacet__factory } from "../../../typechai
 import { ethers, ignition } from "hardhat";
 import { expect } from "chai";
 import { SnapshotRestorer, takeSnapshot } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import QuexMonetaryFacetModule from "../../../ignition/modules/core/QuexMonetaryFacet";
+import DeployQuexMonetaryFacetModule from "../../../ignition/modules/core/DeployQuexMonetaryFacetModule";
+import AddQuexMonetaryFacetToQuexCoreModule from "../../../ignition/modules/core/AddQuexMonetaryFacetToQuexCoreModule";
 
 describe("QuexMonetaryFacet", () => {
     let owner: SignerWithAddress;
@@ -19,8 +20,8 @@ describe("QuexMonetaryFacet", () => {
     });
 
     beforeEach(async () => {
-        const { quexMonetaryFacet } = await ignition.deploy(QuexMonetaryFacetModule, {defaultSender: await owner.getAddress()});
-        testObject = QuexMonetaryFacet__factory.connect(await quexMonetaryFacet.getAddress(), quexMonetaryFacet.runner);
+        const { quexCoreDiamond } = await ignition.deploy(AddQuexMonetaryFacetToQuexCoreModule, {defaultSender: await owner.getAddress()});
+        testObject = QuexMonetaryFacet__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
         snapshot = await takeSnapshot();
     });
 

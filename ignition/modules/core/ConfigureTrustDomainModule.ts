@@ -1,5 +1,6 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
-import QuexDiamondModule from "./QuexDiamond";
+import DeployQuexCoreDiamondModule from "./DeployQuexCoreDiamondModule";
+import AddTrustDomainFacetToQuexCoreModule from "./AddTrustDomainFacetToQuexCoreModule";
 
 export const platformCaCert = {
     x: BigInt("24030003042588091771170974992323049441734798737906192722609658704857607787826"),
@@ -79,15 +80,18 @@ export const tdQuote = {
 };
 
 
-export default buildModule("TrustDomainConfiguration", (m) => {
-    const quexDiamond = m.useModule(QuexDiamondModule).quexDiamond;
-    const trustDomainWrap = m.contractAt("TrustDomainFacet", quexDiamond);
+export default buildModule("ConfigureTrustDomainModule", (m) => {
+    const quexCoreDiamond = m.useModule(DeployQuexCoreDiamondModule).quexCoreDiamond;
+    m.useModule(AddTrustDomainFacetToQuexCoreModule);
+
+    const trustDomainWrap = m.contractAt("TrustDomainFacet", quexCoreDiamond);
 
     const addPlatformCAKey = m.call(trustDomainWrap, "addPlatformCAKey", [
         platformCaCert.x,
         platformCaCert.y,
         platformCaCert.serial,
         platformCaCert.notBefore,
+        platformCaCert.notAfter,
         platformCaCert.extensions,
         platformCaCert.r,
         platformCaCert.s
@@ -103,7 +107,7 @@ export default buildModule("TrustDomainConfiguration", (m) => {
         processorPckCert.authority,
         processorPckCert.r,
         processorPckCert.s
-    ], {after: [addPlatformCAKey]});
+    ], { after: [addPlatformCAKey] });
 
     const addQE = m.call(trustDomainWrap, "addQE", [
         qeReportData,
@@ -111,7 +115,7 @@ export default buildModule("TrustDomainConfiguration", (m) => {
         processorPckCert.serial,
         qeReportSignature.r,
         qeReportSignature.s
-    ], {after: [addPCK]});
+    ], { after: [addPCK] });
 
     m.call(trustDomainWrap, "addTD", [
         tdQuote,
@@ -121,7 +125,7 @@ export default buildModule("TrustDomainConfiguration", (m) => {
         qeAuthenticationData,
         quoteSignature.r,
         quoteSignature.s
-    ], {after: [addQE]});
+    ], { after: [addQE] });
 
-    return {tdAddress: "0xCa614CD12D3b9515610C4d8b901De4b5641Be508"}; // todo: event?
-})
+    return { quexCoreDiamond };
+});

@@ -6,8 +6,9 @@ import {
 import { ethers, ignition } from "hardhat";
 import { expect } from "chai";
 import { SnapshotRestorer, takeSnapshot } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import FlowFacetModule from "../../../ignition/modules/core/FlowFacet";
+import DeployFlowFacetModule from "../../../ignition/modules/core/DeployFlowFacetModule";
 import { FlowStruct } from "../../../typechain/contracts/facets/flow/FlowFacet";
+import AddFlowFacetToQuexCoreModule from "../../../ignition/modules/core/AddFlowFacetToQuexCoreModule";
 
 describe("FlowFacet", () => {
     let owner: SignerWithAddress;
@@ -24,8 +25,8 @@ describe("FlowFacet", () => {
     });
 
     beforeEach(async () => {
-        const { flowFacet } = await ignition.deploy(FlowFacetModule, {defaultSender: await owner.getAddress()});
-        testObject = FlowFacet__factory.connect(await flowFacet.getAddress(), flowFacet.runner);
+        const { quexCoreDiamond } = await ignition.deploy(AddFlowFacetToQuexCoreModule, {defaultSender: await owner.getAddress()});
+        testObject = FlowFacet__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
         snapshot = await takeSnapshot();
     });
 

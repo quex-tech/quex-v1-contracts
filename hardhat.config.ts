@@ -37,6 +37,13 @@ const config: HardhatUserConfig = {
   },
   gasReporter: {
     enabled: true
+  },
+  ignition: {
+    strategyConfig: {
+      create2: {
+        salt: "0x19b1da12264f86ca7aa41516ff68f9fbae4086ddca5a5cdf0274984451220c9d"
+      }
+    }
   }
 };
 

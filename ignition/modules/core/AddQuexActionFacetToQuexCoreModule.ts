@@ -1,10 +1,12 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
+import DeployQuexCoreDiamondModule from "./DeployQuexCoreDiamondModule";
 import { QuexActionFacet__factory } from "../../../typechain";
 import { ethers } from "ethers";
-import QuexDiamondModule from "../QuexDiamond";
+import DeployQuexActionFacetModule from "./DeployQuexActionFacetModule";
 
-const QuexActionFacetModule = buildModule("QuexActionFacet", (m) => {
-    const facet = m.contract("QuexActionFacet");
+const AddQuexActionFacetToQuexCoreModule = buildModule("AddQuexActionFacetToQuexCoreModule", (m) => {
+    const quexCoreDiamond = m.useModule(DeployQuexCoreDiamondModule).quexCoreDiamond;
+    const facet = m.useModule(DeployQuexActionFacetModule).facet;
     const facetInterface = QuexActionFacet__factory.createInterface();
 
     const facetCuts = [
@@ -25,12 +27,8 @@ const QuexActionFacetModule = buildModule("QuexActionFacet", (m) => {
         }
     ];
 
-    const quexDiamond = m.useModule(QuexDiamondModule).quexDiamond;
-    m.call(quexDiamond, "diamondCut", [facetCuts, ethers.ZeroAddress, "0x"]);
-
-    const quexActionFacet = m.contractAt("QuexActionFacet", quexDiamond, {id: "QuexCore_QuexActionFacet"});
-
-    return { quexActionFacet };
+    m.call(quexCoreDiamond, "diamondCut", [facetCuts, ethers.ZeroAddress, "0x"]);
+    return { quexCoreDiamond };
 });
 
-export default QuexActionFacetModule;
+export default AddQuexActionFacetToQuexCoreModule;

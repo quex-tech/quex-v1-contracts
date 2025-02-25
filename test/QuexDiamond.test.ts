@@ -24,6 +24,7 @@ describe("QuexDiamond", () => {
     beforeEach(async () => {
         const [deployer] = await ethers.getSigners();
         instance = await new QuexDiamond__factory(deployer).deploy();
+        await instance.init();
 
         const facets = await instance.facets.staticCall();
 
