@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
+import "../../interfaces/core/IFlowRegistry.sol";
 import "../../interfaces/core/IOraclePool.sol";
-import "../flow/FlowFacet.sol";
 import "../../interfaces/core/IQuexMonetary.sol";
 import "../../interfaces/core/IQuexActionRegistry.sol";
 import "./QuexActionStorage.sol";
@@ -16,7 +16,8 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
     event DataPushingFailed(uint256 flowId, address sender);
 
     // request events
-    event RequestFulfilled(uint256 requestId, uint256 flowId, address relayer, bool isSuccessful, uint256 quexFee, uint256 oraclePoolFee, uint256 relayerPremium);
+    event RequestFulfilled(uint256 requestId, uint256 flowId, address relayer);
+    event RequestFulfillingFailed(uint256 requestId, uint256 flowId, address relayer);
 
     function pushData(OracleMessage memory message, ETHSignature memory signature, uint256 flowId, address tdAddress) external payable {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
@@ -98,15 +99,20 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
         (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
 
-        emit RequestFulfilled(
-            requestId,
-            request.flowId,
-            msg.sender,
-            success,
-            request.quexFee,
-            request.oraclePoolFee,
-            request.relayerPremium
-        );
+        if (success) {
+            emit RequestFulfilled(
+                requestId,
+                request.flowId,
+                msg.sender
+            );
+        } else {
+            emit RequestFulfillingFailed(
+                requestId,
+                request.flowId,
+                msg.sender
+            );
+
+        }
     }
 
     function getRequest(uint256 requestId) external view returns (QuexActionStorage.Request memory) {
@@ -139,7 +145,7 @@ contract QuexActionFacet is IQuexActionRegistry, Ownable {
             revert Action_MismatchIds();
         }
 
-        if (ITrustDomainRegistry(address(this)).isTDValid(tdAddress)) {
+        if (!ITrustDomainRegistry(address(this)).isTDValid(tdAddress)) {
             revert TrustDomain_NotValid();
         }
 

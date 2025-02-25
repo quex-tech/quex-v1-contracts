@@ -129,7 +129,6 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, Ownable {
 
     function isTDValid(address tdAddress) external view returns (bool) {
         // todo: check QE/certs validity?
-        // todo: different mapping to reduce read gas cost
         return TrustDomainStorage.tdLayout().tdQuotes[tdAddress].REPORT_DATA1 != 0;
     }
 

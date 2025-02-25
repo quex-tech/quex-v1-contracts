@@ -410,5 +410,26 @@ describe("TrustDomainFacet", () => {
                 ).to.be.revertedWithCustomError(diamond, "Ownable__NotOwner");
             });
         });
+
+        describe("#isTDValid", () => {
+            beforeEach(async () => {
+                await ContractHelpers.TrustDomainFacet.addRootKey(diamond, owner);
+                await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
+                await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+                await ContractHelpers.TrustDomainFacet.addQE(diamond);
+            });
+    
+            it("returns true if TD is registered", async () => {
+                await ContractHelpers.TrustDomainFacet.addTD(diamond);
+
+                expect(await testObject.isTDValid(ContractHelpers.TrustDomainFacet.TestData.tdAddress))
+                    .to.be.true;
+            });
+    
+            it("returns false if TD is not registered", async () => {
+                expect(await testObject.isTDValid(ContractHelpers.TrustDomainFacet.TestData.tdAddress))
+                    .to.be.false;
+            });
+        });
     });
 });
