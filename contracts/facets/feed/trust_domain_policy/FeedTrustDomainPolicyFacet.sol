@@ -4,9 +4,9 @@ pragma solidity 0.8.22;
 import "./IFeedTrustDomainPolicyExtended.sol";
 
 import "./TrustDomainPolicyStorage.sol";
-import "@solidstate/contracts/access/ownable/Ownable.sol";
+import "@solidstate/contracts/access/ownable/OwnableInternal.sol";
 
-contract FeedTrustDomainPolicyFacet is IFeedTrustDomainPolicyExtended, Ownable {
+contract FeedTrustDomainPolicyFacet is IFeedTrustDomainPolicyExtended, OwnableInternal {
     function isTDAllowedForFeed(address tdAddress) external view returns (bool) {
         return TrustDomainPolicyStorage.layout().allowedTDs[tdAddress] == 1;
     }

@@ -2,9 +2,9 @@
 pragma solidity 0.8.22;
 
 import "./QuexAddressStorage.sol";
-import "@solidstate/contracts/access/ownable/Ownable.sol";
+import "@solidstate/contracts/access/ownable/OwnableInternal.sol";
 
-contract QuexAddressFacet is Ownable {
+contract QuexAddressFacet is OwnableInternal {
     function setQuexAddress(address quexAddress) external onlyOwner {
         QuexAddressStorage.layout().quexAddress = quexAddress;
     }

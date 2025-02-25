@@ -2,9 +2,9 @@
 pragma solidity 0.8.22;
 
 import "./TrustDomainPolicyStorage.sol";
-import "@solidstate/contracts/access/ownable/Ownable.sol";
+import "@solidstate/contracts/access/ownable/OwnableInternal.sol";
 
-contract TrustDomainPolicyFacet is Ownable {
+contract TrustDomainPolicyFacet is OwnableInternal {
     function isInPool(address tdAddress) external view returns (bool) {
         return TrustDomainPolicyStorage.layout().allowedTDs[tdAddress] == 1;
     }

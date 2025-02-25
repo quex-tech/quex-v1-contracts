@@ -5,12 +5,10 @@ import "./TrustDomainStorage.sol";
 import "../../interfaces/core/ITrustDomainRegistry.sol";
 import "./QuoteVerifier.sol";
 
-import "@solidstate/contracts/access/ownable/Ownable.sol";
+import "@solidstate/contracts/access/ownable/OwnableInternal.sol";
 import {DateTimeLib} from "solady/src/utils/DateTimeLib.sol";
 
-import "hardhat/console.sol";
-
-contract TrustDomainFacet is ITrustDomainRegistryExtended, Ownable {
+contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     error Certificate_WrongValidPeriod();
 
     function getRootKey() external view returns(ECKey memory) {
