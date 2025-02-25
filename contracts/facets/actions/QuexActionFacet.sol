@@ -8,9 +8,10 @@ import "../../interfaces/core/IQuexActionRegistry.sol";
 import "./QuexActionStorage.sol";
 
 import {OwnableInternal} from "@solidstate/contracts/access/ownable/OwnableInternal.sol";
+import {ReentrancyGuard} from "@solidstate/contracts/security/reentrancy_guard/ReentrancyGuard.sol";
 import {ITrustDomainRegistry} from "../../interfaces/core/ITrustDomainRegistry.sol";
 
-contract QuexActionFacet is IQuexActionRegistry, OwnableInternal {
+contract QuexActionFacet is IQuexActionRegistry, OwnableInternal, ReentrancyGuard {
     // push events
     event DataPushed(uint256 flowId, address sender);
     event DataPushingFailed(uint256 flowId, address sender);
@@ -19,7 +20,12 @@ contract QuexActionFacet is IQuexActionRegistry, OwnableInternal {
     event RequestFulfilled(uint256 requestId, uint256 flowId, address relayer);
     event RequestFulfillingFailed(uint256 requestId, uint256 flowId, address relayer);
 
-    function pushData(OracleMessage memory message, ETHSignature memory signature, uint256 flowId, address tdAddress) external payable {
+    function pushData(
+        OracleMessage memory message,
+        ETHSignature memory signature,
+        uint256 flowId,
+        address tdAddress
+    ) external payable nonReentrant {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
         _ensureOracleMessageIsValid(message, signature, flow, tdAddress);
 
@@ -36,7 +42,7 @@ contract QuexActionFacet is IQuexActionRegistry, OwnableInternal {
         }
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, flowId, message.dataItem, IdType.FlowId);
-        (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
+        (bool success, ) = flow.consumer.call{gas: flow.gasLimit}(payload);
 
         if (success) {
             emit DataPushed(flowId, msg.sender);
@@ -45,7 +51,7 @@ contract QuexActionFacet is IQuexActionRegistry, OwnableInternal {
         }
     }
 
-    function createRequest(uint256 flowId) external payable returns (uint256 requestId) {
+    function createRequest(uint256 flowId) external payable nonReentrant returns (uint256 requestId) {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
 
         if (flow.pool == address(0)) {
@@ -80,7 +86,12 @@ contract QuexActionFacet is IQuexActionRegistry, OwnableInternal {
         return requestId;
     }
 
-    function fulfillRequest(OracleMessage memory message, ETHSignature memory signature, uint256 requestId, address tdAddress) external {
+    function fulfillRequest(
+        OracleMessage memory message,
+        ETHSignature memory signature,
+        uint256 requestId,
+        address tdAddress
+    ) external nonReentrant {
         QuexActionStorage.Layout storage layout = QuexActionStorage.layout();
         QuexActionStorage.Request memory request = layout.requests[requestId];
         if (request.flowId == 0) {
@@ -97,21 +108,12 @@ contract QuexActionFacet is IQuexActionRegistry, OwnableInternal {
         payable(msg.sender).transfer(request.relayerPremium);
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
-        (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
+        (bool success, ) = flow.consumer.call{gas: flow.gasLimit}(payload);
 
         if (success) {
-            emit RequestFulfilled(
-                requestId,
-                request.flowId,
-                msg.sender
-            );
+            emit RequestFulfilled(requestId, request.flowId, msg.sender);
         } else {
-            emit RequestFulfillingFailed(
-                requestId,
-                request.flowId,
-                msg.sender
-            );
-
+            emit RequestFulfillingFailed(requestId, request.flowId, msg.sender);
         }
     }
 
@@ -136,7 +138,12 @@ contract QuexActionFacet is IQuexActionRegistry, OwnableInternal {
         return (quexFee + oraclePoolFee, flow.gasLimit + quexFulfillingGasCost);
     }
 
-    function _ensureOracleMessageIsValid(OracleMessage memory message, ETHSignature memory signature, Flow memory flow, address tdAddress) private view {
+    function _ensureOracleMessageIsValid(
+        OracleMessage memory message,
+        ETHSignature memory signature,
+        Flow memory flow,
+        address tdAddress
+    ) private view {
         if (flow.pool == address(0)) {
             revert Flow_NotFound();
         }
@@ -158,7 +165,11 @@ contract QuexActionFacet is IQuexActionRegistry, OwnableInternal {
         }
     }
 
-    function _isSignatureValid(OracleMessage memory oracleMessage, ETHSignature memory signature, address tdAddress) private pure returns (bool) {
+    function _isSignatureValid(
+        OracleMessage memory oracleMessage,
+        ETHSignature memory signature,
+        address tdAddress
+    ) private pure returns (bool) {
         bytes memory message = abi.encode(oracleMessage);
         bytes32 messageHash = keccak256(message);
         bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));

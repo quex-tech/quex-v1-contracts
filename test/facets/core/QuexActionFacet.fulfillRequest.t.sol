@@ -4,13 +4,14 @@ pragma solidity 0.8.22;
 import {QuexActionFacetTestDataBase} from "./QuexActionFacet.t.sol";
 import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
 import {IdType, DataItem, OracleMessage, ETHSignature, IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
+import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
 
 contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     uint256 requestPrice;
 
     function setUp() override public {
         QuexActionFacetTestDataBase.setUp();
-        requestPrice = _getMinimumRequestPrice();
+        requestPrice = _getMinimumRequestPrice(flowId);
     }
 
     function test_CallsCallbackFunctionOnce() public {
@@ -205,7 +206,42 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
     }
 
-    function _getMinimumRequestPrice() private view returns (uint256) {
+    function test_RevertsIf_CallbackReenter() public {
+        uint256 flowId = uint256(keccak256("test_RevertsIf_CallbackReenter_flowId"));
+        uint256 actionId = uint256(keccak256("test_RevertsIf_CallbackReenter_actionId"));
+        Flow memory flow = Flow(1000000, actionId, oraclePoolAddress, address(this), this.callback_Reenter.selector);
+        vm.mockCall(address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, flowId), abi.encode(flow));
+
+        uint256 requestPrice = _getMinimumRequestPrice(flowId);
+        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        TDTestData memory td = TD_validInQuex_inOraclePool;
+
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        ETHSignature memory signature = _signOracleMessage(message, td);
+
+        vm.expectCall(
+            address(testObject),
+            abi.encodeWithSelector(testObject.fulfillRequest.selector),
+            2
+        );
+
+        vm.expectEmit(true, false, false, true);
+        emit QuexActionFacet.RequestFulfillingFailed(requestId, flowId, address(this));
+
+        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+    }
+
+    function callback_Reenter(uint256 requestId, DataItem memory dataItem, IdType /* idType */) public {
+        uint256 actionId = IFlowRegistry(address(testObject)).getFlow(flowId).actionId;
+        TDTestData memory td = TD_validInQuex_inOraclePool;
+
+        OracleMessage memory message = OracleMessage(actionId, dataItem);
+        ETHSignature memory signature = _signOracleMessage(message, td);
+
+        testObject.fulfillRequest(message, signature, requestId, td.tdAddress);
+    }
+
+    function _getMinimumRequestPrice(uint256 flowId) private view returns (uint256) {
         (uint256 nativeFee, uint256 gasFee) = testObject.getRequestFee(flowId);
         return nativeFee + gasFee * tx.gasprice;
     }
