@@ -54,8 +54,8 @@ export namespace ContractHelpers {
             export const rootCaKey = {
                 x: BigInt("0x0ba9c4c0c0c86193a3fe23d6b02cda10a8bbd4e88e48b4458561a36e705525f5"),
                 y: BigInt("0x67918e2edc88e40d860bd0cc4ee26aacc988e505a953558c453f6b0904ae7394"),
-                notBefore: "0x3138303532313130343531305a",
-                notAfter: "0x3439313233313233353935395a"
+                notBefore: 1526899510,
+                notAfter: 2524607999
             };
 
             export const platformCaCert = {
@@ -152,7 +152,6 @@ export namespace ContractHelpers {
                     action: 0,
                     selectors: [
                         // add
-                        facet.interface.getFunction("addRootKey").selector,
                         facet.interface.getFunction("addPlatformCAKey").selector,
                         facet.interface.getFunction("addPCK").selector,
                         facet.interface.getFunction("addQE").selector,
@@ -167,18 +166,14 @@ export namespace ContractHelpers {
                         facet.interface.getFunction("getPlatformCAKey").selector,
                         facet.interface.getFunction("getPCK").selector,
                         facet.interface.getFunction("getQE").selector,
-                        facet.interface.getFunction("getTD").selector
+                        facet.interface.getFunction("getTD").selector,
+                        facet.interface.getFunction("isTDValid").selector
                     ]
                 }
             ];
 
             await (await diamond.diamondCut(facetCuts, await trustDomainFacetInitializer.getAddress(), calldata)).wait();
             return facet;
-        }
-
-        export async function addRootKey(diamond: QuexDiamond, owner: HardhatEthersSigner) {
-            const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
-            await tdRegistry.connect(owner).addRootKey(TestData.rootCaKey);
         }
 
         export async function addPlatformKey(diamond: QuexDiamond) {
@@ -189,6 +184,7 @@ export namespace ContractHelpers {
                 platformCaCert.y,
                 platformCaCert.serial,
                 platformCaCert.notBefore,
+                platformCaCert.notAfter,
                 platformCaCert.extensions,
                 platformCaCert.r,
                 platformCaCert.s);
@@ -237,8 +233,7 @@ export namespace ContractHelpers {
                 );
         }
 
-        export async function configureFully(diamond: QuexDiamond, owner: HardhatEthersSigner) {
-            await addRootKey(diamond, owner);
+        export async function configureFully(diamond: QuexDiamond) {
             await addPlatformKey(diamond);
             await addPCK(diamond);
             await addQE(diamond);

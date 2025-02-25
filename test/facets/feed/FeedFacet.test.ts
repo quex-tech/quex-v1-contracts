@@ -34,7 +34,7 @@ describe("::FeedFacet", () => {
         diamond = await new QuexDiamond__factory(owner).deploy();
         await ContractHelpers.P256VerifierFacet.createAndAddToDiamond(diamond, owner);
         await ContractHelpers.TrustDomainFacet.createAndAddToDiamond(diamond, owner);
-        await ContractHelpers.TrustDomainFacet.configureFully(diamond, owner);
+        await ContractHelpers.TrustDomainFacet.configureFully(diamond);
         feedFacet = await ContractHelpers.FeedFacet.createAndAddToDiamond(diamond, owner);
         snapshot = await takeSnapshot();
     });

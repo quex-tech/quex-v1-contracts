@@ -1,5 +1,7 @@
 import { HardhatUserConfig, vars } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-foundry";
+import "hardhat-gas-reporter";
 
 const quexPrivateKey = vars.get("QUEX_PRIVATE_KEY")
 
@@ -20,7 +22,7 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {
-      initialDate: "2024-11-01T00:00:00Z"
+      initialDate: "2024-11-05T00:00:00Z"
     },
     redBellyTestnet: {
       chainId: 153,
@@ -32,6 +34,9 @@ const config: HardhatUserConfig = {
       url: "https://sepolia-rollup.arbitrum.io/rpc",
       accounts : [quexPrivateKey]
     }
+  },
+  gasReporter: {
+    enabled: true
   }
 };
 
