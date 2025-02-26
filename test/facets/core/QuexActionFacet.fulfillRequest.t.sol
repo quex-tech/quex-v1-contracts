@@ -206,6 +206,31 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
     }
 
+    function test_RevertsIf_MessageIsOutdated() public {
+        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        TDTestData memory td = TD_validInQuex_inOraclePool;
+
+        vm.warp(100000000); // set block's timestamp
+        uint256 timestamp = vm.getBlockTimestamp() - pastTimeSkew - 1;
+        OracleMessage memory message = OracleMessage(actionId, DataItem(timestamp, 0, abi.encode(1)));
+        ETHSignature memory signature = _signOracleMessage(message, td);
+
+        vm.expectRevert(IQuexActionRegistry.OracleMessage_OutdatedMessage.selector);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
+    }
+
+    function test_RevertsIf_MessageFromFuture() public {
+        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        TDTestData memory td = TD_validInQuex_inOraclePool;
+
+        uint256 timestamp = vm.getBlockTimestamp() + futureTimeSkew + 1;
+        OracleMessage memory message = OracleMessage(actionId, DataItem(timestamp, 0, abi.encode(1)));
+        ETHSignature memory signature = _signOracleMessage(message, td);
+
+        vm.expectRevert(IQuexActionRegistry.OracleMessage_TimestampFromFuture.selector);
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
+    }
+
     function test_CallbackFailIf_CallbackReenter() public {
         uint256 flowId = uint256(keccak256("test_RevertsIf_CallbackReenter_flowId"));
         uint256 actionId = uint256(keccak256("test_RevertsIf_CallbackReenter_actionId"));

@@ -30,6 +30,8 @@ interface IQuexActionRegistry {
     error TrustDomain_NotValid();
     error TrustDomain_IsNotAllowedInOraclePool();
     error OracleMessage_SignatureIsInvalid();
+    error OracleMessage_OutdatedMessage();
+    error OracleMessage_TimestampFromFuture();
     error InsufficientValue();
 
     event RequestCreated(uint256 requestId, uint256 flowId, address oraclePool);

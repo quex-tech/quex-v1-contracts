@@ -17,6 +17,9 @@ import { ethers } from "hardhat";
 import env from "hardhat";
 import { quexConfig, QuexNetworkConfig, QuexCoreNetworkConfig } from "./quex_config";
 
+const pastTimeSkew = 15n * 60n; // 15 min
+const futureTimeSkew = 30n; // 30 sec
+
 async function run() {
     const quexNetworkConfig: QuexNetworkConfig = quexConfig[env.network.name];
 
@@ -68,6 +71,13 @@ async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkCo
         await quexActions
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setQuexGas(config.quexFulfillingGasCost);
+    }
+
+    const timeSkew = await quexActions.getTimeSkew();
+    if (timeSkew[0] != pastTimeSkew || timeSkew[1] != futureTimeSkew) {
+        await quexActions
+            .connect(await ethers.getSigner(<string>config.managerAddress))
+            .setTimeSkew(pastTimeSkew, futureTimeSkew);
     }
 }
 

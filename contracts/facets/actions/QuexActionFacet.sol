@@ -139,6 +139,17 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         return (quexFee + oraclePoolFee, flow.gasLimit + quexFulfillingGasCost);
     }
 
+    function getTimeSkew() external view returns (uint256 pastSkewInSeconds, uint256 futureSkewInSeconds) {
+        QuexActionStorage.TimeSkewLayout storage timeSkewLayout = QuexActionStorage.timeSkewLayout();
+        return (timeSkewLayout.timeSkewPast, timeSkewLayout.timeSkewFuture);
+    }
+
+    function setTimeSkew(uint256 pastSkewInSeconds, uint256 futureSkewInSeconds) external onlyRole(QuexRoles.Manager) {
+        QuexActionStorage.TimeSkewLayout storage timeSkewLayout = QuexActionStorage.timeSkewLayout();
+        timeSkewLayout.timeSkewPast = pastSkewInSeconds;
+        timeSkewLayout.timeSkewFuture = futureSkewInSeconds;
+    }
+
     function _ensureOracleMessageIsValid(
         OracleMessage memory message,
         ETHSignature memory signature,
@@ -151,6 +162,18 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
 
         if (flow.actionId != message.actionId) {
             revert Action_MismatchIds();
+        }
+
+        QuexActionStorage.TimeSkewLayout storage timeSkewLayout = QuexActionStorage.timeSkewLayout();
+
+        if (block.timestamp > message.dataItem.timestamp
+            && block.timestamp - message.dataItem.timestamp > timeSkewLayout.timeSkewPast) {
+            revert OracleMessage_OutdatedMessage();
+        }
+
+        if (message.dataItem.timestamp > block.timestamp
+            && message.dataItem.timestamp - block.timestamp > timeSkewLayout.timeSkewFuture) {
+            revert OracleMessage_TimestampFromFuture();
         }
 
         if (!ITrustDomainRegistry(address(this)).isTDValid(tdId)) {

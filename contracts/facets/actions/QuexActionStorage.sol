@@ -15,10 +15,24 @@ library QuexActionStorage {
         uint256 quexFulfillingGasCost;
     }
 
+    struct TimeSkewLayout {
+        uint256 timeSkewPast;
+        uint256 timeSkewFuture;
+    }
+
     bytes32 internal constant STORAGE_SLOT = keccak256("quex.contracts.storage.Action");
+    bytes32 internal constant TIME_SKEW_STORAGE_SLOT = keccak256("quex.contracts.storage.Action.TimeSkew");
 
     function layout() internal pure returns (Layout storage l) {
         bytes32 slot = STORAGE_SLOT;
+        assembly {
+            l.slot := slot
+        }
+        return l;
+    }
+
+    function timeSkewLayout() internal pure returns (TimeSkewLayout storage l) {
+        bytes32 slot = TIME_SKEW_STORAGE_SLOT;
         assembly {
             l.slot := slot
         }

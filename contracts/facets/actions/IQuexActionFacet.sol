@@ -7,4 +7,8 @@ interface IQuexActionFacet is IQuexActionRegistry {
     function getQuexGas() external view returns (uint256);
 
     function setQuexGas(uint256 quexGas) external;
+
+    function getTimeSkew() external view returns (uint256 pastSkewInSeconds, uint256 futureSkewInSeconds);
+
+    function setTimeSkew(uint256 pastSkewInSeconds, uint256 futureSkewInSeconds) external;
 }

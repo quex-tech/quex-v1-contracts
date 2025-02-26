@@ -14,6 +14,10 @@ const AddQuexActionFacetToQuexCoreModule = buildModule("AddQuexActionFacetToQuex
             target: facet,
             action: 0,
             selectors: [
+                //common
+                facetInterface.getFunction("setTimeSkew").selector,
+                facetInterface.getFunction("getTimeSkew").selector,
+
                 // requests
                 facetInterface.getFunction("createRequest").selector,
                 facetInterface.getFunction("fulfillRequest").selector,
