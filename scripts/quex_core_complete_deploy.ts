@@ -23,7 +23,7 @@ const futureTimeSkew = 30n; // 30 sec
 async function run() {
     const quexNetworkConfig: QuexNetworkConfig = quexConfig[env.network.name];
 
-    const { quexCoreDiamond } = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule);
+    const { quexCoreDiamond } = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule, { strategy: "create2" });
 
     const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
 

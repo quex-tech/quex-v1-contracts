@@ -8,10 +8,11 @@ import {
     QuexDiamond,
     QuexDiamond__factory,
     ITrustDomainRegistryExtended__factory,
-    ITrustDomainPolicyFacet__factory,
+    ITrustDomainPolicyFacet__factory
 } from "../typechain";
 import { AddressLike, Contract, EventLog, FunctionFragment } from "ethers";
-import RequestOracleDeployAndConfigurationModule from "../ignition/modules/oracles/requests/RequestOracleDeployAndConfigurationModule";
+import RequestOracleDeployAndConfigurationModule
+    from "../ignition/modules/oracles/requests/RequestOracleDeployAndConfigurationModule";
 import { quexConfig, QuexNetworkConfig, RequestOracleConfig } from "./quex_config";
 import DeployQuexCoreDiamondModule from "../ignition/modules/core/DeployQuexCoreDiamondModule";
 import { assert } from "console";
@@ -19,7 +20,7 @@ import { assert } from "console";
 async function run() {
     const quexNetworkConfig: QuexNetworkConfig = quexConfig[env.network.name];
 
-    const { requestsDiamond } = await ignition.deploy(RequestOracleDeployAndConfigurationModule);
+    const { requestsDiamond } = await ignition.deploy(RequestOracleDeployAndConfigurationModule, { strategy: "create2" });
 
     const diamond = QuexDiamond__factory.connect(await requestsDiamond.getAddress(), requestsDiamond.runner);
 
@@ -88,7 +89,7 @@ async function add_qe(quexCoreDiamond: Contract, diamond: QuexDiamond) {
         extensions:
             "0x3081b8301f0603551d2304183016801422650cd65a9d3489f383b49552bf501b392706ac30520603551d1f044b30493047a045a043864168747470733a2f2f6365727469666963617465732e7472757374656473657276696365732e696e74656c2e636f6d2f496e74656c534758526f6f7443412e646572301d0603551d0e04160414956f5dcdbd1be1e94049c9d4f433ce01570bde54300e0603551d0f0101ff04040302010630120603551d130101ff040830060101ff020100",
         r: BigInt("42866170568685111900057008158509843856138296930751925740913709471306297805719"),
-        s: BigInt("17237064055611587912602576747291700467597514190097038271137615530927947838334"),
+        s: BigInt("17237064055611587912602576747291700467597514190097038271137615530927947838334")
     };
 
     const processorPckCert = {
@@ -101,7 +102,7 @@ async function add_qe(quexCoreDiamond: Contract, diamond: QuexDiamond) {
             "0x30820308301f0603551d23041830168014956f5dcdbd1be1e94049c9d4f433ce01570bde54306b0603551d1f046430623060a05ea05c865a68747470733a2f2f6170692e7472757374656473657276696365732e696e74656c2e636f6d2f7367782f63657274696669636174696f6e2f76342f70636b63726c3f63613d706c6174666f726d26656e636f64696e673d646572301d0603551d0e04160414e1699b3b1e544c5e36aa8feed189cc0eac22dbbd300e0603551d0f0101ff0404030206c0300c0603551d130101ff040230003082023906092a864886f84d010d010482022a30820226301e060a2a864886f84d010d010104103965e1a981cf369aa991217bc30ea60630820163060a2a864886f84d010d0102308201533010060b2a864886f84d010d0102010201023010060b2a864886f84d010d0102020201023010060b2a864886f84d010d0102030201023010060b2a864886f84d010d0102040201023010060b2a864886f84d010d0102050201033010060b2a864886f84d010d0102060201013010060b2a864886f84d010d0102070201003010060b2a864886f84d010d0102080201053010060b2a864886f84d010d0102090201003010060b2a864886f84d010d01020a0201003010060b2a864886f84d010d01020b0201003010060b2a864886f84d010d01020c0201003010060b2a864886f84d010d01020d0201003010060b2a864886f84d010d01020e0201003010060b2a864886f84d010d01020f0201003010060b2a864886f84d010d0102100201003010060b2a864886f84d010d01021102010b301f060b2a864886f84d010d0102120410020202020301000500000000000000003010060a2a864886f84d010d0103040200003014060a2a864886f84d010d01040406b0c06f000000300f060a2a864886f84d010d01050a0101301e060a2a864886f84d010d01060410f08e03bf85c728e0949340f6ea49f50d3044060a2a864886f84d010d010730363010060b2a864886f84d010d0107010101ff3010060b2a864886f84d010d0107020101ff3010060b2a864886f84d010d0107030101ff",
         authority: BigInt("0x956f5dcdbd1be1e94049c9d4f433ce01570bde54"),
         r: BigInt("0xc1fbdbd07acd76dc19598b56aa4ef9599dd8e06b036d7230940093ff3572f1aa"),
-        s: BigInt("0xe2c0d05f02e43cd2e31efb19f7e615206c9dedca72a7e97639691f0d75254e16"),
+        s: BigInt("0xe2c0d05f02e43cd2e31efb19f7e615206c9dedca72a7e97639691f0d75254e16")
     };
 
     const qeReportData = {
@@ -113,12 +114,12 @@ async function add_qe(quexCoreDiamond: Contract, diamond: QuexDiamond) {
         ISVProdID: "0x0200",
         ISVSVN: "0x0600",
         REPORT_DATA1: "0xb1031521f8c3d582214cf2ad732fabcebab018b821b5b69d838297bf0d2285a9",
-        REPORT_DATA2: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        REPORT_DATA2: "0x0000000000000000000000000000000000000000000000000000000000000000"
     };
 
     const qeReportSignature = {
         r: BigInt("0x5e301006050e5b32024d91d63d916bb90caa81edaee22df41e9de6dafba461f6"),
-        s: BigInt("0x4a39eed0ccc11b5769704d9e8e0e4b702412f830e44a72e40033122a76a4aae7"),
+        s: BigInt("0x4a39eed0ccc11b5769704d9e8e0e4b702412f830e44a72e40033122a76a4aae7")
     };
 
     const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
@@ -157,13 +158,13 @@ async function add_qe(quexCoreDiamond: Contract, diamond: QuexDiamond) {
 async function add_td(quexCoreDiamond: Contract, diamond: QuexDiamond, config: RequestOracleConfig) {
     const attestationKey = {
         x: BigInt("0xe677c409ec1f7632b791c907cdb2955c032b4972b971c005bb6711a2f7da7881"),
-        y: BigInt("0x1590a686922b5a24191c92595806084b833b659e4aee627f82b60140a131372c"),
+        y: BigInt("0x1590a686922b5a24191c92595806084b833b659e4aee627f82b60140a131372c")
     };
     const qeAuthenticationData = "0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
 
     const quoteSignature = {
         r: BigInt("0x5483ac469e6f75773fc4105e65affa319be51c3534153e4f572bec69754c89e7"),
-        s: BigInt("0x0ba31ec7f0c01464e9754d13d5071e36e5f9dbd64caeac2a9912ad3c4f55007d"),
+        s: BigInt("0x0ba31ec7f0c01464e9754d13d5071e36e5f9dbd64caeac2a9912ad3c4f55007d")
     };
 
     const tdQuote = {
@@ -186,7 +187,7 @@ async function add_td(quexCoreDiamond: Contract, diamond: QuexDiamond, config: R
         RTMR2: "0xdf56317ccc6c1658e9f5c8bac832bf1827faec3a0b3efb627792a3098529c3d35b5dd97da5a92e917831a8d0366b6bb5",
         RTMR3: "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         REPORT_DATA1: "0x1740f4ac5cdec0a9fa95e1f67e72b0e845b384fa7790c5e12686d25e491a4615",
-        REPORT_DATA2: "0xe1fabdb369c37b28007b19b1b314fe410466dbeb8a2d3bcaf6685c9b8615046f",
+        REPORT_DATA2: "0xe1fabdb369c37b28007b19b1b314fe410466dbeb8a2d3bcaf6685c9b8615046f"
     };
 
     const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);

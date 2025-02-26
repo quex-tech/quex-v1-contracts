@@ -4,7 +4,7 @@ import { RequestActionTestContract__factory } from "../typechain";
 import DeployRequestActionTestContractModule from "../ignition/modules/test_contracts/DeployRequestActionTestContractModule";
 
 async function run() {
-    const { requestActionTestContract } = await ignition.deploy(DeployRequestActionTestContractModule);
+    const { requestActionTestContract } = await ignition.deploy(DeployRequestActionTestContractModule, { strategy: "create2" });
 
     const testContract = RequestActionTestContract__factory.connect(
         await requestActionTestContract.getAddress(),
