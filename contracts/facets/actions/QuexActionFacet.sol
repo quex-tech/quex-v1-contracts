@@ -36,10 +36,10 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
             revert InsufficientValue();
         }
 
-        payable(quexMonetary.getTreasury()).transfer(quexFee);
+        payable(quexMonetary.getTreasury()).call{value: quexFee}("");
         if (msg.value > quexFee) {
             // todo: process situation when msg.sender is not payable
-            payable(msg.sender).transfer(msg.value - quexFee);
+            payable(msg.sender).call{value: msg.value - quexFee}("");
         }
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, flowId, message.dataItem, IdType.FlowId);
@@ -81,7 +81,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
 
         if (msg.value > requestPrice) {
             // todo: process situation when msg.sender is not payable
-            payable(msg.sender).transfer(msg.value - requestPrice);
+            payable(msg.sender).call{value: msg.value - requestPrice}("");
         }
 
         return requestId;
@@ -104,9 +104,9 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         _ensureOracleMessageIsValid(message, signature, flow, tdId);
 
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
-        payable(quexMonetary.getTreasury()).transfer(request.quexFee);
-        payable(IOraclePool(flow.pool).getTreasury()).transfer(request.oraclePoolFee);
-        payable(msg.sender).transfer(request.relayerPremium);
+        payable(quexMonetary.getTreasury()).call{value: request.quexFee}("");
+        payable(IOraclePool(flow.pool).getTreasury()).call{value: request.oraclePoolFee}("");
+        payable(msg.sender).call{value: request.relayerPremium}("");
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
         (bool success, ) = flow.consumer.call{gas: flow.gasLimit}(payload);
