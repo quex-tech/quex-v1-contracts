@@ -87,6 +87,15 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         return requestId;
     }
 
+    function getRequest(uint256 requestId) external view returns (Request memory request) {
+        QuexActionStorage.Request memory internalRequestModel = QuexActionStorage.layout().requests[requestId];
+        if (internalRequestModel.flowId == 0) {
+            return Request(0, 0, address(0));
+        }
+        Flow memory flow = IFlowRegistry(address(this)).getFlow(internalRequestModel.flowId);
+        return Request(requestId, internalRequestModel.flowId, flow.pool);
+    }
+
     function fulfillRequest(
         OracleMessage memory message,
         ETHSignature memory signature,
@@ -116,10 +125,6 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         } else {
             emit RequestFulfillingFailed(requestId, request.flowId, msg.sender);
         }
-    }
-
-    function getRequest(uint256 requestId) external view returns (QuexActionStorage.Request memory) {
-        return QuexActionStorage.layout().requests[requestId];
     }
 
     function getQuexGas() external view returns (uint256) {
