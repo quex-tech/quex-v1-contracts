@@ -12,24 +12,28 @@ import {IQuexMonetary} from "../../../contracts/interfaces/core/IQuexMonetary.so
 import {ITrustDomainRegistry} from "../../../contracts/interfaces/core/ITrustDomainRegistry.sol";
 import {IdType, DataItem, OracleMessage, ETHSignature, IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
+import {IQuexActionFacet} from "../../../contracts/facets/actions/IQuexActionFacet.sol";
 import {QuexDiamond} from "../../../contracts/diamond/QuexDiamond.sol";
 import {QuexRoles} from "../../../contracts/QuexRoles.sol";
 
 abstract contract QuexActionFacetTestBase is Test {
     QuexDiamond internal diamond;
-    IQuexActionRegistry internal testObject;
+    IQuexActionFacet internal testObject;
     address internal oraclePoolAddress = address(100);
     address internal consumerAddress = address(200);
     Vm.Wallet internal manager = vm.createWallet("manager");
     bytes4 internal callbackSignature = 0x12345678;
-    uint256 actionId = 15;
-    uint256 internal flowId = 111;
-    Flow flow = Flow(100, actionId, oraclePoolAddress, consumerAddress, callbackSignature);
+    uint256 internal constant actionId = 15;
+    uint256 internal constant flowId = 111;
+    Flow internal flow = Flow(100, actionId, oraclePoolAddress, consumerAddress, callbackSignature);
 
-    uint256 internal unknownFlowId = 2;
+    uint256 internal constant unknownFlowId = 2;
 
-    uint256 quexFee = 100;
-    uint256 oraclePoolFee = 150;
+    uint256 internal constant quexFee = 100;
+    uint256 internal constant oraclePoolFee = 150;
+
+    uint256 internal constant pastTimeSkew = 30 * 60;
+    uint256 internal constant futureTimeSkew = 30;
 
     function setUp() public virtual {
         diamond = new QuexDiamond();
@@ -37,7 +41,7 @@ abstract contract QuexActionFacetTestBase is Test {
         diamond.grantRole(QuexRoles.Manager, manager.addr);
         QuexActionFacet t = new QuexActionFacet();
         IERC2535DiamondCutInternal.FacetCut[] memory cuts = new IERC2535DiamondCutInternal.FacetCut[](1);
-        bytes4[] memory selectors = new bytes4[](6);
+        bytes4[] memory selectors = new bytes4[](9);
 
         selectors[0] = QuexActionFacet.createRequest.selector;
         selectors[1] = QuexActionFacet.getRequestFee.selector;
@@ -45,6 +49,9 @@ abstract contract QuexActionFacetTestBase is Test {
         selectors[3] = QuexActionFacet.getQuexGas.selector;
         selectors[4] = QuexActionFacet.setQuexGas.selector;
         selectors[5] = QuexActionFacet.fulfillRequest.selector;
+        selectors[6] = QuexActionFacet.setTimeSkew.selector;
+        selectors[7] = QuexActionFacet.getTimeSkew.selector;
+        selectors[8] = QuexActionFacet.getRequest.selector;
 
         cuts[0] = IERC2535DiamondCutInternal.FacetCut({
             target: address(t),
@@ -52,7 +59,7 @@ abstract contract QuexActionFacetTestBase is Test {
             selectors: selectors
         });
         diamond.diamondCut(cuts, address(0), "");
-        testObject = IQuexActionRegistry(address(diamond));
+        testObject = IQuexActionFacet(address(diamond));
 
         vm.txGasPrice(1000);
         vm.mockCall(address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, flowId), abi.encode(flow));

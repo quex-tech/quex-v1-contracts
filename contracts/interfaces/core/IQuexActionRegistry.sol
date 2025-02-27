@@ -23,6 +23,12 @@ struct ETHSignature {
     uint8 v;
 }
 
+struct Request {
+    uint256 requestId;
+    uint256 flowId;
+    address oraclePool;
+}
+
 interface IQuexActionRegistry {
     error Flow_NotFound();
     error Request_NotFound();
@@ -30,6 +36,8 @@ interface IQuexActionRegistry {
     error TrustDomain_NotValid();
     error TrustDomain_IsNotAllowedInOraclePool();
     error OracleMessage_SignatureIsInvalid();
+    error OracleMessage_OutdatedMessage();
+    error OracleMessage_TimestampFromFuture();
     error InsufficientValue();
 
     event RequestCreated(uint256 requestId, uint256 flowId, address oraclePool);
@@ -38,4 +46,5 @@ interface IQuexActionRegistry {
     function createRequest(uint256 flowId) external payable returns (uint256 requestId);
     function fulfillRequest(OracleMessage memory message, ETHSignature memory signature, uint256 requestId, uint256 tdId) external;
     function getRequestFee(uint256 flowId) external view returns (uint256 nativeFee, uint256 gasFee);
+    function getRequest(uint256 requestId) external view returns (Request memory request);
 }

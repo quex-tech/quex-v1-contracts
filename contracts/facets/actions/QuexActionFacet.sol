@@ -36,10 +36,10 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
             revert InsufficientValue();
         }
 
-        payable(quexMonetary.getTreasury()).transfer(quexFee);
+        payable(quexMonetary.getTreasury()).call{value: quexFee}("");
         if (msg.value > quexFee) {
             // todo: process situation when msg.sender is not payable
-            payable(msg.sender).transfer(msg.value - quexFee);
+            payable(msg.sender).call{value: msg.value - quexFee}("");
         }
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, flowId, message.dataItem, IdType.FlowId);
@@ -81,10 +81,19 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
 
         if (msg.value > requestPrice) {
             // todo: process situation when msg.sender is not payable
-            payable(msg.sender).transfer(msg.value - requestPrice);
+            payable(msg.sender).call{value: msg.value - requestPrice}("");
         }
 
         return requestId;
+    }
+
+    function getRequest(uint256 requestId) external view returns (Request memory request) {
+        QuexActionStorage.Request memory internalRequestModel = QuexActionStorage.layout().requests[requestId];
+        if (internalRequestModel.flowId == 0) {
+            return Request(0, 0, address(0));
+        }
+        Flow memory flow = IFlowRegistry(address(this)).getFlow(internalRequestModel.flowId);
+        return Request(requestId, internalRequestModel.flowId, flow.pool);
     }
 
     function fulfillRequest(
@@ -104,9 +113,9 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         _ensureOracleMessageIsValid(message, signature, flow, tdId);
 
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
-        payable(quexMonetary.getTreasury()).transfer(request.quexFee);
-        payable(IOraclePool(flow.pool).getTreasury()).transfer(request.oraclePoolFee);
-        payable(msg.sender).transfer(request.relayerPremium);
+        payable(quexMonetary.getTreasury()).call{value: request.quexFee}("");
+        payable(IOraclePool(flow.pool).getTreasury()).call{value: request.oraclePoolFee}("");
+        payable(msg.sender).call{value: request.relayerPremium}("");
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
         (bool success, ) = flow.consumer.call{gas: flow.gasLimit}(payload);
@@ -116,10 +125,6 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         } else {
             emit RequestFulfillingFailed(requestId, request.flowId, msg.sender);
         }
-    }
-
-    function getRequest(uint256 requestId) external view returns (QuexActionStorage.Request memory) {
-        return QuexActionStorage.layout().requests[requestId];
     }
 
     function getQuexGas() external view returns (uint256) {
@@ -139,6 +144,17 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         return (quexFee + oraclePoolFee, flow.gasLimit + quexFulfillingGasCost);
     }
 
+    function getTimeSkew() external view returns (uint256 pastSkewInSeconds, uint256 futureSkewInSeconds) {
+        QuexActionStorage.TimeSkewLayout storage timeSkewLayout = QuexActionStorage.timeSkewLayout();
+        return (timeSkewLayout.timeSkewPast, timeSkewLayout.timeSkewFuture);
+    }
+
+    function setTimeSkew(uint256 pastSkewInSeconds, uint256 futureSkewInSeconds) external onlyRole(QuexRoles.Manager) {
+        QuexActionStorage.TimeSkewLayout storage timeSkewLayout = QuexActionStorage.timeSkewLayout();
+        timeSkewLayout.timeSkewPast = pastSkewInSeconds;
+        timeSkewLayout.timeSkewFuture = futureSkewInSeconds;
+    }
+
     function _ensureOracleMessageIsValid(
         OracleMessage memory message,
         ETHSignature memory signature,
@@ -151,6 +167,18 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
 
         if (flow.actionId != message.actionId) {
             revert Action_MismatchIds();
+        }
+
+        QuexActionStorage.TimeSkewLayout storage timeSkewLayout = QuexActionStorage.timeSkewLayout();
+
+        if (block.timestamp > message.dataItem.timestamp
+            && block.timestamp - message.dataItem.timestamp > timeSkewLayout.timeSkewPast) {
+            revert OracleMessage_OutdatedMessage();
+        }
+
+        if (message.dataItem.timestamp > block.timestamp
+            && message.dataItem.timestamp - block.timestamp > timeSkewLayout.timeSkewFuture) {
+            revert OracleMessage_TimestampFromFuture();
         }
 
         if (!ITrustDomainRegistry(address(this)).isTDValid(tdId)) {

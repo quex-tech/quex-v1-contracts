@@ -33,8 +33,7 @@ contract QuexActionFacet_getRequestFee is QuexActionFacetTestBase {
         );
 
         vm.prank(manager.addr);
-        (bool success, ) = address(diamond).call(abi.encodeWithSelector(QuexActionFacet.setQuexGas.selector, quexGas));
-        assert(success);
+        testObject.setQuexGas(quexGas);
 
         (uint256 nativeFee, uint256 gasFee) = testObject.getRequestFee(flowId);
         assertEq(nativeFee, quexFee + poolFee);
