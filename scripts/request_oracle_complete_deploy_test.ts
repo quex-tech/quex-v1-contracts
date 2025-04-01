@@ -47,7 +47,7 @@ async function validate_interfaces(diamond: QuexDiamond) {
 
 async function configure_manager(diamond: QuexDiamond, config: RequestOracleConfig) {
     const manager = "0xc8935964ff9a146a753e867ea3890f562b75604c6d6883305d776151177a5a74";
-    await diamond.grantRole(manager, config.managerAddress);
+    await (await diamond.grantRole(manager, config.managerAddress)).wait();
 }
 
 async function set_config_values(diamond: QuexDiamond, config: RequestOracleConfig, quexCoreAddress: AddressLike) {
@@ -163,8 +163,8 @@ async function add_td(quexCoreDiamond: Contract, diamond: QuexDiamond, config: R
     const qeAuthenticationData = "0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
 
     const quoteSignature = {
-        r: BigInt("0xa876c3ed6483720a58114075de9a10f20a15bae136240d3ac5f51881478b7af5"),
-        s: BigInt("0x6e5410251d716306ebe996e58f3e6125ce485a37cca6542d9feb838726e6faae")
+        r: BigInt("0xdf6bb445b3b1de857a80227057b58dcd17e0c4c0ae2d61128a72168ce3b53a43"),
+        s: BigInt("0x305f942ad1d8f001ef94161553c5a127030193c8340a387bb3dc194ebf0a7f0c")
     };
 
     const tdQuote = {
@@ -182,12 +182,12 @@ async function add_td(quexCoreDiamond: Contract, diamond: QuexDiamond, config: R
         MROWNER: "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         MROWNERCONFIG:
             "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        RTMR0: "0x6eb0eee908583acabdcf13eaaeade5db0f6e6054cdd8f79f9c028228194a17eba72d8b8c02d59cc0a572e1646d6966ec",
-        RTMR1: "0x19e7db5a1194a023562f0f7d740ea421bd0155d4721db626833ad9f8b92714a327d14a9cc9ad4a065739b6e97faf4055",
-        RTMR2: "0x69eeefd2c35a163f747ca1452973ef1aea9151643c7422a89da11e2193f1d9b15b007a619bbd84c21190691ca6044a14",
+        RTMR0: "0x3e9ad874e1991fc4aabb42bf82384cccfa2e08308ea19164825cf650b7432c74c58db1842a69ce903cbc1a513692084a",
+        RTMR1: "0xf88085916dc4020a4820236baa57013a7aee6fc05fff338334146c67576a17bd5cc5ce85ad909283adc835007f20ad5e",
+        RTMR2: "0x831c3811fdb222d3db5752917da9f719636d6fac356da5ddae597d7a4af7a7f1d5b7bc40688c382088c8e1c7e3e511df",
         RTMR3: "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        REPORT_DATA1: "0x610e7707b0dbbed2bc6f1c66e9674955bae124e7a406ee64133d77c8bf0595c3",
-        REPORT_DATA2: "0xce6dcd75b4e289b14caf5ad4a15868a8fad54388ae091dd165e00bd5260206af"
+        REPORT_DATA1: "0xb23974e9267308bd821c34038e00072bf1e297f308227d98de387deb50f9ca2e",
+        REPORT_DATA2: "0xbed328af1471f291e53eff602130f5ab79d006ee040553016775d79261362770"
     };
 
     const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);

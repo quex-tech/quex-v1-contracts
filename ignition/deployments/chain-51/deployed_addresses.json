@@ -1,0 +1,17 @@
+{
+  "QuexDiamond#QuexDiamond": "0xD8a37e96117816D43949e72B90F73061A868b387",
+  "AddTrustDomainFacetToQuexCoreModule#TrustDomainFacetInitializer": "0x260CD223C0cB331F24a36D890b8c8aD4F1d84caB",
+  "DeployFlowFacetModule#FlowFacet": "0xcC801D5F9a5A814DA424A5c749c74648BD917A3A",
+  "DeployP256VerifierFacetModule#P256VerifierFacet": "0x25E8E2187c451F384657839a8b2C187d4f1B09D3",
+  "DeployQuexActionFacetModule#QuexActionFacet": "0x7971dC4B0ca1527967f89efE0599c510A918EDf9",
+  "DeployQuexMonetaryFacetModule#QuexMonetaryFacet": "0x3e5FBb5Dc8a7829c5052B079af6c8e2a8a31432c",
+  "DeployTrustDomainFacetModule#TrustDomainFacet": "0xd46828be8c0e884bb85415cbc3Af0C0871d2DA4A",
+  "DeployTreasuryFacetModule#TreasuryFacet": "0x7c60F9a4A4E57b09C1d0eE6dbcfe8aa8DF4B9f7b",
+  "DeployTrustDomainPolicyFacetModule#TrustDomainPolicyFacet": "0x0e402a17A7487feB71BA80f0b4ba294a1E7bF146",
+  "ProxyFactory#ProxyFactory": "0xD0dFf183E462C3a2328EC06F04efbC7A5e09fe65",
+  "DeployConstantPriceMonetaryFacetModule#ConstantPriceMonetaryFacet": "0x7A424Be6f56bC80B2E012DcCf3fe59b5A1F91C30",
+  "DeployQuexAddressFacetModule#QuexAddressFacet": "0xdADB1824B913188dd172263495C6E1b4f8d7592f",
+  "DeployRequestActionFacetModule#RequestActionFacet": "0x2531e3b0c04A0dc076B8375aE4FeBB92D43A50FF",
+  "DeployRequestOracleDiamondModule#QuexDiamond": "0x957E16D5bfa78799d79b86bBb84b3Ca34D986439",
+  "DeployRequestActionTestContractModule#RequestActionTestContract": "0xa01e6792395F4e97192dd12FE7D701Ef06aa5E94"
+}
