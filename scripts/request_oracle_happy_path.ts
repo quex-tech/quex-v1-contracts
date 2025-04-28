@@ -16,7 +16,7 @@ async function run() {
 
     const prevLastResponse = await testContract.getLastResponse();
 
-    const requestValue = quexNetworkConfig.core.quexFee * 10n * (quexNetworkConfig.coinMultiplier ?? 1n);
+    const requestValue = quexNetworkConfig.core.quexFee * 100n * (quexNetworkConfig.coinMultiplier ?? 1n);
     const tx = await testContract.createRequest({value: requestValue, gasLimit: 1_500_000});
     const txReceipt = await tx.wait();
     if (txReceipt?.status !== 1) {
@@ -27,7 +27,7 @@ async function run() {
 
     const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 60; i++) {
         const lastResponse = await testContract.getLastResponse();
         if (lastResponse[0] != prevLastResponse[0]) {
             console.log(`Attempt ${i + 1}: Test passed!`);

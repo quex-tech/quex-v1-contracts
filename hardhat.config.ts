@@ -124,6 +124,11 @@ const config: HardhatUserConfig = {
       chainId: 295,
       url: `https://mainnet.hashio.io/api`,
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    },
+    waterfallTestnet9: {
+      chainId: 1501869,
+      url: `https://rpc.testnet9.waterfall.network/`,
+      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     }
   },
   gasReporter: {

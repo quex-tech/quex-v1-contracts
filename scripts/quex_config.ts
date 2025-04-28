@@ -276,4 +276,18 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
             managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
         }
     },
+    waterfallTestnet9: {
+        disableCreate2: true,
+        core: {
+            quexFee: 4000_000_000_000_000_000_000n, // 4000 WATER
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+        }
+    }
 }
