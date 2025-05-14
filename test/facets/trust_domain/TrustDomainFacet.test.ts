@@ -77,6 +77,20 @@ describe("TrustDomainFacet", () => {
             expect(result.notAfter).to.eq(2000285410n);
         });
 
+        it("emits PlatformCAAdded event", async () => {
+            await expect(testObject.connect(owner).addPlatformCAKey(
+                platformCaCert.x,
+                platformCaCert.y,
+                platformCaCert.serial,
+                platformCaCert.notBefore,
+                platformCaCert.notAfter,
+                platformCaCert.extensions,
+                platformCaCert.r,
+                platformCaCert.s
+            )).to.emit(testObject, "PlatformCAAdded")
+            .withArgs(platformCaCert.serial);
+        });
+
         describe("reverts if", () => {
             it("signed by not root key", async () => {
                 const wrongPlatformCaCert = structuredClone(platformCaCert);
@@ -139,6 +153,24 @@ describe("TrustDomainFacet", () => {
             expect(result.y).to.eq(processorPckCert.y);
             expect(result.notBefore).to.eq(1730719464n);
             expect(result.notAfter).to.eq(1951557864n);
+        });
+
+        it("emits PCKAdded event", async () => {
+            await expect(testObject
+                .connect(nonOwner)
+                .addPCK(
+                    processorPckCert.x,
+                    processorPckCert.y,
+                    processorPckCert.serial,
+                    processorPckCert.notBefore,
+                    processorPckCert.notAfter,
+                    processorPckCert.extensions,
+                    processorPckCert.authority,
+                    processorPckCert.r,
+                    processorPckCert.s
+                ))
+                .to.emit(testObject, "PCKAdded")
+                .withArgs(processorPckCert.authority, processorPckCert.serial);
         });
 
         describe("reverts if", () => {
@@ -221,6 +253,20 @@ describe("TrustDomainFacet", () => {
             // todo: check get
         });
 
+        it("emits QEReportAdded event", async () => {
+            await expect(testObject
+                .connect(nonOwner)
+                .addQE(
+                    qeReportData,
+                    platformCaCert.serial,
+                    processorPckCert.serial,
+                    qeReportSignature.r,
+                    qeReportSignature.s
+                ))
+                .to.emit(testObject, "QEReportAdded")
+                .withArgs(1);
+        });
+
         describe("reverts if", () => {
             it("signed by not registered PCK", async () => {
                 const wrongPckSerial = BigInt("0x00cd53aca66dbd5e173beea15185ed20b13a099951");
@@ -272,6 +318,30 @@ describe("TrustDomainFacet", () => {
                     quoteSignature.s
                 ))
                 .not.to.be.rejected;
+        });
+
+        it("emits TDReportAdded event", async () => {
+            const tx = await testObject
+                .connect(nonOwner)
+                .addTD(
+                    tdQuote,
+                    1,
+                    attestationKey.x,
+                    attestationKey.y,
+                    qeAuthenticationData,
+                    quoteSignature.r,
+                    quoteSignature.s
+                );
+            
+            const receipt = await tx.wait();
+            const event = receipt?.logs[0];
+            if (!event) throw new Error("No event found");
+            const parsedEvent = testObject.interface.parseLog(event);
+            const tdId = parsedEvent?.args[0] as bigint;
+
+            await expect(tx)
+                .to.emit(testObject, "TDReportAdded")
+                .withArgs(tdId);
         });
 
         it("assign expected address", async () => {
@@ -337,14 +407,58 @@ describe("TrustDomainFacet", () => {
             await ContractHelpers.TrustDomainFacet.addPCK(diamond);
         });
 
+        it("revokes PCK", async () => {
+            await expect(testObject
+                .connect(owner)
+                .revokePCK(processorPckCert.authority, processorPckCert.serial)
+            ).not.to.be.reverted;
+
+            const pck = await testObject.getPCK(processorPckCert.authority, processorPckCert.serial);
+            expect(pck.x).to.be.eq(0n);
+        });
+
+        it("emits PCKRevoked event", async () => {
+            await expect(testObject
+                .connect(owner)
+                .revokePCK(processorPckCert.authority, processorPckCert.serial)
+            ).to.emit(testObject, "PCKRevoked")
+            .withArgs(processorPckCert.authority, processorPckCert.serial);
+        });
+
+        it("can revoke PCK after all QEs are revoked", async () => {
+            const qeId = await ContractHelpers.TrustDomainFacet.addQE(diamond);
+            
+            const qeReport = await testObject.getQE(qeId);
+            expect(qeReport.REPORT_DATA1).not.to.be.eq(0n);
+
+            await testObject
+                .connect(owner)
+                .revokeQE(qeId);
+
+            await expect(testObject
+                .connect(owner)
+                .revokePCK(processorPckCert.authority, processorPckCert.serial)
+            ).not.to.be.reverted;
+
+            const pck = await testObject.getPCK(processorPckCert.authority, processorPckCert.serial);
+            expect(pck.x).to.be.eq(0n);
+        });
+
         describe("reverts if", () => {
             it("sender is not owner", async () => {
                 await expect(testObject
                     .connect(nonOwner)
-                    .revokePCK(
-                        processorPckCert.authority,
-                        processorPckCert.serial))
-                    .to.be.revertedWithCustomError(diamond, "Ownable__NotOwner");
+                    .revokePCK(processorPckCert.authority, processorPckCert.serial)
+                ).to.be.revertedWithCustomError(diamond, "Ownable__NotOwner");
+            });
+
+            it("PCK has associated QEs", async () => {
+                await ContractHelpers.TrustDomainFacet.addQE(diamond);
+
+                await expect(testObject
+                    .connect(owner)
+                    .revokePCK(processorPckCert.authority, processorPckCert.serial)
+                ).to.be.revertedWithCustomError(trustDomainFacet, "PCKRevocation_QEExist");
             });
         });
     });
@@ -362,37 +476,33 @@ describe("TrustDomainFacet", () => {
             
             expect((await testObject.getPlatformCAKey(platformCaCert.serial)).x).to.be.eq(0n);
         });
-        
-        it("revokes all related PCKs", async () => {
-            const anotherProcessorPckCert = {
-                x: BigInt("0x99158f75763e8fc5e1dab9e542cb410e94decda1e46fdfbd57d996a7086c5731"),
-                y: BigInt("0xb77c15cb4d3d7ef849bc170c67ba18a2f3cce1c723477a0bb52bd1af274bcb8f"),
-                serial: BigInt("0xe1d36308908c642b4e39a77dfd2c18a8cf4811"),
-                notBefore: "0x3234303831353137303031395a",
-                notAfter: "0x3331303831353137303031395a",
-                extensions:
-                    "0x30820308301f0603551d23041830168014956f5dcdbd1be1e94049c9d4f433ce01570bde54306b0603551d1f046430623060a05ea05c865a68747470733a2f2f6170692e7472757374656473657276696365732e696e74656c2e636f6d2f7367782f63657274696669636174696f6e2f76342f70636b63726c3f63613d706c6174666f726d26656e636f64696e673d646572301d0603551d0e041604143e4c15958d7554ad930524d9da6600305683c508300e0603551d0f0101ff0404030206c0300c0603551d130101ff040230003082023906092a864886f84d010d010482022a30820226301e060a2a864886f84d010d010104106ca004e799459e298c07ccd7af00c24e30820163060a2a864886f84d010d0102308201533010060b2a864886f84d010d0102010201023010060b2a864886f84d010d0102020201023010060b2a864886f84d010d0102030201023010060b2a864886f84d010d0102040201023010060b2a864886f84d010d0102050201033010060b2a864886f84d010d0102060201013010060b2a864886f84d010d0102070201003010060b2a864886f84d010d0102080201033010060b2a864886f84d010d0102090201003010060b2a864886f84d010d01020a0201003010060b2a864886f84d010d01020b0201003010060b2a864886f84d010d01020c0201003010060b2a864886f84d010d01020d0201003010060b2a864886f84d010d01020e0201003010060b2a864886f84d010d01020f0201003010060b2a864886f84d010d0102100201003010060b2a864886f84d010d01021102010b301f060b2a864886f84d010d0102120410020202020301000300000000000000003010060a2a864886f84d010d0103040200003014060a2a864886f84d010d01040406b0c06f000000300f060a2a864886f84d010d01050a0101301e060a2a864886f84d010d010604103aac4e3ec60fbaf6933812a1d21169a33044060a2a864886f84d010d010730363010060b2a864886f84d010d0107010101ff3010060b2a864886f84d010d0107020101ff3010060b2a864886f84d010d0107030101ff",
-                authority: BigInt("0x956f5dcdbd1be1e94049c9d4f433ce01570bde54"),
-                r: BigInt("0x4AED5C07C590310B27F53E021634CB8B63E2B084DFFEDCF725E0D1675D6C9479"),
-                s: BigInt("0xEF8A50030D245365B227720F45AC2E11D61AE52A32C3AD57AABA0A051ABE9578"),
-            };
 
+        it("emits PlatformCARevoked event", async () => {
+            await expect(testObject
+                .connect(owner)
+                .revokePlatformCA(platformCaCert.serial)
+            ).to.emit(testObject, "PlatformCARevoked")
+            .withArgs(platformCaCert.serial);
+        });
+
+        it("can revoke platform CA after all PCKs are revoked", async () => {
             await ContractHelpers.TrustDomainFacet.addPCK(diamond);
-            await ContractHelpers.TrustDomainFacet.addPCK(diamond, anotherProcessorPckCert);
-
-            expect((await testObject.getPCK(processorPckCert.authority, processorPckCert.serial)).x).not.to.be.eq(0);
-            expect((await testObject.getPCK(anotherProcessorPckCert.authority, anotherProcessorPckCert.serial)).x).not.to.be.eq(0);
-
-            expect(processorPckCert.authority).to.eq(anotherProcessorPckCert.authority, "Test expects same platform CA for all PCKs");
+            
+            const pck = await testObject.getPCK(processorPckCert.authority, processorPckCert.serial);
+            expect(pck.x).not.to.be.eq(0n);
 
             await testObject
                 .connect(owner)
-                .revokePlatformCA(platformCaCert.serial);
+                .revokePCK(processorPckCert.authority, processorPckCert.serial);
 
-            expect((await testObject.getPCK(processorPckCert.authority, processorPckCert.serial)).x).to.be.eq(0);
-            expect((await testObject.getPCK(anotherProcessorPckCert.authority, anotherProcessorPckCert.serial)).x).to.be.eq(0);
+            await expect(testObject
+                .connect(owner)
+                .revokePlatformCA(platformCaCert.serial)
+            ).not.to.be.reverted;
+
+            expect((await testObject.getPlatformCAKey(platformCaCert.serial)).x).to.be.eq(0n);
         });
-
+        
         describe("reverts if", () => {
             it("sender is not owner", async () => {
                 await expect(testObject
@@ -400,26 +510,152 @@ describe("TrustDomainFacet", () => {
                     .revokePlatformCA(platformCaCert.serial)
                 ).to.be.revertedWithCustomError(diamond, "Ownable__NotOwner");
             });
+
+            it("platform CA has associated PCKs", async () => {
+                await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+                
+                await expect(testObject
+                    .connect(owner)
+                    .revokePlatformCA(platformCaCert.serial)
+                ).to.be.revertedWithCustomError(trustDomainFacet, "PlatformCARevocation_PCKsExist");
+            });
+        });
+    });
+
+    describe("#isTDValid", () => {
+        beforeEach(async () => {
+            await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
+            await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+            await ContractHelpers.TrustDomainFacet.addQE(diamond);
         });
 
-        describe("#isTDValid", () => {
-            beforeEach(async () => {
-                await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
-                await ContractHelpers.TrustDomainFacet.addPCK(diamond);
-                await ContractHelpers.TrustDomainFacet.addQE(diamond);
-            });
-    
-            it("returns true if TD is registered", async () => {
-                const tdId = await ContractHelpers.TrustDomainFacet.addTD(diamond);
+        it("returns true if TD is registered", async () => {
+            const tdId = await ContractHelpers.TrustDomainFacet.addTD(diamond);
 
-                expect(await testObject.isTDValid(tdId))
-                    .to.be.true;
+            expect(await testObject.isTDValid(tdId))
+                .to.be.true;
+        });
+
+        it("returns false if TD is not registered", async () => {
+            const tdId = 123
+            expect(await testObject.isTDValid(tdId))
+                .to.be.false;
+        });
+    });
+
+    describe("#revokeQE", () => {
+        let qeId: bigint;
+
+        beforeEach(async () => {
+            await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
+            await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+            qeId = await ContractHelpers.TrustDomainFacet.addQE(diamond);
+        });
+
+        it("revokes QE", async () => {
+            await expect(testObject
+                .connect(owner)
+                .revokeQE(qeId)
+            ).not.to.be.reverted;
+
+            const qeReport = await testObject.getQE(qeId);
+            expect(qeReport.REPORT_DATA1).to.equal(0n);
+        });
+
+        it("emits QEReportRevoked event", async () => {
+            await expect(testObject
+                .connect(owner)
+                .revokeQE(qeId)
+            ).to.emit(testObject, "QEReportRevoked")
+            .withArgs(qeId);
+        });
+
+        it("can revoke QE after its TD is revoked", async () => {
+            const tdId = await ContractHelpers.TrustDomainFacet.addTD(diamond);
+            
+            await expect(testObject
+                .connect(owner)
+                .revokeTD(tdId)
+            ).not.to.be.reverted;
+
+            await expect(testObject
+                .connect(owner)
+                .revokeQE(qeId)
+            ).not.to.be.reverted;
+
+            const qeReport = await testObject.getQE(qeId);
+            expect(qeReport.REPORT_DATA1).to.equal(0n);
+        });
+
+        describe("reverts if", () => {
+            it("sender is not owner", async () => {
+                await expect(testObject
+                    .connect(nonOwner)
+                    .revokeQE(qeId)
+                ).to.be.revertedWithCustomError(diamond, "Ownable__NotOwner");
             });
-    
-            it("returns false if TD is not registered", async () => {
-                const tdId = 123
-                expect(await testObject.isTDValid(tdId))
-                    .to.be.false;
+
+            it("QE has associated TDs", async () => {
+                await ContractHelpers.TrustDomainFacet.addTD(diamond);
+
+                await expect(testObject
+                    .connect(owner)
+                    .revokeQE(qeId)
+                ).to.be.revertedWithCustomError(trustDomainFacet, "QERevocation_TDExist");
+            });
+        });
+    });
+
+    describe("#revokeTD", () => {
+        let tdId: bigint;
+
+        beforeEach(async () => {
+            await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
+            await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+            await ContractHelpers.TrustDomainFacet.addQE(diamond);
+            // Add TD and store its ID
+            const tx = await testObject.addTD(
+                tdQuote,
+                1,
+                attestationKey.x,
+                attestationKey.y,
+                qeAuthenticationData,
+                quoteSignature.r,
+                quoteSignature.s
+            );
+            const receipt = await tx.wait();
+            const event = receipt?.logs[0];
+            if (!event) throw new Error("No event found");
+            const parsedEvent = testObject.interface.parseLog(event);
+            tdId = parsedEvent?.args[0] as bigint;
+        });
+
+        it("revokes TD", async () => {
+            await expect(testObject
+                .connect(owner)
+                .revokeTD(tdId)
+            ).not.to.be.reverted;
+
+            // Verify TD is revoked by checking its data is cleared
+            const tdQuote = await testObject.getTD(tdId);
+            expect(tdQuote.REPORT_DATA1).to.equal(0n);
+            expect(await testObject.getTDSignerAddress(tdId)).to.equal(ethers.ZeroAddress);
+        });
+
+        it("emits TDReportRevoked event", async () => {
+            await expect(testObject
+                .connect(owner)
+                .revokeTD(tdId)
+            ).to.emit(testObject, "TDReportRevoked")
+            .withArgs(tdId);
+        });
+
+        describe("reverts if", () => {
+            it("sender is not owner", async () => {
+                await expect(testObject
+                    .connect(nonOwner)
+                    .revokeTD(tdId)
+                ).to.be.revertedWithCustomError(diamond, "Ownable__NotOwner");
             });
         });
     });

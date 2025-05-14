@@ -149,6 +149,8 @@ export namespace ContractHelpers {
                         // revoke
                         facet.interface.getFunction("revokePlatformCA").selector,
                         facet.interface.getFunction("revokePCK").selector,
+                        facet.interface.getFunction("revokeQE").selector,
+                        facet.interface.getFunction("revokeTD").selector,
 
                         // get
                         facet.interface.getFunction("getRootKey").selector,
@@ -199,7 +201,7 @@ export namespace ContractHelpers {
 
         export async function addQE(diamond: QuexDiamond) {
             const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
-            await tdRegistry
+            const tx = await tdRegistry
                 .addQE(
                     TestData.qeReportData,
                     TestData.platformCaCert.serial,
@@ -207,6 +209,8 @@ export namespace ContractHelpers {
                     TestData.qeReportSignature.r,
                     TestData.qeReportSignature.s
                 );
+            const txReceipt = await tx.wait();
+            return (<EventLog>txReceipt?.logs[0]).args[0];
         }
 
         export async function addTD(diamond: QuexDiamond) {
