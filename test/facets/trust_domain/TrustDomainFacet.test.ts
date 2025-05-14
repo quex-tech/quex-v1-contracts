@@ -659,4 +659,87 @@ describe("TrustDomainFacet", () => {
             });
         });
     });
+
+    describe("#getPCKCounterByPlatformCA", () => {
+        beforeEach(async () => {
+            await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
+        });
+
+        it("returns 0 for new platform CA", async () => {
+            expect(await testObject.getPCKCounterByPlatformCA(platformCaCert.serial))
+                .to.equal(0n);
+        });
+
+        it("increments when PCK is added", async () => {
+            await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+            expect(await testObject.getPCKCounterByPlatformCA(platformCaCert.serial))
+                .to.equal(1n);
+        });
+
+        it("decrements when PCK is revoked", async () => {
+            await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+            await testObject
+                .connect(owner)
+                .revokePCK(processorPckCert.authority, processorPckCert.serial);
+            expect(await testObject.getPCKCounterByPlatformCA(platformCaCert.serial))
+                .to.equal(0n);
+        });
+    });
+
+    describe("#getQECounterByProcessorPCK", () => {
+        beforeEach(async () => {
+            await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
+            await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+        });
+
+        it("returns 0 for new PCK", async () => {
+            expect(await testObject.getQECounterByProcessorPCK(processorPckCert.authority, processorPckCert.serial))
+                .to.equal(0n);
+        });
+
+        it("increments when QE is added", async () => {
+            await ContractHelpers.TrustDomainFacet.addQE(diamond);
+            expect(await testObject.getQECounterByProcessorPCK(processorPckCert.authority, processorPckCert.serial))
+                .to.equal(1n);
+        });
+
+        it("decrements when QE is revoked", async () => {
+            const qeId = await ContractHelpers.TrustDomainFacet.addQE(diamond);
+            await testObject
+                .connect(owner)
+                .revokeQE(qeId);
+            expect(await testObject.getQECounterByProcessorPCK(processorPckCert.authority, processorPckCert.serial))
+                .to.equal(0n);
+        });
+    });
+
+    describe("#getTDCounterByQE", () => {
+        beforeEach(async () => {
+            await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
+            await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+        });
+
+        it("returns 0 for new QE", async () => {
+            const qeId = await ContractHelpers.TrustDomainFacet.addQE(diamond);
+            expect(await testObject.getTDCounterByQE(qeId))
+                .to.equal(0n);
+        });
+
+        it("increments when TD is added", async () => {
+            const qeId = await ContractHelpers.TrustDomainFacet.addQE(diamond);
+            await ContractHelpers.TrustDomainFacet.addTD(diamond);
+            expect(await testObject.getTDCounterByQE(qeId))
+                .to.equal(1n);
+        });
+
+        it("decrements when TD is revoked", async () => {
+            const qeId = await ContractHelpers.TrustDomainFacet.addQE(diamond);
+            const tdId = await ContractHelpers.TrustDomainFacet.addTD(diamond);
+            await testObject
+                .connect(owner)
+                .revokeTD(tdId);
+            expect(await testObject.getTDCounterByQE(qeId))
+                .to.equal(0n);
+        });
+    });
 });

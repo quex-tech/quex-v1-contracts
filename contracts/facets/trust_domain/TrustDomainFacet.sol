@@ -196,6 +196,18 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         emit TDReportRevoked(tdId);
     }
 
+    function getPCKCounterByPlatformCA(uint256 platformSerial) external view returns (uint256) {
+        return TrustDomainStorage.certificateLayout().pckCounterByPlatformCA[platformSerial];
+    }
+    
+    function getQECounterByProcessorPCK(uint256 platformSerial, uint256 pckSerial) external view returns (uint256) {
+        return TrustDomainStorage.certificateLayout().qeCounterByProcessorPCK[platformSerial][pckSerial];
+    }
+
+    function getTDCounterByQE(uint256 qeId) external view returns (uint256) {
+        return TrustDomainStorage.qeLayout().tdCounterByQE[qeId];
+    }
+
     function _convertPublicKeyToAddress(bytes memory publicKey) private pure returns (address) {
         require(publicKey.length == 64, "Invalid public key length");
         bytes32 hash = keccak256(publicKey);

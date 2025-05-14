@@ -109,6 +109,12 @@ interface ITrustDomainRegistry {
     function getQEId(uint256 tdId) external view returns (uint256 qeId);
 
     function getQEAuthority(uint256 qeId) external view returns (uint256 platformSerial, uint256 pckSerial);
+
+    function getPCKCounterByPlatformCA(uint256 platformSerial) external view returns (uint256);
+    
+    function getQECounterByProcessorPCK(uint256 platformSerial, uint256 pckSerial) external view returns (uint256);
+
+    function getTDCounterByQE(uint256 qeId) external view returns (uint256);
 }
 
 interface ITrustDomainRegistryExtended is ITrustDomainRegistry {

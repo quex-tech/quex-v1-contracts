@@ -160,6 +160,11 @@ export namespace ContractHelpers {
                         facet.interface.getFunction("getTD").selector,
                         facet.interface.getFunction("isTDValid").selector,
                         facet.interface.getFunction("getTDSignerAddress").selector,
+
+                        // get counters
+                        facet.interface.getFunction("getPCKCounterByPlatformCA").selector,
+                        facet.interface.getFunction("getQECounterByProcessorPCK").selector,
+                        facet.interface.getFunction("getTDCounterByQE").selector,
                     ]
                 }
             ];
