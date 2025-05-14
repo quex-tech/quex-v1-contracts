@@ -108,18 +108,32 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     ) external returns (uint256 tdId) {
         QuoteVerifier.ensureTDQuoteIsValid(tdQuote, qeId, x, y, authenticationData, r, s);
         TrustDomainStorage.TDLayout storage layout = TrustDomainStorage.tdLayout();
+        TrustDomainStorage.CertificateLayout storage certLayout = TrustDomainStorage.certificateLayout();
+        TrustDomainStorage.QELayout storage qeLayout = TrustDomainStorage.qeLayout();
 
         tdId = _calculateTDId(tdQuote);
 
         bytes memory publicKey = abi.encodePacked(tdQuote.REPORT_DATA1, tdQuote.REPORT_DATA2);
         address tdAddress = _convertPublicKeyToAddress(publicKey);
 
+        // Get certificate chain validity timestamps
+        TrustDomainStorage.QEAuthority memory authority = qeLayout.qeAuthorities[qeId];
+        ECKey memory rootCA = certLayout.rootCA;
+        ECKey memory platformCA = certLayout.platformCAs[authority.platformSerial];
+        ECKey memory pck = certLayout.processorPCKs[authority.platformSerial][authority.pckSerial];
+
+        // Find minimum validity timestamp
+        uint256 minValidity = rootCA.notAfter;
+        if (platformCA.notAfter < minValidity) minValidity = platformCA.notAfter;
+        if (pck.notAfter < minValidity) minValidity = pck.notAfter;
+
         // TODO Optimize storage
         layout.tdQuotes[tdId] = tdQuote;
         layout.tdToQe[tdId] = qeId;
         layout.tdSignerAddress[tdId] = tdAddress;
+        layout.tdValidityEnd[tdId] = minValidity;
 
-        TrustDomainStorage.qeLayout().tdCounterByQE[qeId]++;
+        qeLayout.tdCounterByQE[qeId]++;
 
         emit TDReportAdded(tdId);
 
@@ -127,8 +141,8 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     }
 
     function isTDValid(uint256 tdId) external view returns (bool) {
-        // todo: check QE/certs validity?
-        return TrustDomainStorage.tdLayout().tdQuotes[tdId].REPORT_DATA1 != 0;
+        TrustDomainStorage.TDLayout storage layout = TrustDomainStorage.tdLayout();
+        return layout.tdQuotes[tdId].REPORT_DATA1 != 0 && block.timestamp <= layout.tdValidityEnd[tdId];
     }
 
     function getTDSignerAddress(uint256 tdId) external view returns (address) {

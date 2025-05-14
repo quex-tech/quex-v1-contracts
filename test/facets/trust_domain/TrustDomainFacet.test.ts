@@ -541,6 +541,29 @@ describe("TrustDomainFacet", () => {
             expect(await testObject.isTDValid(tdId))
                 .to.be.false;
         });
+
+        it("returns false if TD is revoked", async () => {
+            const tdId = await ContractHelpers.TrustDomainFacet.addTD(diamond);
+            await testObject.connect(owner).revokeTD(tdId);
+
+            expect(await testObject.isTDValid(tdId))
+                .to.be.false;
+        });
+
+        it("returns false if TD certificate is expired", async () => {
+            const tdId = await ContractHelpers.TrustDomainFacet.addTD(diamond);
+            
+            // Get the validity end timestamp from storage
+            const qeId = await testObject.getQEId(tdId);
+            const [platformSerial, pckSerial] = await testObject.getQEAuthority(qeId);
+            const pck = await testObject.getPCK(platformSerial, pckSerial);
+            
+            // Move time past the certificate expiration
+            await time.increaseTo(pck.notAfter + 1n);
+
+            expect(await testObject.isTDValid(tdId))
+                .to.be.false;
+        });
     });
 
     describe("#revokeQE", () => {

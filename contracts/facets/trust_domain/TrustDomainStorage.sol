@@ -29,6 +29,7 @@ library TrustDomainStorage {
         mapping(uint256 => TDQuote) tdQuotes;
         mapping(uint256 => uint256) tdToQe;
         mapping(uint256 => address) tdSignerAddress;
+        mapping(uint256 => uint256) tdValidityEnd;
     }
 
     bytes32 internal constant CERT_STORAGE_SLOT = keccak256("quex.contracts.storage.TrustDomain.Certificate");
