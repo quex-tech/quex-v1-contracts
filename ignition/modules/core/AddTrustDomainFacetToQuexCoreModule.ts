@@ -25,6 +25,8 @@ const AddTrustDomainFacetToQuexCoreModule = buildModule("AddTrustDomainFacetToQu
                 // revoke
                 facetInterface.getFunction("revokePlatformCA").selector,
                 facetInterface.getFunction("revokePCK").selector,
+                facetInterface.getFunction("revokeQE").selector,
+                facetInterface.getFunction("revokeTD").selector,
 
                 // get
                 facetInterface.getFunction("getRootKey").selector,
@@ -36,6 +38,11 @@ const AddTrustDomainFacetToQuexCoreModule = buildModule("AddTrustDomainFacetToQu
                 facetInterface.getFunction("getTD").selector,
                 facetInterface.getFunction("isTDValid").selector,
                 facetInterface.getFunction("getTDSignerAddress").selector,
+
+                // get counters
+                facetInterface.getFunction("getPCKCounterByPlatformCA").selector,
+                facetInterface.getFunction("getQECounterByProcessorPCK").selector,
+                facetInterface.getFunction("getTDCounterByQE").selector,
             ]
         }
     ];
