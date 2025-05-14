@@ -13,13 +13,16 @@ library TrustDomainStorage {
         ECKey rootCA;
         mapping(uint256 => ECKey) platformCAs;
         mapping(uint256 => mapping(uint256 => ECKey)) processorPCKs;
-        mapping(uint256 => uint256[]) processorPCKSerials;
+        mapping(uint256 => uint256[]) depricated1;
+        mapping(uint256 => uint256) pckCounterByPlatformCA;
+        mapping(uint256 => mapping(uint256 => uint256)) qeCounterByProcessorPCK;
     }
 
     struct QELayout {
         mapping(uint256 => QEReport) qeReports;
         mapping(uint256 => QEAuthority) qeAuthorities;
         uint256 qeReportsCounter;
+        mapping(uint256 => uint256) tdCounterByQE;
     }
 
     struct TDLayout {

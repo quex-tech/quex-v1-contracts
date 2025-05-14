@@ -10,6 +10,9 @@ import {DateTimeLib} from "solady/src/utils/DateTimeLib.sol";
 
 contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     error Certificate_WrongValidityPeriod();
+    error PlatformCARevocation_PCKsExist();
+    error PCKRevocation_QEExist();
+    error QERevocation_TDExist();
 
     function getRootKey() external view returns(ECKey memory) {
         return TrustDomainStorage.certificateLayout().rootCA;
@@ -33,6 +36,8 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
 
         QuoteVerifier.ensurePlatformCAKeyIsValid(x, y, serial, notBefore, extensions, r, s);
         TrustDomainStorage.certificateLayout().platformCAs[serial] = ECKey(x, y, _fromDERToTimestamp(notBefore), _fromDERToTimestamp(notAfter));
+
+        emit PlatformCAAdded(serial);
     }
 
     function getPlatformCAKey(uint256 serial) external view returns(ECKey memory) {
@@ -60,29 +65,13 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
 
         TrustDomainStorage.CertificateLayout storage layout = TrustDomainStorage.certificateLayout();
         layout.processorPCKs[authority][serial] = ECKey(x, y, notBeforeTimestamp, notAfterTimestamp);
-        layout.processorPCKSerials[authority].push(serial);
+        layout.pckCounterByPlatformCA[authority]++;
+
+        emit PCKAdded(authority, serial);
     }
 
     function getPCK(uint256 platformSerial, uint256 pckSerial) external view returns (ECKey memory) {
         return TrustDomainStorage.certificateLayout().processorPCKs[platformSerial][pckSerial];
-    }
-
-    function revokePCK(uint256 platformSerial, uint256 pckSerial) external onlyOwner {
-        delete TrustDomainStorage.certificateLayout().processorPCKs[platformSerial][pckSerial];
-    }
-
-    // TODO rewrite such that unneeded items are popped
-    function revokePlatformCA(uint256 serial) external onlyOwner {
-        TrustDomainStorage.CertificateLayout storage layout = TrustDomainStorage.certificateLayout();
-        delete layout.platformCAs[serial];
-        uint256 curr_len = layout.processorPCKSerials[serial].length;
-
-        while (curr_len > 0) {
-            uint256 pck_serial = layout.processorPCKSerials[serial][curr_len - 1];
-            delete layout.processorPCKs[serial][pck_serial];
-            layout.processorPCKSerials[serial].pop();
-            curr_len -= 1;
-        }
     }
 
     function addQE(
@@ -100,6 +89,8 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         layout.qeAuthorities[qeId] = TrustDomainStorage.QEAuthority(platformSerial, pckSerial);
         layout.qeReports[qeId] = qeReport;
         layout.qeReportsCounter++;
+
+        TrustDomainStorage.certificateLayout().qeCounterByProcessorPCK[platformSerial][pckSerial]++;
 
         emit QEReportAdded(qeId);
 
@@ -127,6 +118,8 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         layout.tdQuotes[tdId] = tdQuote;
         layout.tdToQe[tdId] = qeId;
         layout.tdSignerAddress[tdId] = tdAddress;
+
+        TrustDomainStorage.qeLayout().tdCounterByQE[qeId]++;
 
         emit TDReportAdded(tdId);
 
@@ -157,6 +150,50 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     function getQEAuthority(uint256 qeId) external view returns (uint256 platformSerial, uint256 pckSerial) {
         TrustDomainStorage.QEAuthority memory authority = TrustDomainStorage.qeLayout().qeAuthorities[qeId];
         return (authority.platformSerial, authority.pckSerial);
+    }
+
+    function revokePlatformCA(uint256 serial) external onlyOwner {
+        TrustDomainStorage.CertificateLayout storage layout = TrustDomainStorage.certificateLayout();
+        if (layout.pckCounterByPlatformCA[serial] > 0) {
+            revert PlatformCARevocation_PCKsExist();
+        }
+        delete layout.platformCAs[serial];
+
+        emit PlatformCARevoked(serial);
+    }
+
+    function revokePCK(uint256 platformSerial, uint256 pckSerial) external onlyOwner {
+        TrustDomainStorage.CertificateLayout storage layout = TrustDomainStorage.certificateLayout();
+        if (layout.qeCounterByProcessorPCK[platformSerial][pckSerial] > 0) {
+            revert PCKRevocation_QEExist();
+        }
+        delete layout.processorPCKs[platformSerial][pckSerial];
+        layout.pckCounterByPlatformCA[platformSerial]--;
+
+        emit PCKRevoked(platformSerial, pckSerial);
+    }
+
+    function revokeQE(uint256 qeId) external onlyOwner {
+        TrustDomainStorage.QELayout storage layout = TrustDomainStorage.qeLayout();
+        if (layout.tdCounterByQE[qeId] > 0) {
+            revert QERevocation_TDExist();
+        }
+        TrustDomainStorage.QEAuthority memory authority = layout.qeAuthorities[qeId];
+        delete layout.qeReports[qeId];
+        delete layout.qeAuthorities[qeId];
+        TrustDomainStorage.certificateLayout().qeCounterByProcessorPCK[authority.platformSerial][authority.pckSerial]--;
+
+        emit QEReportRevoked(qeId);
+    }
+
+    function revokeTD(uint256 tdId) external onlyOwner {
+        TrustDomainStorage.TDLayout storage layout = TrustDomainStorage.tdLayout();
+        TrustDomainStorage.qeLayout().tdCounterByQE[layout.tdToQe[tdId]]--;
+        delete layout.tdQuotes[tdId];
+        delete layout.tdSignerAddress[tdId];
+        delete layout.tdToQe[tdId];
+
+        emit TDReportRevoked(tdId);
     }
 
     function _convertPublicKeyToAddress(bytes memory publicKey) private pure returns (address) {
