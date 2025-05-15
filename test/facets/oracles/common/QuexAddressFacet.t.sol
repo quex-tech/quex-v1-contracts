@@ -46,4 +46,10 @@ contract QuexAddressFacetTest is Test {
         vm.expectRevert();
         testObject.setQuexAddress(address(100));
     }
+
+    function test_setQuexAddress_RevertsIf_AddressIsZero() public {
+        vm.prank(manager);
+        vm.expectRevert("Quex address cannot be 0");
+        testObject.setQuexAddress(address(0));
+    }
 }

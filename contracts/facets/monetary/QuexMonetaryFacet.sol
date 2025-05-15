@@ -21,6 +21,7 @@ contract QuexMonetaryFacet is IQuexMonetary, AccessControlInternal {
     }
 
     function setTreasury(address treasuryAddress) external onlyRole(QuexRoles.Manager) {
+        require(treasuryAddress != address(0), "Treasury cannot be zero address");
         QuexMonetaryStorage.layout().treasuryAddress = treasuryAddress;
     }
 }

@@ -46,4 +46,10 @@ contract TreasuryFacetTest is Test {
         vm.expectRevert();
         testObject.setTreasury(treasuryAddress);
     }
+
+    function test_setTreasury_RevertsIf_ZeroAddress() public {
+        vm.prank(manager);
+        vm.expectRevert("Treasury cannot be zero address");
+        testObject.setTreasury(address(0));
+    }
 }
