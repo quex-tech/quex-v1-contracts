@@ -15,7 +15,7 @@ contract ConstantPriceMonetaryFacetTest is Test {
 
     function setUp() public virtual {
         diamond = new QuexDiamond();
-        diamond.init();
+        diamond.init(address(this));
         diamond.grantRole(QuexRoles.Manager, manager);
 
         ConstantPriceMonetaryFacet facet = new ConstantPriceMonetaryFacet();

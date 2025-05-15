@@ -36,7 +36,7 @@ describe("TrustDomainFacet", () => {
 
     beforeEach(async () => {
         diamond = await new QuexDiamond__factory(owner).deploy();
-        await diamond.init();
+        await diamond.init(owner.address);
         await ContractHelpers.P256VerifierFacet.createAndAddToDiamond(diamond, owner);
         trustDomainFacet = await ContractHelpers.TrustDomainFacet.createAndAddToDiamond(diamond, owner);
         testObject = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);

@@ -15,7 +15,7 @@ contract QuexAddressFacetTest is Test {
 
     function setUp() public virtual {
         diamond = new QuexDiamond();
-        diamond.init();
+        diamond.init(address(this));
         diamond.grantRole(QuexRoles.Manager, manager);
 
         QuexAddressFacet facet = new QuexAddressFacet();
