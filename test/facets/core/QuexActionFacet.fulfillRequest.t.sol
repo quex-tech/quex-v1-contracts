@@ -5,7 +5,7 @@ import {QuexActionFacetTestDataBase} from "./QuexActionFacet.t.sol";
 import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
 import {IdType, DataItem, OracleMessage, ETHSignature, IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
-
+import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
 contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     uint256 requestPrice;
 
@@ -254,6 +254,30 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         emit QuexActionFacet.RequestFulfillingFailed(requestId, flowId, address(this));
 
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
+    }
+
+    function test_RevertsIf_SignatureIsMalleable() public {
+        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        TDTestData memory td = TD_validInQuex_inOraclePool;
+
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        ETHSignature memory signature = _signOracleMessage(message, td);
+
+        // Create a malleable signature by modifying the s value
+        // In ECDSA, if (s > n/2) then s' = n - s is also a valid signature
+        // We'll modify the s value to create a malleable signature
+        uint256 n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141; // secp256k1 curve order
+        bytes32 malleableS = bytes32(n - uint256(signature.s));
+        
+        // Create a new signature with the malleable s value
+        ETHSignature memory malleableSignature = ETHSignature(
+            signature.r,
+            malleableS,
+            signature.v == 27 ? 28 : 27
+        );
+
+        vm.expectRevert(ECDSA.ECDSA__InvalidS.selector);
+        testObject.fulfillRequest(message, malleableSignature, requestId, td.tdId);
     }
 
     function callback_Reenter(uint256 requestId, DataItem memory dataItem, IdType /* idType */) public {

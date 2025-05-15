@@ -10,6 +10,7 @@ import "./QuexActionStorage.sol";
 
 import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 import {ReentrancyGuard} from "@solidstate/contracts/security/reentrancy_guard/ReentrancyGuard.sol";
+import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
 import {ITrustDomainRegistry} from "../../interfaces/core/ITrustDomainRegistry.sol";
 
 contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyGuard {
@@ -202,7 +203,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
     ) private pure returns (bool) {
         bytes memory message = abi.encode(oracleMessage);
         bytes32 messageHash = keccak256(message);
-        bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
-        return ecrecover(ethSignedMessageHash, signature.v, signature.r, signature.s) == tdAddress;
+        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(messageHash);
+        return ECDSA.recover(ethSignedMessageHash, signature.v, signature.r, signature.s) == tdAddress;
     }
 }

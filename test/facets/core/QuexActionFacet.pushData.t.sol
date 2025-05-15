@@ -5,7 +5,7 @@ import {QuexActionFacetTestDataBase} from "./QuexActionFacet.t.sol";
 import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
 import {IdType, DataItem, OracleMessage, ETHSignature, IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
-
+import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
 contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
     uint256 internal pushFee = quexFee;
 
@@ -162,6 +162,30 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         emit QuexActionFacet.DataPushingFailed(flowId, address(this));
 
         testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
+    }
+
+    function test_RevertsIf_SignatureIsMalleable() public {
+        TDTestData memory td = TD_validInQuex_inOraclePool;
+        TDTestData memory signerTD = TD_validInQuex_notInOraclePool;
+
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        ETHSignature memory signature = _signOracleMessage(message, signerTD);
+ 
+        // Create a malleable signature by modifying the s value
+        // In ECDSA, if (s > n/2) then s' = n - s is also a valid signature
+        // We'll modify the s value to create a malleable signature
+        uint256 n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141; // secp256k1 curve order
+        bytes32 malleableS = bytes32(n - uint256(signature.s));
+        
+        // Create a new signature with the malleable s value
+        ETHSignature memory malleableSignature = ETHSignature(
+            signature.r,
+            malleableS,
+            signature.v == 27 ? 28 : 27
+        );
+
+        vm.expectRevert(ECDSA.ECDSA__InvalidS.selector);
+        testObject.pushData{value: pushFee}(message, malleableSignature, flowId, td.tdId);
     }
 
     function callback_Reenter(uint256 flowId, DataItem memory dataItem, IdType /* idType */) public {
