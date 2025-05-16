@@ -25,6 +25,7 @@ const AddQuexActionFacetToQuexCoreModule = buildModule("AddQuexActionFacetToQuex
                 facetInterface.getFunction("getQuexGas").selector,
                 facetInterface.getFunction("setQuexGas").selector,
                 facetInterface.getFunction("getRequest").selector,
+                facetInterface.getFunction("cancelRequest").selector,
 
                 // push
                 facetInterface.getFunction("pushData").selector

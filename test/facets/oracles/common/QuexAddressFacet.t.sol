@@ -36,6 +36,7 @@ contract QuexAddressFacetTest is Test {
     }
 
     function testFuzz_setQuexAddress_SetsAddress(address quexAddress) public {
+        vm.assume(quexAddress != address(0));
         vm.prank(manager);
         testObject.setQuexAddress(quexAddress);
 

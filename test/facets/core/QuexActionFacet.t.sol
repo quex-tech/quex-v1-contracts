@@ -41,7 +41,7 @@ abstract contract QuexActionFacetTestBase is Test {
         diamond.grantRole(QuexRoles.Manager, manager.addr);
         QuexActionFacet t = new QuexActionFacet();
         IERC2535DiamondCutInternal.FacetCut[] memory cuts = new IERC2535DiamondCutInternal.FacetCut[](1);
-        bytes4[] memory selectors = new bytes4[](9);
+        bytes4[] memory selectors = new bytes4[](10);
 
         selectors[0] = QuexActionFacet.createRequest.selector;
         selectors[1] = QuexActionFacet.getRequestFee.selector;
@@ -52,6 +52,7 @@ abstract contract QuexActionFacetTestBase is Test {
         selectors[6] = QuexActionFacet.setTimeSkew.selector;
         selectors[7] = QuexActionFacet.getTimeSkew.selector;
         selectors[8] = QuexActionFacet.getRequest.selector;
+        selectors[9] = QuexActionFacet.cancelRequest.selector;
 
         cuts[0] = IERC2535DiamondCutInternal.FacetCut({
             target: address(t),

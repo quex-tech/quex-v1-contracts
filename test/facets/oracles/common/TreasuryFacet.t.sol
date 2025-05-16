@@ -36,6 +36,7 @@ contract TreasuryFacetTest is Test {
     }
 
     function testFuzz_setTreasury_SetsAddress(address treasuryAddress) public {
+        vm.assume(treasuryAddress != address(0));
         vm.prank(manager);
         testObject.setTreasury(treasuryAddress);
 

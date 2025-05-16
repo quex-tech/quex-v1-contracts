@@ -7,6 +7,8 @@ library QuexActionStorage {
         uint256 quexFee;
         uint256 relayerPremium;
         uint256 oraclePoolFee;
+        uint256 createdBlockNumber;
+        address owner;
     }
 
     struct Layout {
