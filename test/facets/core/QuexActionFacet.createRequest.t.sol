@@ -58,7 +58,7 @@ contract OraclePoolWithReenterToCreateRequest {
         console.log(flowId);
     }
 
-    function getActionFee(uint256 actionId) external returns (uint256) {
+    function getActionFee(uint256) external returns (uint256) {
         console.log(quexCoreAddress);
         console.log(flowId);
         IQuexActionRegistry(quexCoreAddress).createRequest(flowId);
