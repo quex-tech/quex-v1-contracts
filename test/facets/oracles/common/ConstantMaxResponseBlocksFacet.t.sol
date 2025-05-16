@@ -39,7 +39,7 @@ contract ConstantMaxResponseBlocksFacetTest is Test {
         vm.prank(manager);
         testObject.setMaxResponseBlocks(blocks);
 
-        vm.assertEq(blocks, testObject.getMaxResponseBlocks());
+        vm.assertEq(blocks, testObject.getMaxResponseBlocks(0));
     }
 
     function test_setMaxResponseBlocks_RevertsIf_CallerIsNotManager() public {

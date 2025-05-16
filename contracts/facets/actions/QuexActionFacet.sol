@@ -143,7 +143,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
 
         Flow memory flow = IFlowRegistry(address(this)).getFlow(request.flowId);
-        uint256 maxResponseBlocks = IOraclePool(flow.pool).getMaxResponseBlocks();
+        uint256 maxResponseBlocks = IOraclePool(flow.pool).getMaxResponseBlocks(flow.actionId);
         if (block.number - request.createdBlockNumber < maxResponseBlocks) {
             revert Request_TooFreshToCancel();
         }
