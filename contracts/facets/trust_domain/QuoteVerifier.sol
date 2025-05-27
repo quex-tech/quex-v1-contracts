@@ -45,7 +45,7 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        ECKey memory authorityKey = TrustDomainStorage.certificateLayout().processorPCKs[platformSerial][pckSerial];
+        ECKey memory authorityKey = TrustDomainStorage.layout().processorPCKs[platformSerial][pckSerial];
         if (authorityKey.x == 0) {
             revert PCKNotFound();
         }
@@ -90,10 +90,10 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        TrustDomainStorage.QELayout storage layout = TrustDomainStorage.qeLayout();
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
 
         bytes32 qeReportData = sha256(bytes.concat(bytes32(x), bytes32(y), authenticationData));
-        if (layout.qeReports[qeId].REPORT_DATA1 != qeReportData) {
+        if (layout.qeReports[qeId].REPORT_DATA1 != qeReportData) { 
             revert TDReport_InvalidQuote();
         }
 
@@ -137,7 +137,7 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        ECKey memory rootCA = TrustDomainStorage.certificateLayout().rootCA;
+        ECKey memory rootCA = TrustDomainStorage.layout().rootCA;
         if (rootCA.notAfter < block.timestamp) {
             revert RootCA_Expired();
         }
@@ -160,7 +160,7 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        ECKey memory authorityKey = TrustDomainStorage.certificateLayout().platformCAs[authority];
+        ECKey memory authorityKey = TrustDomainStorage.layout().platformCAs[authority];
         if (authorityKey.x == 0) {
             revert PlatformCA_NotFound();
         }
