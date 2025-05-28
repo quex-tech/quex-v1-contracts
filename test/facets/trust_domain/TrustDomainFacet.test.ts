@@ -369,7 +369,7 @@ describe("TrustDomainFacet", () => {
                 await expect(testObject
                     .connect(nonOwner)
                     .addTD(tdQuoteInDebugMode, 1, attestationKey.x, attestationKey.y, qeAuthenticationData, quoteSignature.r, quoteSignature.s))
-                    .to.be.revertedWithCustomError(trustDomainFacet, "TDReport_InDebugMode");
+                    .to.be.revertedWithCustomError(trustDomainFacet, "TDReport_UnsafeAttributes");
             });
 
             it("signed by not registered QE", async () => {

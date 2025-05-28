@@ -14,7 +14,7 @@ library QuoteVerifier {
     error QEReport_InvalidSignature();
     error TDReport_InvalidQuote();
     error TDReport_InvalidSignature();
-    error TDReport_InDebugMode();   
+    error TDReport_UnsafeAttributes();   
     error TDReport_InvalidTeeTcbSvn();
     error QEReport_InvalidCpuSvn();
 
@@ -187,16 +187,16 @@ library QuoteVerifier {
         }
     }
 
-    function ensureTDIsNotInDebugMode(
+    function ensureTDAttributesSafe(
         TDQuote memory tdQuote
     ) internal pure {
         // mask & value == 0: bits 0-27, 29, and 32-62 should be zero
-        uint64 mask = 0xFFFFFF4FFFFFFFEF;
+        uint64 mask = 0xFFFFFF2FFFFFFF7F;
         
         uint64 attributes = uint64(tdQuote.TDATTRIBUTES);
 
         if ((attributes & mask) != 0) {
-            revert TDReport_InDebugMode();
+            revert TDReport_UnsafeAttributes();
         }
     }
 
