@@ -39,10 +39,20 @@ const AddTrustDomainFacetToQuexCoreModule = buildModule("AddTrustDomainFacetToQu
                 facetInterface.getFunction("isTDValid").selector,
                 facetInterface.getFunction("getTDSignerAddress").selector,
 
+                // CPU_SVN and TEE_TCB_SVN
+                facetInterface.getFunction("allowTeeTcbSvn").selector,
+                facetInterface.getFunction("allowCpuSvn").selector,
+                facetInterface.getFunction("revokeTeeTcbSvn").selector,
+                facetInterface.getFunction("revokeCpuSvn").selector,
+                facetInterface.getFunction("isTeeTcbSvnAllowed").selector,
+                facetInterface.getFunction("isCpuSvnAllowed").selector,
+
                 // get counters
                 facetInterface.getFunction("getPCKCounterByPlatformCA").selector,
                 facetInterface.getFunction("getQECounterByProcessorPCK").selector,
                 facetInterface.getFunction("getTDCounterByQE").selector,
+                facetInterface.getFunction("getTeeTcbSvnTDCounter").selector,
+                facetInterface.getFunction("getCpuSvnQECounter").selector,
             ]
         }
     ];

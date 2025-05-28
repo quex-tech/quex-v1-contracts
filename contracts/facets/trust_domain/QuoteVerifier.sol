@@ -3,7 +3,6 @@ pragma solidity 0.8.22;
 
 import "./TrustDomainStorage.sol";
 import {IP256Verifier} from "../../interfaces/core/IP256Verifier.sol";
-import {console} from "forge-std/console.sol";
 
 library QuoteVerifier {
     error RootCA_Expired();
@@ -15,7 +14,9 @@ library QuoteVerifier {
     error QEReport_InvalidSignature();
     error TDReport_InvalidQuote();
     error TDReport_InvalidSignature();
-    error TDReport_InDebugMode();
+    error TDReport_InDebugMode();   
+    error TDReport_InvalidTeeTcbSvn();
+    error QEReport_InvalidCpuSvn();
 
     bytes private constant TD_HEADER_PREAMBLE = hex"040002008100000000000000939A7233F79C4CA9940A0DB3957F0607";
 
@@ -47,7 +48,12 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        ECKey memory authorityKey = TrustDomainStorage.layout().processorPCKs[platformSerial][pckSerial];
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        if (layout.allowedCpuSvn[qeReport.CPUSVN] == 0) {
+            revert QEReport_InvalidCpuSvn();
+        }
+
+        ECKey memory authorityKey = layout.processorPCKs[platformSerial][pckSerial];
         if (authorityKey.x == 0) {
             revert PCKNotFound();
         }
@@ -93,6 +99,10 @@ library QuoteVerifier {
         uint256 s
     ) internal view {
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+
+        if (layout.allowedTeeTcbSvn[tdQuote.TEE_TCB_SVN] == 0) {
+            revert TDReport_InvalidTeeTcbSvn();
+        }
 
         bytes32 qeReportData = sha256(bytes.concat(bytes32(x), bytes32(y), authenticationData));
         if (layout.qeReports[qeId].REPORT_DATA1 != qeReportData) { 
@@ -185,10 +195,6 @@ library QuoteVerifier {
         
         uint64 attributes = uint64(tdQuote.TDATTRIBUTES);
 
-        console.logBytes8(tdQuote.TDATTRIBUTES);
-        console.log("attributes", attributes);
-        console.log("mask", mask);
-        console.log("attributes & mask", attributes & mask);
         if ((attributes & mask) != 0) {
             revert TDReport_InDebugMode();
         }

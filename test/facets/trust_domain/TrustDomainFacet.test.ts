@@ -236,6 +236,7 @@ describe("TrustDomainFacet", () => {
         beforeEach(async () => {
             await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
             await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+            await ContractHelpers.TrustDomainFacet.allowCpuSvn(diamond);
         });
 
         it("adds QE", async () => {
@@ -295,6 +296,14 @@ describe("TrustDomainFacet", () => {
                     ))
                     .to.be.revertedWithCustomError(trustDomainFacet, "QEReport_InvalidSignature");
             });
+
+            it("CPU_SVN is not allowed", async () => {
+                await ContractHelpers.TrustDomainFacet.revokeCpuSvn(diamond);
+                await expect(testObject
+                    .connect(nonOwner)
+                    .addQE(qeReportData, platformCaCert.serial, processorPckCert.serial, qeReportSignature.r, qeReportSignature.s))
+                    .to.be.revertedWithCustomError(trustDomainFacet, "QEReport_InvalidCpuSvn");
+            });
         });
     });
 
@@ -302,7 +311,9 @@ describe("TrustDomainFacet", () => {
         beforeEach(async () => {
             await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
             await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+            await ContractHelpers.TrustDomainFacet.allowTeeTcbSvn(diamond);
             await ContractHelpers.TrustDomainFacet.addQE(diamond);
+            await ContractHelpers.TrustDomainFacet.allowTeeTcbSvn(diamond);
         });
 
         it("adds TD", async () => {
@@ -406,7 +417,15 @@ describe("TrustDomainFacet", () => {
                         wrongSignatureS
                     ))
                     .to.be.revertedWithCustomError(trustDomainFacet, "TDReport_InvalidSignature");
-            })
+            });
+
+            it("TEE_TCB_SVN is not allowed", async () => {
+                await ContractHelpers.TrustDomainFacet.revokeTeeTcbSvn(diamond);
+                await expect(testObject
+                    .connect(nonOwner)
+                    .addTD(tdQuote, 1, attestationKey.x, attestationKey.y, qeAuthenticationData, quoteSignature.r, quoteSignature.s))
+                    .to.be.revertedWithCustomError(trustDomainFacet, "TDReport_InvalidTeeTcbSvn");
+            });
         });
     });
 
@@ -645,21 +664,7 @@ describe("TrustDomainFacet", () => {
             await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
             await ContractHelpers.TrustDomainFacet.addPCK(diamond);
             await ContractHelpers.TrustDomainFacet.addQE(diamond);
-            // Add TD and store its ID
-            const tx = await testObject.addTD(
-                tdQuote,
-                1,
-                attestationKey.x,
-                attestationKey.y,
-                qeAuthenticationData,
-                quoteSignature.r,
-                quoteSignature.s
-            );
-            const receipt = await tx.wait();
-            const event = receipt?.logs[0];
-            if (!event) throw new Error("No event found");
-            const parsedEvent = testObject.interface.parseLog(event);
-            tdId = parsedEvent?.args[0] as bigint;
+            tdId = await ContractHelpers.TrustDomainFacet.addTD(diamond);
         });
 
         it("revokes TD", async () => {
@@ -772,6 +777,126 @@ describe("TrustDomainFacet", () => {
                 .revokeTD(tdId);
             expect(await testObject.getTDCounterByQE(qeId))
                 .to.equal(0n);
+        });
+    });
+
+    describe("#allowTeeTcbSvn", () => {
+        it("allows TEE_TCB_SVN", async () => {
+            await testObject.connect(owner).allowTeeTcbSvn(tdQuote.TEE_TCB_SVN);
+            expect(await testObject.isTeeTcbSvnAllowed(tdQuote.TEE_TCB_SVN)).to.be.true;
+        });
+
+        describe("reverts if", () => {
+            it("sender is not owner", async () => {
+                await expect(testObject.connect(nonOwner).allowTeeTcbSvn(tdQuote.TEE_TCB_SVN)).to.be.revertedWithCustomError(diamond, "Ownable__NotOwner");
+            });
+        });
+    });
+
+    describe("#allowCpuSvn", () => {
+        it("allows CPU_SVN", async () => {
+            await testObject.connect(owner).allowCpuSvn(qeReportData.CPUSVN);
+            expect(await testObject.isCpuSvnAllowed(qeReportData.CPUSVN)).to.be.true;
+        });
+
+        describe("reverts if", () => {
+            it("sender is not owner", async () => {
+                await expect(testObject.connect(nonOwner).allowCpuSvn(qeReportData.CPUSVN)).to.be.revertedWithCustomError(diamond, "Ownable__NotOwner");
+            });
+        });
+    });
+
+    describe("#revokeTeeTcbSvn", () => {
+        beforeEach(async () => {
+            await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
+            await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+            await ContractHelpers.TrustDomainFacet.addQE(diamond);
+            await ContractHelpers.TrustDomainFacet.allowTeeTcbSvn(diamond);
+        });
+
+        it("revokes TEE_TCB_SVN", async () => {
+            expect(await testObject.isTeeTcbSvnAllowed(tdQuote.TEE_TCB_SVN)).to.be.true;
+            await testObject.connect(owner).revokeTeeTcbSvn(tdQuote.TEE_TCB_SVN);
+            expect(await testObject.isTeeTcbSvnAllowed(tdQuote.TEE_TCB_SVN)).to.be.false;
+        });
+
+        describe("reverts if", () => {
+            it("sender is not owner", async () => {
+                await expect(testObject.connect(nonOwner).revokeTeeTcbSvn(tdQuote.TEE_TCB_SVN)).to.be.revertedWithCustomError(diamond, "Ownable__NotOwner");
+            });
+
+            it("TEE_TCB_SVN has associated TDs", async () => {
+                await ContractHelpers.TrustDomainFacet.addTD(diamond);
+
+                await expect(testObject
+                    .connect(owner)
+                    .revokeTeeTcbSvn(tdQuote.TEE_TCB_SVN)
+                ).to.be.revertedWithCustomError(trustDomainFacet, "TeeTcbSvnRevocation_TDExist");
+            });
+        });
+    });
+
+    describe("#revokeCpuSvn", () => {
+        beforeEach(async () => {
+            await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
+            await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+            await ContractHelpers.TrustDomainFacet.allowCpuSvn(diamond);
+        });
+
+        it("revokes CPU_SVN", async () => {
+            expect(await testObject.isCpuSvnAllowed(qeReportData.CPUSVN)).to.be.true;
+            await testObject.connect(owner).revokeCpuSvn(qeReportData.CPUSVN);
+            expect(await testObject.isCpuSvnAllowed(qeReportData.CPUSVN)).to.be.false;
+        });
+
+        describe("reverts if", () => {  
+            it("sender is not owner", async () => {
+                await expect(testObject.connect(nonOwner).revokeCpuSvn(qeReportData.CPUSVN)).to.be.revertedWithCustomError(diamond, "Ownable__NotOwner");
+            });
+
+            it("CPU_SVN has associated QEs", async () => {
+                await ContractHelpers.TrustDomainFacet.addQE(diamond);
+
+                await expect(testObject
+                    .connect(owner)
+                    .revokeCpuSvn(qeReportData.CPUSVN)
+                ).to.be.revertedWithCustomError(trustDomainFacet, "CpuSvnRevocation_QEExist");
+            });
+        });
+    });
+
+    describe("#getTeeTcbSvnTDCounter", () => {
+        beforeEach(async () => {
+            await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
+            await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+            await ContractHelpers.TrustDomainFacet.addQE(diamond);
+            await ContractHelpers.TrustDomainFacet.allowTeeTcbSvn(diamond);
+        });
+
+        it("returns 0 for new TEE_TCB_SVN", async () => {
+            expect(await testObject.getTeeTcbSvnTDCounter(tdQuote.TEE_TCB_SVN)).to.be.equal(0n);
+        });
+
+        it("increments when TD is added", async () => {
+            await ContractHelpers.TrustDomainFacet.addTD(diamond);
+            expect(await testObject.getTeeTcbSvnTDCounter(tdQuote.TEE_TCB_SVN)).to.be.equal(1n);
+        });
+    });
+
+    describe("#getCpuSvnQECounter", () => {
+        beforeEach(async () => {
+            await ContractHelpers.TrustDomainFacet.addPlatformKey(diamond);
+            await ContractHelpers.TrustDomainFacet.addPCK(diamond);
+            await ContractHelpers.TrustDomainFacet.allowCpuSvn(diamond);
+        });
+
+        it("returns 0 for new CPU_SVN", async () => {
+            expect(await testObject.getCpuSvnQECounter(qeReportData.CPUSVN)).to.be.equal(0n);
+        });
+
+        it("increments when QE is added", async () => {
+            await ContractHelpers.TrustDomainFacet.addQE(diamond);
+            expect(await testObject.getCpuSvnQECounter(qeReportData.CPUSVN)).to.be.equal(1n);
         });
     });
 });

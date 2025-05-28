@@ -23,6 +23,10 @@ library TrustDomainStorage {
         mapping(uint256 => uint256) pckCounterByPlatformCA;
         mapping(uint256 => mapping(uint256 => uint256)) qeCounterByProcessorPCK;
         mapping(uint256 => uint256) tdCounterByQE;
+        mapping(bytes16 => uint256) allowedTeeTcbSvn;
+        mapping(bytes16 => uint256) teeTcbSvnTDCounter;
+        mapping(bytes16 => uint256) allowedCpuSvn;
+        mapping(bytes16 => uint256) cpuSvnQECounter;
     }
 
     bytes32 internal constant STORAGE_SLOT = keccak256("quex.contracts.storage.TrustDomain");

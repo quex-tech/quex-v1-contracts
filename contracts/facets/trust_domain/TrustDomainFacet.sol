@@ -13,6 +13,8 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     error PlatformCARevocation_PCKsExist();
     error PCKRevocation_QEExist();
     error QERevocation_TDExist();
+    error TeeTcbSvnRevocation_TDExist();
+    error CpuSvnRevocation_QEExist();
 
     function getRootKey() external view returns(ECKey memory) {
         return TrustDomainStorage.layout().rootCA;
@@ -90,6 +92,7 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         layout.qeReports[qeId] = qeReport;
         layout.qeReportsCounter++;
         layout.qeCounterByProcessorPCK[platformSerial][pckSerial]++;
+        layout.cpuSvnQECounter[qeReport.CPUSVN]++;
 
         emit QEReportAdded(qeId);
 
@@ -131,6 +134,7 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         layout.tdSignerAddress[tdId] = tdAddress;
         layout.tdValidityEnd[tdId] = minValidity;
         layout.tdCounterByQE[qeId]++;
+        layout.teeTcbSvnTDCounter[tdQuote.TEE_TCB_SVN]++;
 
         emit TDReportAdded(tdId);
 
@@ -207,6 +211,32 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         emit TDReportRevoked(tdId);
     }
 
+    function allowTeeTcbSvn(bytes16 tcbSvn) external onlyOwner {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        layout.allowedTeeTcbSvn[tcbSvn] = 1;
+    }
+
+    function allowCpuSvn(bytes16 cpuSvn) external onlyOwner {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        layout.allowedCpuSvn[cpuSvn] = 1;
+    }
+
+    function revokeTeeTcbSvn(bytes16 tcbSvn) external onlyOwner {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        if (layout.teeTcbSvnTDCounter[tcbSvn] > 0) {
+            revert TeeTcbSvnRevocation_TDExist();
+        }
+        delete layout.allowedTeeTcbSvn[tcbSvn];
+    }
+
+    function revokeCpuSvn(bytes16 cpuSvn) external onlyOwner {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        if (layout.cpuSvnQECounter[cpuSvn] > 0) {
+            revert CpuSvnRevocation_QEExist();
+        }
+        delete layout.allowedCpuSvn[cpuSvn];
+    }
+
     function getPCKCounterByPlatformCA(uint256 platformSerial) external view returns (uint256) {
         return TrustDomainStorage.layout().pckCounterByPlatformCA[platformSerial];
     }
@@ -217,6 +247,22 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
 
     function getTDCounterByQE(uint256 qeId) external view returns (uint256) {
         return TrustDomainStorage.layout().tdCounterByQE[qeId];
+    }
+
+    function isTeeTcbSvnAllowed(bytes16 tcbSvn) external view returns (bool) {
+        return TrustDomainStorage.layout().allowedTeeTcbSvn[tcbSvn] == 1;
+    }
+
+    function isCpuSvnAllowed(bytes16 cpuSvn) external view returns (bool) {
+        return TrustDomainStorage.layout().allowedCpuSvn[cpuSvn] == 1;
+    }
+
+    function getTeeTcbSvnTDCounter(bytes16 tcbSvn) external view returns (uint256) {
+        return TrustDomainStorage.layout().teeTcbSvnTDCounter[tcbSvn];
+    }
+
+    function getCpuSvnQECounter(bytes16 cpuSvn) external view returns (uint256) {
+        return TrustDomainStorage.layout().cpuSvnQECounter[cpuSvn];
     }
 
     function _convertPublicKeyToAddress(bytes memory publicKey) private pure returns (address) {

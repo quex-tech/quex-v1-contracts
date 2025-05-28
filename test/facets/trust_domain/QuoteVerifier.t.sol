@@ -8,16 +8,6 @@ import {TDQuote} from "../../../contracts/facets/trust_domain/TrustDomainStorage
 contract QuoteVerifierTest is Test {
     using QuoteVerifier for *;
 
-    function test_setBit() public {
-        bytes8 value = bytes8(0);
-        for (uint8 i = 0; i < 64; i++) {
-            if (i != 28 && i != 30 && i != 31 && i != 63) {
-                value = _setBit(value, i);
-            }
-        }
-        console.logBytes8(value);
-    }
-
     function test_ensureTDIsNotInDebugMode_ValidAttributes() public {
         bytes8 validAttributes = bytes8(0);
         validAttributes = _setBit(validAttributes, 28);
