@@ -3,6 +3,7 @@ pragma solidity 0.8.22;
 
 import "./TrustDomainStorage.sol";
 import {IP256Verifier} from "../../interfaces/core/IP256Verifier.sol";
+import {console} from "forge-std/console.sol";
 
 library QuoteVerifier {
     error RootCA_Expired();
@@ -14,6 +15,7 @@ library QuoteVerifier {
     error QEReport_InvalidSignature();
     error TDReport_InvalidQuote();
     error TDReport_InvalidSignature();
+    error TDReport_InDebugMode();
 
     bytes private constant TD_HEADER_PREAMBLE = hex"040002008100000000000000939A7233F79C4CA9940A0DB3957F0607";
 
@@ -172,6 +174,23 @@ library QuoteVerifier {
 
         if (!_verifySignatureAllowMalleability(hash, r, s, authorityKey.x, authorityKey.y)) {
             revert InvalidPCK();
+        }
+    }
+
+    function ensureTDIsNotInDebugMode(
+        TDQuote memory tdQuote
+    ) internal pure {
+        // mask & value == 0: bits 0-27, 29, and 32-62 should be zero
+        uint64 mask = 0xFFFFFF4FFFFFFFEF;
+        
+        uint64 attributes = uint64(tdQuote.TDATTRIBUTES);
+
+        console.logBytes8(tdQuote.TDATTRIBUTES);
+        console.log("attributes", attributes);
+        console.log("mask", mask);
+        console.log("attributes & mask", attributes & mask);
+        if ((attributes & mask) != 0) {
+            revert TDReport_InDebugMode();
         }
     }
 

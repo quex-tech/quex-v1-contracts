@@ -352,6 +352,15 @@ describe("TrustDomainFacet", () => {
         })
 
         describe("reverts if", () => {
+            it("TD is in debug mode", async () => {
+                const tdQuoteInDebugMode = structuredClone(tdQuote);
+                tdQuoteInDebugMode.TDATTRIBUTES = "0x1000000000000000";
+                await expect(testObject
+                    .connect(nonOwner)
+                    .addTD(tdQuoteInDebugMode, 1, attestationKey.x, attestationKey.y, qeAuthenticationData, quoteSignature.r, quoteSignature.s))
+                    .to.be.revertedWithCustomError(trustDomainFacet, "TDReport_InDebugMode");
+            });
+
             it("signed by not registered QE", async () => {
                 await expect(testObject
                     .connect(nonOwner)

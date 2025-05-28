@@ -105,6 +105,7 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         uint256 r,
         uint256 s
     ) external returns (uint256 tdId) {
+        QuoteVerifier.ensureTDIsNotInDebugMode(tdQuote);
         QuoteVerifier.ensureTDQuoteIsValid(tdQuote, qeId, x, y, authenticationData, r, s);
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
 
