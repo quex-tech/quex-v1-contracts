@@ -1,0 +1,72 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.22;
+
+import "forge-std/Test.sol";
+import { DepositManagerFacet } from "../../../contracts/facets/monetary/DepositManagerFacet.sol";
+
+contract DepositManagerFacetTest is Test {
+    DepositManagerFacet facet;
+    address owner = address(0x1);
+    address user = address(0x2);
+
+    function setUp() public {
+        facet = new DepositManagerFacet();
+        vm.deal(owner, 10 ether);
+        vm.deal(user, 1 ether);
+    }
+
+    function testCreateSubscription() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+        assertEq(facet.balance(id), 0);
+    }
+
+    function testDepositIncreasesBalance() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+
+        vm.prank(owner);
+        facet.deposit{value: 1 ether}(id);
+        assertEq(facet.balance(id), 1 ether);
+    }
+
+    function testWithdrawReducesBalance() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+
+        vm.prank(owner);
+        facet.deposit{value: 1 ether}(id);
+
+        vm.prank(owner);
+        facet.withdraw(id, owner);
+        assertEq(facet.balance(id), 0);
+    }
+
+    function testLockPreventsWithdraw() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+
+        vm.prank(owner);
+        facet.deposit{value: 1 ether}(id);
+
+        vm.prank(owner);
+        facet.lock(id, 0.2 ether);
+
+        uint256 startBalance = owner.balance;
+
+        vm.prank(owner);
+        facet.withdraw(id, owner);
+
+        assertEq(facet.balance(id), 0.2 ether);
+        assertApproxEqAbs(owner.balance, startBalance + 0.8 ether, 1e14);
+    }
+
+    function testSetOwnerRequiresOwnership() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+
+        vm.prank(user);
+        vm.expectRevert("Not subscription owner");
+        facet.setOwner(id, user);
+    }
+}
