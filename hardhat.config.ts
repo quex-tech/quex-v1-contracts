@@ -1,10 +1,10 @@
-import { HardhatUserConfig, vars } from "hardhat/config";
+import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-foundry";
 import "hardhat-gas-reporter";
 
-const quexDeployerPrivateKey = vars.get("QUEX_DEPLOYER_PRIVATE_KEY");
-const quexManagerPrivateKey = vars.get("QUEX_MANAGER_PRIVATE_KEY");
+const quexDeployerPrivateKey = process.env.QUEX_DEPLOYER_PRIVATE_KEY ?? "0x0000000000000000000000000000000000000000000000000000000000000001";
+const quexManagerPrivateKey = process.env.QUEX_MANAGER_PRIVATE_KEY ?? "0x0000000000000000000000000000000000000000000000000000000000000001";
 
 const config: HardhatUserConfig = {
   solidity: {
