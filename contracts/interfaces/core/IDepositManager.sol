@@ -7,6 +7,7 @@ interface IDepositManager {
     function deposit(uint256 subscriptionId) external payable;
     function withdraw(uint256 subscriptionId, address receiver) external;
     function lock(uint256 subscriptionId, uint256 amount) external;
+    function unlock(uint256 subscriptionId, uint256 amount) external;
     function addConsumer(uint256 subscriptionId, address consumer) external;
     function removeConsumer(uint256 subscriptionId, address consumer) external;
     function isValidSubscription(uint256 subscriptionId, address consumer) external view returns (bool);

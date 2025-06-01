@@ -63,6 +63,16 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         s.locked += amount;
     }
 
+    function unlock(uint256 subscriptionId, uint256 amount) external override {
+        if (msg.sender != address(this)) {
+            revert IQuexActionRegistry.OnlyCallableInternally();
+        }
+        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
+        DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
+        require(s.locked >= amount, "Trying to unlock funds that are not locked");
+        s.locked -= amount;
+    }
+
     function addConsumer(uint256 subscriptionId, address consumer) external override {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
         if (msg.sender != l.subscriptions[subscriptionId].owner) {

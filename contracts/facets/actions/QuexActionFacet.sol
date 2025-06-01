@@ -71,6 +71,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
         uint256 requestPrice = quexFee + relayerPremium + oraclePoolFee;
 
+        // TODO lock amount rely on gasprice?
         IDepositManager(address(this)).lock(subscriptionId, requestPrice);
 
         requestId = ++QuexActionStorage.layout().lastRequestId;
@@ -78,6 +79,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
 
         QuexActionStorage.layout().requests[requestId] = QuexActionStorage.Request(
             flowId,
+            subscriptionId,
             quexFee,
             relayerPremium,
             oraclePoolFee,
@@ -91,6 +93,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
     function getRequest(uint256 requestId) external view returns (Request memory request) {
         QuexActionStorage.Request memory internalRequestModel = QuexActionStorage.layout().requests[requestId];
         if (internalRequestModel.flowId == 0) {
+            // TODO why do we need this?
             return Request(0, 0, address(0), 0);
         }
         Flow memory flow = IFlowRegistry(address(this)).getFlow(internalRequestModel.flowId);
@@ -146,7 +149,9 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
 
         delete layout.requests[requestId];
-        payable(msg.sender).call{value: request.quexFee + request.relayerPremium + request.oraclePoolFee}("");
+        uint256 requestPrice = request.quexFee + request.relayerPremium + request.oraclePoolFee;
+
+        IDepositManager(address(this)).unlock(request.subscriptionId, requestPrice);
         emit RequestCancelled(requestId, request.flowId, msg.sender);
     }
 
