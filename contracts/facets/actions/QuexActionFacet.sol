@@ -5,6 +5,7 @@ import "../../QuexRoles.sol";
 import "../../interfaces/core/IFlowRegistry.sol";
 import "../../interfaces/core/IOraclePool.sol";
 import "../../interfaces/core/IQuexMonetary.sol";
+import "../../interfaces/core/IDepositManager.sol";
 import "./IQuexActionFacet.sol";
 import "./QuexActionStorage.sol";
 
@@ -35,7 +36,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
         uint quexFee = quexMonetary.getQuexFee(flowId);
         if (msg.value < quexFee) {
-            revert InsufficientValue();
+            revert Subscription_InsufficientValue();
         }
 
         payable(quexMonetary.getTreasury()).call{value: quexFee}("");
@@ -54,11 +55,14 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
     }
 
-    function createRequest(uint256 flowId) external payable nonReentrant returns (uint256 requestId) {
+    function createRequest(uint256 flowId, uint256 subscriptionId) external nonReentrant returns (uint256 requestId) {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
 
         if (flow.pool == address(0)) {
             revert Flow_NotFound();
+        }
+        if (!IDepositManager(address(this)).isValidSubscription(subscriptionId, flow.consumer)) {
+            revert Subscription_NotFound();
         }
 
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
@@ -67,9 +71,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
         uint256 requestPrice = quexFee + relayerPremium + oraclePoolFee;
 
-        if (msg.value < requestPrice) {
-            revert InsufficientValue();
-        }
+        IDepositManager(address(this)).lock(subscriptionId, requestPrice);
 
         requestId = ++QuexActionStorage.layout().lastRequestId;
         emit RequestCreated(requestId, flowId, flow.pool);
@@ -82,11 +84,6 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
             block.number,
             msg.sender
         );
-
-        if (msg.value > requestPrice) {
-            // todo: process situation when msg.sender is not payable
-            payable(msg.sender).call{value: msg.value - requestPrice}("");
-        }
 
         return requestId;
     }

@@ -39,14 +39,18 @@ interface IQuexActionRegistry {
     error OracleMessage_SignatureIsInvalid();
     error OracleMessage_OutdatedMessage();
     error OracleMessage_TimestampFromFuture();
-    error InsufficientValue();
+    error Subscription_InsufficientValue();
+    error Subscription_NotFound();
+    error Subscription_WrongCaller();
+    error Subscription_TransferFailed();
+    error OnlyCallableInternally();
     error Request_TooFreshToCancel();
     error Request_NotOwnedBySender();
 
     event RequestCreated(uint256 requestId, uint256 flowId, address oraclePool);
 
     function pushData(OracleMessage memory message, ETHSignature memory signature, uint256 flowId, uint256 tdId) external payable;
-    function createRequest(uint256 flowId) external payable returns (uint256 requestId);
+    function createRequest(uint256 flowId, uint256 subscriptionId) external returns (uint256 requestId);
     function fulfillRequest(OracleMessage memory message, ETHSignature memory signature, uint256 requestId, uint256 tdId) external;
     function getRequestFee(uint256 flowId) external view returns (uint256 nativeFee, uint256 gasFee);
     function getRequest(uint256 requestId) external view returns (Request memory request);

@@ -3,6 +3,7 @@ pragma solidity 0.8.22;
 
 import "../interfaces/core/IFlowRegistry.sol";
 import "../interfaces/core/IQuexActionRegistry.sol";
+import "../interfaces/core/IDepositManager.sol";
 import "../interfaces/oracles/IRequestOraclePool.sol";
 
 struct Order {
@@ -20,6 +21,7 @@ contract RequestActionTestContract {
     address quexCoreAddress;
     address oraclePoolAddress;
     uint256 lastRequestId;
+    uint256 subscriptionId;
     OrderBook lastResponse;
 
     constructor(address quexCoreAddress_, address oraclePoolAddress_) {
@@ -27,7 +29,7 @@ contract RequestActionTestContract {
         oraclePoolAddress = oraclePoolAddress_;
     }
 
-    function createRequest() external payable {
+    function createRequest() external {
         IRequestOraclePool requestOracle = IRequestOraclePool(oraclePoolAddress);
         QueryParameter[] memory parameters = new QueryParameter[](2);
         parameters[0] = QueryParameter("symbol", "BTCUSDT");
@@ -58,14 +60,15 @@ contract RequestActionTestContract {
         Flow memory flow = Flow(1000000, actionId, oraclePoolAddress, address(this), this.fulfillRequest.selector);
         uint256 flowId = flowRegistry.createFlow(flow);
 
-        IQuexActionRegistry actionRegistry = IQuexActionRegistry(quexCoreAddress);
-        (uint256 nativeFee, uint256 gasFee) = actionRegistry.getRequestFee(flowId);
-        uint256 totalRequestPrice = nativeFee + gasFee * tx.gasprice;
-        lastRequestId = actionRegistry.createRequest{value: totalRequestPrice}(flowId);
+        IDepositManager depositManager = IDepositManager(quexCoreAddress);
 
-        if (msg.value > totalRequestPrice) {
-            payable(msg.sender).transfer(msg.value - totalRequestPrice);
-        }
+        // create subscription and fund it
+        subscriptionId = depositManager.createSubscription();
+        depositManager.addConsumer(subscriptionId, address(flow.consumer));
+        depositManager.deposit{value: 1 ether}(subscriptionId);
+
+        IQuexActionRegistry actionRegistry = IQuexActionRegistry(quexCoreAddress);
+        lastRequestId = actionRegistry.createRequest(flowId, subscriptionId);
     }
 
     function fulfillRequest(uint256 requestId, DataItem memory dataItem, IdType /* idType */) external {

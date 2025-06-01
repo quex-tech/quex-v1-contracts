@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import { IDepositManager } from "../../interfaces/core/IDepositManager.sol";
-import { DepositManagerStorage } from "./DepositManagerStorage.sol";
+import {ReentrancyGuard} from "@solidstate/contracts/security/reentrancy_guard/ReentrancyGuard.sol";
+import {IDepositManager} from "../../interfaces/core/IDepositManager.sol";
+import {DepositManagerStorage} from "./DepositManagerStorage.sol";
+import {IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 
-contract DepositManagerFacet is IDepositManager {
+contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
+
     event SubscriptionCreated(uint256 indexed id, address indexed owner);
 
     function createSubscription() external override returns (uint256) {
@@ -17,7 +20,9 @@ contract DepositManagerFacet is IDepositManager {
 
     function setOwner(uint256 subscriptionId, address owner) external override {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
-        require(msg.sender == l.subscriptions[subscriptionId].owner, "Not subscription owner");
+        if (msg.sender != l.subscriptions[subscriptionId].owner) {
+            revert IQuexActionRegistry.Subscription_WrongCaller();
+        }
         l.subscriptions[subscriptionId].owner = owner;
     }
 
@@ -26,35 +31,51 @@ contract DepositManagerFacet is IDepositManager {
         l.subscriptions[subscriptionId].balance += msg.value;
     }
 
-    function withdraw(uint256 subscriptionId, address receiver) external override {
+    function withdraw(uint256 subscriptionId, address receiver) external override nonReentrant {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
         DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
-        require(msg.sender == s.owner, "Not subscription owner");
+        if (msg.sender != s.owner) {
+            revert IQuexActionRegistry.Subscription_WrongCaller();
+        }
 
         uint256 withdrawable = s.balance - s.locked;
-        require(withdrawable > 0, "Nothing to withdraw");
+        if (withdrawable == 0) {
+            revert IQuexActionRegistry.Subscription_InsufficientValue();
+        }
 
         s.balance -= withdrawable;
-        (bool success, ) = receiver.call{value: withdrawable}("");
-        require(success, "Transfer failed");
+        (bool success,) = receiver.call{value: withdrawable}("");
+        if (!success) {
+            revert IQuexActionRegistry.Subscription_TransferFailed();
+        }
     }
 
     function lock(uint256 subscriptionId, uint256 amount) external override {
+        if (msg.sender != address(this)) {
+            revert IQuexActionRegistry.OnlyCallableInternally();
+        }
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
         DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
-        require(s.balance - s.locked >= amount, "Insufficient available balance");
+        if (s.balance - s.locked < amount) {
+            revert IQuexActionRegistry.Subscription_InsufficientValue();
+        }
+
         s.locked += amount;
     }
 
     function addConsumer(uint256 subscriptionId, address consumer) external override {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
-        require(msg.sender == l.subscriptions[subscriptionId].owner, "Not subscription owner");
+        if (msg.sender != l.subscriptions[subscriptionId].owner) {
+            revert IQuexActionRegistry.Subscription_WrongCaller();
+        }
         l.subscriptions[subscriptionId].consumers[consumer] = true;
     }
 
     function removeConsumer(uint256 subscriptionId, address consumer) external override {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
-        require(msg.sender == l.subscriptions[subscriptionId].owner, "Not subscription owner");
+        if (msg.sender != l.subscriptions[subscriptionId].owner) {
+            revert IQuexActionRegistry.Subscription_WrongCaller();
+        }
         l.subscriptions[subscriptionId].consumers[consumer] = false;
     }
 
@@ -65,5 +86,9 @@ contract DepositManagerFacet is IDepositManager {
     function withdrawableBalance(uint256 subscriptionId) external view override returns (uint256) {
         DepositManagerStorage.Subscription storage s = DepositManagerStorage.layout().subscriptions[subscriptionId];
         return s.balance - s.locked;
+    }
+
+    function isValidSubscription(uint256 subscriptionId, address consumer) external view override returns (bool) {
+        return DepositManagerStorage.layout().subscriptions[subscriptionId].consumers[consumer];
     }
 }

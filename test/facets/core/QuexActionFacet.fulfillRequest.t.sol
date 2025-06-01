@@ -15,7 +15,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_CallsCallbackFunctionOnce() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
         ETHSignature memory signature = _signOracleMessage(message, td);
@@ -32,7 +32,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_TransfersTokensToQuex() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
@@ -47,7 +47,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_TransfersTokensToQuex_EvenIf_CallbackIsFailed() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
@@ -62,7 +62,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_TransfersTokensToOraclePool() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
@@ -77,7 +77,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_TransfersTokensToOraclePool_EvenIf_CallbackIsFailed() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
@@ -92,7 +92,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_TransfersTokensToRelayer() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
@@ -109,7 +109,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_TransfersTokensToRelayer_EvenIf_CallbackIsFailed() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
@@ -126,7 +126,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_EmitsRequestFulfilledEvent() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
         ETHSignature memory signature = _signOracleMessage(message, td);
@@ -139,7 +139,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_EmitsRequestFulfillingFailedEventIf_CallbackIsFailed() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
         ETHSignature memory signature = _signOracleMessage(message, td);
@@ -151,7 +151,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         testObject.fulfillRequest(message, signature, requestId, td.tdId);}
 
     function test_RevertsIf_RequestNotFound() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
@@ -162,7 +162,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_RevertsIf_ActionIdsMismatched() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
         OracleMessage memory message = OracleMessage(actionId + 1, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
@@ -173,7 +173,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_RevertsIf_TrustDomainIsNotValid() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_notValidInQuex_inOraclePool;
 
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
@@ -184,7 +184,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_RevertsIf_TrustDomainIsNotInOraclePool() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_notInOraclePool;
 
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
@@ -195,7 +195,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_RevertsIf_SignatureIsInvalid() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
         TDTestData memory signerTD = TD_validInQuex_notInOraclePool;
 
@@ -207,7 +207,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_RevertsIf_MessageIsOutdated() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
         vm.warp(100000000); // set block's timestamp
@@ -220,7 +220,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_RevertsIf_MessageFromFuture() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
         uint256 timestamp = vm.getBlockTimestamp() + futureTimeSkew + 1;
@@ -238,7 +238,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         vm.mockCall(address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, flowId), abi.encode(flow));
 
         uint256 requestPrice = _getMinimumRequestPrice(flowId);
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
@@ -257,7 +257,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_RevertsIf_SignatureIsMalleable() public {
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));

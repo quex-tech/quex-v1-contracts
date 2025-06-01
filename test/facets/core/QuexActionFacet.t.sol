@@ -15,6 +15,8 @@ import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet
 import {IQuexActionFacet} from "../../../contracts/facets/actions/IQuexActionFacet.sol";
 import {QuexDiamond} from "../../../contracts/diamond/QuexDiamond.sol";
 import {QuexRoles} from "../../../contracts/QuexRoles.sol";
+import {IDepositManager} from "../../../contracts/interfaces/core/IDepositManager.sol";
+import {DepositManagerFacet} from "../../../contracts/facets/monetary/DepositManagerFacet.sol";
 
 abstract contract QuexActionFacetTestBase is Test {
     QuexDiamond internal diamond;
@@ -25,6 +27,8 @@ abstract contract QuexActionFacetTestBase is Test {
     bytes4 internal callbackSignature = 0x12345678;
     uint256 internal constant actionId = 15;
     uint256 internal constant flowId = 111;
+    uint256 internal subscriptionId;
+    address internal subscriptionOwner = address(0xA11CE);
     Flow internal flow = Flow(100, actionId, oraclePoolAddress, consumerAddress, callbackSignature);
 
     uint256 internal constant unknownFlowId = 2;
@@ -59,7 +63,29 @@ abstract contract QuexActionFacetTestBase is Test {
             action: IERC2535DiamondCutInternal.FacetCutAction.ADD,
             selectors: selectors
         });
-        diamond.diamondCut(cuts, address(0), "");
+
+        // Add DepositManagerFacet to diamond
+        DepositManagerFacet depositManager = new DepositManagerFacet();
+        bytes4[] memory depositSelectors = new bytes4[](10);
+        depositSelectors[0] = IDepositManager.createSubscription.selector;
+        depositSelectors[1] = IDepositManager.setOwner.selector;
+        depositSelectors[2] = IDepositManager.deposit.selector;
+        depositSelectors[3] = IDepositManager.withdraw.selector;
+        depositSelectors[4] = IDepositManager.lock.selector;
+        depositSelectors[5] = IDepositManager.addConsumer.selector;
+        depositSelectors[6] = IDepositManager.removeConsumer.selector;
+        depositSelectors[7] = IDepositManager.isValidSubscription.selector;
+        depositSelectors[8] = IDepositManager.balance.selector;
+        depositSelectors[9] = IDepositManager.withdrawableBalance.selector;
+
+        IERC2535DiamondCutInternal.FacetCut[] memory allCuts = new IERC2535DiamondCutInternal.FacetCut[](2);
+        allCuts[0] = cuts[0];
+        allCuts[1] = IERC2535DiamondCutInternal.FacetCut({
+            target: address(depositManager),
+            action: IERC2535DiamondCutInternal.FacetCutAction.ADD,
+            selectors: depositSelectors
+        });
+        diamond.diamondCut(allCuts, address(0), "");
         testObject = IQuexActionFacet(address(diamond));
 
         vm.txGasPrice(1000);
@@ -85,6 +111,10 @@ abstract contract QuexActionFacetTestBase is Test {
 
         vm.label(oraclePoolAddress, "OraclePool");
         vm.label(consumerAddress, "Consumer");
+
+        subscriptionId = IDepositManager(address(diamond)).createSubscription();
+        IDepositManager(address(diamond)).addConsumer(subscriptionId, flow.consumer);
+        IDepositManager(address(diamond)).deposit{value: 1 ether}(subscriptionId);
     }
 }
 

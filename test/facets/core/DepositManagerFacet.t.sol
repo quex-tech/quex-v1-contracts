@@ -42,25 +42,6 @@ contract DepositManagerFacetTest is Test {
         assertEq(facet.balance(id), 0);
     }
 
-    function testLockPreventsWithdraw() public {
-        vm.prank(owner);
-        uint256 id = facet.createSubscription();
-
-        vm.prank(owner);
-        facet.deposit{value: 1 ether}(id);
-
-        vm.prank(owner);
-        facet.lock(id, 0.2 ether);
-
-        uint256 startBalance = owner.balance;
-
-        vm.prank(owner);
-        facet.withdraw(id, owner);
-
-        assertEq(facet.balance(id), 0.2 ether);
-        assertApproxEqAbs(owner.balance, startBalance + 0.8 ether, 1e14);
-    }
-
     function testSetOwnerRequiresOwnership() public {
         vm.prank(owner);
         uint256 id = facet.createSubscription();
@@ -68,5 +49,47 @@ contract DepositManagerFacetTest is Test {
         vm.prank(user);
         vm.expectRevert("Not subscription owner");
         facet.setOwner(id, user);
+    }
+
+    function testAddConsumerAndValidate() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+
+        vm.prank(owner);
+        facet.addConsumer(id, user);
+        assertTrue(facet.isValidSubscription(id, user));
+    }
+
+    function testRemoveConsumerInvalidatesSubscription() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+
+        vm.prank(owner);
+        facet.addConsumer(id, user);
+        assertTrue(facet.isValidSubscription(id, user));
+
+        vm.prank(owner);
+        facet.removeConsumer(id, user);
+        assertFalse(facet.isValidSubscription(id, user));
+    }
+
+    function testOnlyOwnerCanAddConsumer() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+
+        vm.prank(user);
+        vm.expectRevert("Not subscription owner");
+        facet.addConsumer(id, user);
+    }
+
+    function testOnlyOwnerCanRemoveConsumer() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+        vm.prank(owner);
+        facet.addConsumer(id, user);
+
+        vm.prank(user);
+        vm.expectRevert("Not subscription owner");
+        facet.removeConsumer(id, user);
     }
 }

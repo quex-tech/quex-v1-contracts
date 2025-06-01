@@ -96,7 +96,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
         ETHSignature memory signature = _signOracleMessage(message, td);
 
-        vm.expectRevert(IQuexActionRegistry.InsufficientValue.selector);
+        vm.expectRevert(IQuexActionRegistry.Subscription_InsufficientValue.selector);
         testObject.pushData{value: pushFee - 1}(message, signature, flowId, td.tdId);
     }
 

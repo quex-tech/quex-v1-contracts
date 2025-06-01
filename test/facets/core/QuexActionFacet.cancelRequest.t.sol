@@ -16,10 +16,9 @@ contract QuexActionFacet_cancelRequest is QuexActionFacetTestBase {
     function setUp() public override {
         QuexActionFacetTestBase.setUp();
         requestOwner = address(this);
-        requestPrice = _getMinimumRequestPrice();
-        
+
         // Create a request that we can cancel
-        requestId = testObject.createRequest{value: requestPrice}(flowId);
+        requestId = testObject.createRequest(flowId, subscriptionId);
     }
 
     function test_SuccessfullyCancelsRequest() public {
