@@ -103,8 +103,17 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         if (s.balance - s.reserved < amount) {
             revert IQuexActionRegistry.Subscription_InsufficientValue();
         }
-
         s.reserved += amount;
+    }
+
+    function release(uint256 subscriptionId, uint256 amount) external quexOnly {
+        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
+        DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
+        if (s.reserved < amount) {
+            s.reserved = 0;
+        } else {
+            s.reserved -= amount;
+        }
     }
 
 }

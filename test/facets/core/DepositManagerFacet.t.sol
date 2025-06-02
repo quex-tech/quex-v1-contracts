@@ -136,4 +136,34 @@ contract DepositManagerFacetTest is Test {
         facet.reserve(id, 0.1 ether);
     }
 
+    function testReleaseOnlyCallableInternally() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+        facet.deposit{value: 1 ether}(id);
+
+        vm.prank(address(owner));
+        vm.expectRevert(IQuexActionRegistry.OnlyCallableInternally.selector);
+        facet.release(id, 0.1 ether);
+    }
+
+    function testReleaseReducesReserved() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+        facet.deposit{value: 1 ether}(id);
+
+        vm.prank(address(facet));
+        facet.reserve(id, 0.6 ether);
+
+        // Check withdrawable balance after reserve
+        uint256 withdrawableBefore = facet.withdrawableBalance(id);
+        assertEq(withdrawableBefore, 0.4 ether);
+
+        vm.prank(address(facet));
+        facet.release(id, 0.3 ether);
+
+        // Should have more withdrawable balance now
+        uint256 withdrawableAfter = facet.withdrawableBalance(id);
+        assertEq(withdrawableAfter, 0.7 ether);
+    }
+
 }

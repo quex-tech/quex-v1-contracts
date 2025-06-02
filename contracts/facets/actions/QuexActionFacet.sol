@@ -122,10 +122,6 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
 
         // Release funds from reserve
         uint256 reservedFee = request.quexFee + request.relayerPremium + request.oraclePoolFee;
-        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
-        DepositManagerStorage.Subscription storage s = l.subscriptions[request.subscriptionId];
-        require(s.reserved >= reservedFee, "Trying to release funds that are not reserved");
-        s.reserved -= reservedFee;
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
         (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
@@ -138,6 +134,10 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
         payable(msg.sender).call{value: refund}("");
 
+        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
+        DepositManagerStorage.Subscription storage s = l.subscriptions[request.subscriptionId];
+        require(s.reserved >= reservedFee, "Trying to release funds that are not reserved");
+        s.reserved -= reservedFee;
         // Update Deposit manager storage
         uint256 totalFees = (request.quexFee + refund + request.oraclePoolFee);
         if (s.locked >= totalFees) {
@@ -173,13 +173,8 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
 
         delete layout.requests[requestId];
         uint256 requestPrice = request.quexFee + request.relayerPremium + request.oraclePoolFee;
+        DepositManagerFacet(address(this)).release(request.subscriptionId, requestPrice);
 
-        {
-            DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
-            DepositManagerStorage.Subscription storage s = l.subscriptions[request.subscriptionId];
-            require(s.reserved >= requestPrice, "Trying to unlock funds that are not locked");
-            s.reserved -= requestPrice;
-        }
         emit RequestCancelled(requestId, request.flowId, msg.sender);
     }
 
