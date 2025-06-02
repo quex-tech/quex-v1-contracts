@@ -128,30 +128,32 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         payable(quexMonetary.getTreasury()).call{value: request.quexFee}("");
         payable(IOraclePool(flow.pool).getTreasury()).call{value: request.oraclePoolFee}("");
 
-        uint256 reservedPrice = request.quexFee + request.relayerPremium + request.oraclePoolFee;
-        // Release funds from reserve and lock
+        // Release funds from reserve
+        uint256 reservedFee = request.quexFee + request.relayerPremium + request.oraclePoolFee;
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
         DepositManagerStorage.Subscription storage s = l.subscriptions[request.subscriptionId];
-        require(s.reserved >= reservedPrice, "Trying to release funds that are not reserved");
-        s.reserved -= reservedPrice;
-        if (s.locked >= reservedPrice) {
-            s.locked -= reservedPrice;
-        } else {
-            s.locked = 0;
-        }
+        require(s.reserved >= reservedFee, "Trying to release funds that are not reserved");
+        s.reserved -= reservedFee;
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
         (bool success, ) = flow.consumer.call{gas: flow.gasLimit}(payload);
 
         // Refund relayer with the gas used
         uint256 gasUsed = gasStart - gasleft();
-        uint256 refund = gasUsed * tx.gasprice;
+        uint256 refund = (gasUsed + QuexActionStorage.layout().quexFulfillingGasCost) * tx.gasprice;
         if (refund > request.relayerPremium) {
             refund = request.relayerPremium;
         }
-        // TODO test
         payable(msg.sender).call{value: refund}("");
-        s.balance -= (request.quexFee + refund + request.oraclePoolFee);
+
+        // Update Deposit manager storage
+        uint256 totalFees = (request.quexFee + refund + request.oraclePoolFee);
+        if (s.locked >= totalFees) {
+            s.locked -= totalFees;
+        } else {
+            s.locked = 0;
+        }
+        s.balance -= totalFees;
 
         if (success) {
             emit RequestFulfilled(requestId, request.flowId, msg.sender);
