@@ -116,4 +116,18 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         }
     }
 
+    function fulfill(uint256 subscriptionId, uint256 reservedFee, uint256 actualFee) external quexOnly {
+        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
+        DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
+        require(s.reserved >= reservedFee, "Trying to release funds that are not reserved");
+        s.reserved -= reservedFee;
+
+        if (s.locked >= actualFee) {
+            s.locked -= actualFee;
+        } else {
+            s.locked = 0;
+        }
+        s.balance -= actualFee;
+    }
+
 }

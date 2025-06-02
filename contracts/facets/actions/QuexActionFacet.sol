@@ -134,18 +134,8 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
         payable(msg.sender).call{value: refund}("");
 
-        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
-        DepositManagerStorage.Subscription storage s = l.subscriptions[request.subscriptionId];
-        require(s.reserved >= reservedFee, "Trying to release funds that are not reserved");
-        s.reserved -= reservedFee;
-        // Update Deposit manager storage
-        uint256 totalFees = (request.quexFee + refund + request.oraclePoolFee);
-        if (s.locked >= totalFees) {
-            s.locked -= totalFees;
-        } else {
-            s.locked = 0;
-        }
-        s.balance -= totalFees;
+        uint256 actualFees = request.quexFee + refund + request.oraclePoolFee;
+        DepositManagerFacet(address(this)).fulfill(request.subscriptionId, reservedFee, actualFees);
 
         if (success) {
             emit RequestFulfilled(requestId, request.flowId, msg.sender);

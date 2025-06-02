@@ -166,4 +166,64 @@ contract DepositManagerFacetTest is Test {
         assertEq(withdrawableAfter, 0.7 ether);
     }
 
+    function testFulfillReleasesReservedAndDecreasesBalance() public {
+        vm.prank(owner);
+        uint256 deposit = 1 ether;
+        uint256 reservedFee = 0.25 ether;
+        uint256 actualFee = 0.15 ether;
+        uint256 locked = 0.51 ether;
+
+        uint256 id = facet.createSubscription();
+        facet.deposit{value: deposit}(id);
+
+        vm.prank(address(facet));
+        facet.reserve(id, reservedFee);
+
+        vm.prank(owner);
+        facet.lock(id, locked);
+
+        uint256 startBalance = facet.balance(id);
+        uint256 withdrawableBalance = facet.withdrawableBalance(id);
+
+        assertEq(startBalance, deposit);
+        assertEq(withdrawableBalance, deposit - reservedFee - locked);
+
+        vm.prank(address(facet));
+        facet.fulfill(id, reservedFee, actualFee);
+
+        // Check that reserved is reduced, locked is reduced, balance is reduced
+        assertEq(facet.balance(id), startBalance - actualFee, "Balance");
+        assertEq(facet.withdrawableBalance(id), deposit - locked, "Withdrawable balance");
+    }
+
+    function testFulfillHandlesLowLockedAmount() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+        facet.deposit{value: 1 ether}(id);
+
+        // Reserve 0.2 ether
+        vm.prank(address(facet));
+        facet.reserve(id, 0.2 ether);
+
+        // Lock only 0.1 ether
+        vm.prank(owner);
+        facet.lock(id, 0.1 ether);
+
+        // Fulfill with reserved = 0.2 ether, actualFee = 0.3 ether
+        vm.prank(address(facet));
+        facet.fulfill(id, 0.2 ether, 0.3 ether);
+
+        // Locked should now be 0 and balance reduced
+        assertEq(facet.balance(id), 0.7 ether);
+    }
+
+    function testFulfillOnlyCallableInternally() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+        facet.deposit{value: 1 ether}(id);
+
+        vm.prank(owner);
+        vm.expectRevert(IQuexActionRegistry.OnlyCallableInternally.selector);
+        facet.fulfill(id, 0.1 ether, 0.2 ether);
+    }
 }
