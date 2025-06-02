@@ -117,15 +117,6 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         assertEq(address(this).balance, initialBalance + gasFee * tx.gasprice);
     }
 
-    function test_FulfillRequestFromLockedFunds() public {
-        _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
-        uint256 balance = depositManager.withdrawableBalance(subscriptionId);
-//        depositManager.lock(subscriptionId, balance);
-//
-//        assertEq(balance, 0, "Test");
-//        assertEq(depositManager.withdrawableBalance(subscriptionId), 0, "All balance should be locked");
-    }
-
     function test_EmitsRequestFulfilledEvent() public {
         _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
 
