@@ -2,7 +2,8 @@
 pragma solidity ^0.8.22;
 
 import "forge-std/Test.sol";
-import { DepositManagerFacet } from "../../../contracts/facets/monetary/DepositManagerFacet.sol";
+import {DepositManagerFacet} from "../../../contracts/facets/monetary/DepositManagerFacet.sol";
+import {IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 
 contract DepositManagerFacetTest is Test {
     DepositManagerFacet facet;
@@ -47,7 +48,7 @@ contract DepositManagerFacetTest is Test {
         uint256 id = facet.createSubscription();
 
         vm.prank(user);
-        vm.expectRevert("Not subscription owner");
+        vm.expectRevert(IQuexActionRegistry.Subscription_WrongCaller.selector);
         facet.setOwner(id, user);
     }
 
@@ -78,7 +79,7 @@ contract DepositManagerFacetTest is Test {
         uint256 id = facet.createSubscription();
 
         vm.prank(user);
-        vm.expectRevert("Not subscription owner");
+        vm.expectRevert(IQuexActionRegistry.Subscription_WrongCaller.selector);
         facet.addConsumer(id, user);
     }
 
@@ -89,7 +90,7 @@ contract DepositManagerFacetTest is Test {
         facet.addConsumer(id, user);
 
         vm.prank(user);
-        vm.expectRevert("Not subscription owner");
+        vm.expectRevert(IQuexActionRegistry.Subscription_WrongCaller.selector);
         facet.removeConsumer(id, user);
     }
 }
