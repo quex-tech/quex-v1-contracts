@@ -10,6 +10,7 @@ import "./IQuexActionFacet.sol";
 import "./QuexActionStorage.sol";
 
 import {DepositManagerStorage} from "../monetary/DepositManagerStorage.sol";
+import {DepositManagerFacet} from "../monetary/DepositManagerFacet.sol";
 import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 import {ReentrancyGuard} from "@solidstate/contracts/security/reentrancy_guard/ReentrancyGuard.sol";
 import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
@@ -62,7 +63,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         if (flow.pool == address(0)) {
             revert Flow_NotFound();
         }
-        if (!DepositManagerStorage.layout().subscriptions[subscriptionId].consumers[flow.consumer]) {
+        if (!DepositManagerFacet(address(this)).isValidSubscription(subscriptionId, flow.consumer)) {
             revert Subscription_NotFound();
         }
 

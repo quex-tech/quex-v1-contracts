@@ -101,4 +101,26 @@ contract DepositManagerFacetTest is Test {
         facet.lock(id, 1 ether);
     }
 
+    function testIsValidSubscription() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+
+        // Initially, no consumers
+        assertFalse(facet.isValidSubscription(id, user));
+
+        // Add consumer
+        vm.prank(owner);
+        facet.addConsumer(id, user);
+
+        // Now should be valid
+        assertTrue(facet.isValidSubscription(id, user));
+
+        // Remove consumer
+        vm.prank(owner);
+        facet.removeConsumer(id, user);
+
+        // Should be invalid again
+        assertFalse(facet.isValidSubscription(id, user));
+    }
+
 }

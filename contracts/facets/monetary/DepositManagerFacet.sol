@@ -84,4 +84,9 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         DepositManagerStorage.Subscription storage s = DepositManagerStorage.layout().subscriptions[subscriptionId];
         return s.balance - s.reserved - s.locked;
     }
+
+    function isValidSubscription(uint256 subscriptionId, address consumer) external view returns (bool) {
+        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
+        return l.subscriptions[subscriptionId].consumers[consumer];
+    }
 }
