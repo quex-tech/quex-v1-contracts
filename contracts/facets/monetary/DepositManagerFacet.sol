@@ -31,6 +31,15 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         l.subscriptions[subscriptionId].balance += msg.value;
     }
 
+    function lock(uint256 subscriptionId, uint256 amount) external {
+        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
+        DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
+        if (msg.sender != s.owner) {
+            revert IQuexActionRegistry.Subscription_WrongCaller();
+        }
+        s.locked += amount;
+    }
+
     function withdraw(uint256 subscriptionId, address receiver) external override nonReentrant {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
         DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
@@ -38,7 +47,7 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
             revert IQuexActionRegistry.Subscription_WrongCaller();
         }
 
-        uint256 withdrawable = s.balance - s.reserved;
+        uint256 withdrawable = this.withdrawableBalance(subscriptionId);
         if (withdrawable == 0) {
             revert IQuexActionRegistry.Subscription_InsufficientValue();
         }

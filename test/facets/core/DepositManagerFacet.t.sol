@@ -76,4 +76,29 @@ contract DepositManagerFacetTest is Test {
         vm.expectRevert(IQuexActionRegistry.Subscription_WrongCaller.selector);
         facet.removeConsumer(id, user);
     }
+
+    function testLockIncreasesLockedAmount() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+        uint256 v = 0.12 ether;
+        uint256 lock = 0.02 ether;
+
+        vm.prank(owner);
+        facet.deposit{value: v}(id);
+        assertEq(facet.withdrawableBalance(id), v);
+
+        vm.prank(owner);
+        facet.lock(id, lock);
+        assertEq(facet.withdrawableBalance(id), v - lock);
+    }
+
+    function testOnlyOwnerCanLock() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+
+        vm.prank(user);
+        vm.expectRevert(IQuexActionRegistry.Subscription_WrongCaller.selector);
+        facet.lock(id, 1 ether);
+    }
+
 }
