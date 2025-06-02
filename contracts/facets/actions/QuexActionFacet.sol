@@ -106,6 +106,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         uint256 requestId,
         uint256 tdId
     ) external nonReentrant {
+        uint256 gasStart = gasleft();
         QuexActionStorage.Layout storage layout = QuexActionStorage.layout();
         QuexActionStorage.Request memory request = layout.requests[requestId];
         if (request.flowId == 0) {
@@ -119,10 +120,21 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
         payable(quexMonetary.getTreasury()).call{value: request.quexFee}("");
         payable(IOraclePool(flow.pool).getTreasury()).call{value: request.oraclePoolFee}("");
-        payable(msg.sender).call{value: request.relayerPremium}("");
+
+        uint256 requestPrice = request.quexFee + request.relayerPremium + request.oraclePoolFee;
+        IDepositManager(address(this)).unlock(request.subscriptionId, requestPrice);
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
         (bool success, ) = flow.consumer.call{gas: flow.gasLimit}(payload);
+
+        // Refund relayer with the gas used
+        uint256 gasUsed = gasStart - gasleft();
+        uint256 refund = gasUsed * tx.gasprice;
+        if (refund > request.relayerPremium) {
+            refund = request.relayerPremium;
+        }
+        // TODO test
+        payable(msg.sender).call{value: refund}("");
 
         if (success) {
             emit RequestFulfilled(requestId, request.flowId, msg.sender);

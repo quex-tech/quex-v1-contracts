@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
+import {IDepositManager} from "../../../contracts/interfaces/core/IDepositManager.sol";
 import {QuexActionFacetTestDataBase} from "./QuexActionFacet.t.sol";
 import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
 import {IdType, DataItem, OracleMessage, ETHSignature, IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
 import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
+
 contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     uint256 requestPrice;
 
@@ -40,9 +42,17 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
 
         _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
 
+        IDepositManager depositManager = IDepositManager(address(testObject));
+        uint256 lockedBefore = depositManager.balance(subscriptionId) -
+            depositManager.withdrawableBalance(subscriptionId);
+        assertEq(lockedBefore, requestPrice, "Request price should be locked before fulfillment");
         uint256 initialBalance = quexTreasury.balance;
+
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
+        uint256 lockedAfter = depositManager.balance(subscriptionId) -
+            depositManager.withdrawableBalance(subscriptionId);
+        assertEq(lockedAfter, 0, "Locked balance should be zero after fulfillment");
         assertEq(quexTreasury.balance, initialBalance + quexFee);
     }
 
@@ -235,6 +245,8 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         uint256 flowId = uint256(keccak256("test_RevertsIf_CallbackReenter_flowId"));
         uint256 actionId = uint256(keccak256("test_RevertsIf_CallbackReenter_actionId"));
         Flow memory flow = Flow(1000000, actionId, oraclePoolAddress, address(this), this.callback_Reenter.selector);
+        IDepositManager(address(diamond)).addConsumer(subscriptionId, flow.consumer);
+
         vm.mockCall(address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, flowId), abi.encode(flow));
 
         uint256 requestPrice = _getMinimumRequestPrice(flowId);
@@ -268,7 +280,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         // We'll modify the s value to create a malleable signature
         uint256 n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141; // secp256k1 curve order
         bytes32 malleableS = bytes32(n - uint256(signature.s));
-        
+
         // Create a new signature with the malleable s value
         ETHSignature memory malleableSignature = ETHSignature(
             signature.r,
