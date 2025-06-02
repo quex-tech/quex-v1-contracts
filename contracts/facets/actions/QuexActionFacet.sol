@@ -9,6 +9,7 @@ import "../../interfaces/core/IDepositManager.sol";
 import "./IQuexActionFacet.sol";
 import "./QuexActionStorage.sol";
 
+import {DepositManagerStorage} from "../monetary/DepositManagerStorage.sol";
 import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 import {ReentrancyGuard} from "@solidstate/contracts/security/reentrancy_guard/ReentrancyGuard.sol";
 import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
@@ -61,7 +62,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         if (flow.pool == address(0)) {
             revert Flow_NotFound();
         }
-        if (!IDepositManager(address(this)).isValidSubscription(subscriptionId, flow.consumer)) {
+        if (!DepositManagerStorage.layout().subscriptions[subscriptionId].consumers[flow.consumer]) {
             revert Subscription_NotFound();
         }
 
@@ -71,8 +72,14 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
         uint256 requestPrice = quexFee + relayerPremium + oraclePoolFee;
 
-        // TODO lock amount rely on gasprice?
-        IDepositManager(address(this)).lock(subscriptionId, requestPrice);
+        // reserve balance in subscription to cover all fees
+        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
+        DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
+        if (s.balance - s.reserved < requestPrice) {
+            revert Subscription_InsufficientValue();
+        }
+        s.reserved += requestPrice;
+
 
         requestId = ++QuexActionStorage.layout().lastRequestId;
         emit RequestCreated(requestId, flowId, flow.pool);
@@ -121,8 +128,17 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         payable(quexMonetary.getTreasury()).call{value: request.quexFee}("");
         payable(IOraclePool(flow.pool).getTreasury()).call{value: request.oraclePoolFee}("");
 
-        uint256 requestPrice = request.quexFee + request.relayerPremium + request.oraclePoolFee;
-        IDepositManager(address(this)).unlock(request.subscriptionId, requestPrice);
+        uint256 reservedPrice = request.quexFee + request.relayerPremium + request.oraclePoolFee;
+        // Release funds from reserve and lock
+        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
+        DepositManagerStorage.Subscription storage s = l.subscriptions[request.subscriptionId];
+        require(s.reserved >= reservedPrice, "Trying to release funds that are not reserved");
+        s.reserved -= reservedPrice;
+        if (s.locked >= reservedPrice) {
+            s.locked -= reservedPrice;
+        } else {
+            s.locked = 0;
+        }
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
         (bool success, ) = flow.consumer.call{gas: flow.gasLimit}(payload);
@@ -163,7 +179,12 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         delete layout.requests[requestId];
         uint256 requestPrice = request.quexFee + request.relayerPremium + request.oraclePoolFee;
 
-        IDepositManager(address(this)).unlock(request.subscriptionId, requestPrice);
+        {
+            DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
+            DepositManagerStorage.Subscription storage s = l.subscriptions[request.subscriptionId];
+            require(s.reserved >= requestPrice, "Trying to unlock funds that are not locked");
+            s.reserved -= requestPrice;
+        }
         emit RequestCancelled(requestId, request.flowId, msg.sender);
     }
 

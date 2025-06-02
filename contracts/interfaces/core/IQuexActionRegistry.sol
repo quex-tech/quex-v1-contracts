@@ -43,7 +43,6 @@ interface IQuexActionRegistry {
     error Subscription_NotFound();
     error Subscription_WrongCaller();
     error Subscription_TransferFailed();
-    error OnlyCallableInternally();
     error Request_TooFreshToCancel();
     error Request_NotOwnedBySender();
 

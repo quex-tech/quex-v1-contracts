@@ -38,7 +38,7 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
             revert IQuexActionRegistry.Subscription_WrongCaller();
         }
 
-        uint256 withdrawable = s.balance - s.locked;
+        uint256 withdrawable = s.balance - s.reserved;
         if (withdrawable == 0) {
             revert IQuexActionRegistry.Subscription_InsufficientValue();
         }
@@ -50,28 +50,6 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         }
     }
 
-    function lock(uint256 subscriptionId, uint256 amount) external override {
-        if (msg.sender != address(this)) {
-            revert IQuexActionRegistry.OnlyCallableInternally();
-        }
-        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
-        DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
-        if (s.balance - s.locked < amount) {
-            revert IQuexActionRegistry.Subscription_InsufficientValue();
-        }
-
-        s.locked += amount;
-    }
-
-    function unlock(uint256 subscriptionId, uint256 amount) external override {
-        if (msg.sender != address(this)) {
-            revert IQuexActionRegistry.OnlyCallableInternally();
-        }
-        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
-        DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
-        require(s.locked >= amount, "Trying to unlock funds that are not locked");
-        s.locked -= amount;
-    }
 
     function addConsumer(uint256 subscriptionId, address consumer) external override {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
@@ -95,10 +73,6 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
 
     function withdrawableBalance(uint256 subscriptionId) external view override returns (uint256) {
         DepositManagerStorage.Subscription storage s = DepositManagerStorage.layout().subscriptions[subscriptionId];
-        return s.balance - s.locked;
-    }
-
-    function isValidSubscription(uint256 subscriptionId, address consumer) external view override returns (bool) {
-        return DepositManagerStorage.layout().subscriptions[subscriptionId].consumers[consumer];
+        return s.balance - s.reserved - s.locked;
     }
 }

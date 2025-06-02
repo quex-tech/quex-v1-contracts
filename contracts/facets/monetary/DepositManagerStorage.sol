@@ -6,6 +6,7 @@ library DepositManagerStorage {
 
     struct Subscription {
         uint256 balance;
+        uint256 reserved;
         uint256 locked;
         address owner;
         mapping(address => bool) consumers;
