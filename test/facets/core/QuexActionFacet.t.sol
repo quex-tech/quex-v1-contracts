@@ -66,7 +66,7 @@ abstract contract QuexActionFacetTestBase is Test {
 
         // Add DepositManagerFacet to diamond
         DepositManagerFacet depositManager = new DepositManagerFacet();
-        bytes4[] memory depositSelectors = new bytes4[](9);
+        bytes4[] memory depositSelectors = new bytes4[](13);
         depositSelectors[0] = IDepositManager.createSubscription.selector;
         depositSelectors[1] = IDepositManager.setOwner.selector;
         depositSelectors[2] = IDepositManager.deposit.selector;
@@ -76,6 +76,10 @@ abstract contract QuexActionFacetTestBase is Test {
         depositSelectors[6] = IDepositManager.balance.selector;
         depositSelectors[7] = IDepositManager.withdrawableBalance.selector;
         depositSelectors[8] = IDepositManager.lock.selector;
+        depositSelectors[9] = DepositManagerFacet.release.selector;
+        depositSelectors[10] = DepositManagerFacet.isValidSubscription.selector;
+        depositSelectors[11] = DepositManagerFacet.reserve.selector;
+        depositSelectors[12] = DepositManagerFacet.fulfill.selector;
 
         IERC2535DiamondCutInternal.FacetCut[] memory allCuts = new IERC2535DiamondCutInternal.FacetCut[](2);
         allCuts[0] = cuts[0];
