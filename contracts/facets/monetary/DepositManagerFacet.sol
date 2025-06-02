@@ -8,6 +8,13 @@ import {IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActio
 
 contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
 
+    modifier quexOnly() {
+        if (msg.sender != address(this)) {
+            revert IQuexActionRegistry.OnlyCallableInternally();
+        }
+        _;
+    }
+
     event SubscriptionCreated(uint256 indexed id, address indexed owner);
 
     function createSubscription() external override returns (uint256) {
@@ -89,4 +96,15 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
         return l.subscriptions[subscriptionId].consumers[consumer];
     }
+
+    function reserve(uint256 subscriptionId, uint256 amount) external quexOnly {
+        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
+        DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
+        if (s.balance - s.reserved < amount) {
+            revert IQuexActionRegistry.Subscription_InsufficientValue();
+        }
+
+        s.reserved += amount;
+    }
+
 }

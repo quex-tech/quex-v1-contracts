@@ -48,7 +48,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, flowId, message.dataItem, IdType.FlowId);
-        (bool success, ) = flow.consumer.call{gas: flow.gasLimit}(payload);
+        (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
 
         if (success) {
             emit DataPushed(flowId, msg.sender);
@@ -71,16 +71,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         uint256 quexFee = quexMonetary.getQuexFee(flowId);
         uint256 relayerPremium = (flow.gasLimit + QuexActionStorage.layout().quexFulfillingGasCost) * tx.gasprice;
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
-        uint256 requestPrice = quexFee + relayerPremium + oraclePoolFee;
-
-        // reserve balance in subscription to cover all fees
-        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
-        DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
-        if (s.balance - s.reserved < requestPrice) {
-            revert Subscription_InsufficientValue();
-        }
-        s.reserved += requestPrice;
-
+        DepositManagerFacet(address(this)).reserve(subscriptionId, quexFee + relayerPremium + oraclePoolFee);
 
         requestId = ++QuexActionStorage.layout().lastRequestId;
         emit RequestCreated(requestId, flowId, flow.pool);
@@ -137,7 +128,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         s.reserved -= reservedFee;
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
-        (bool success, ) = flow.consumer.call{gas: flow.gasLimit}(payload);
+        (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
 
         // Refund relayer with the gas used
         uint256 gasUsed = gasStart - gasleft();

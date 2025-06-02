@@ -123,4 +123,17 @@ contract DepositManagerFacetTest is Test {
         assertFalse(facet.isValidSubscription(id, user));
     }
 
+    function testReserveOnlyCallableInternally() public {
+        vm.prank(owner);
+        uint256 id = facet.createSubscription();
+        facet.deposit{value: 1 ether}(id);
+
+        vm.prank(address(facet));
+        facet.reserve(id, 0.1 ether);
+
+        vm.prank(address(owner));
+        vm.expectRevert(IQuexActionRegistry.OnlyCallableInternally.selector);
+        facet.reserve(id, 0.1 ether);
+    }
+
 }

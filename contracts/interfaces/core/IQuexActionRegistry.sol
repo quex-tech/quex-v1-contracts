@@ -39,6 +39,7 @@ interface IQuexActionRegistry {
     error OracleMessage_SignatureIsInvalid();
     error OracleMessage_OutdatedMessage();
     error OracleMessage_TimestampFromFuture();
+    error OnlyCallableInternally();
     error Subscription_InsufficientValue();
     error Subscription_NotFound();
     error Subscription_WrongCaller();
