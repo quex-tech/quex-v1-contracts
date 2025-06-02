@@ -151,6 +151,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
         // TODO test
         payable(msg.sender).call{value: refund}("");
+        s.balance -= (request.quexFee + refund + request.oraclePoolFee);
 
         if (success) {
             emit RequestFulfilled(requestId, request.flowId, msg.sender);
