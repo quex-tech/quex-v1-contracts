@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
+import "forge-std/console.sol";
 import {IDepositManager} from "../../../contracts/interfaces/core/IDepositManager.sol";
 import {QuexActionFacetTestDataBase} from "./QuexActionFacet.t.sol";
 import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
@@ -250,6 +251,60 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
 
         vm.expectRevert(ECDSA.ECDSA__InvalidS.selector);
         testObject.fulfillRequest(message, malleableSignature, requestId, td.tdId);
+    }
+
+    function test_RelayerRefundIsGreaterThanGasSpent() public {
+        _runRefundComparisonTest(5_000_000);
+    }
+
+    function test_RelayerRefundIsGreaterThanGasSpentOnGasLimit() public {
+        _runRefundComparisonTest(50_000);
+    }
+
+    function _runRefundComparisonTest(uint256 gasLimit) private {
+        // Setup a new flow with a heavy callback
+        uint256 localFlowId = uint256(keccak256(abi.encodePacked("test_RelayerRefundIsGreaterThanGasSpent_flowId", gasLimit)));
+        uint256 localActionId = uint256(keccak256(abi.encodePacked("test_RelayerRefundIsGreaterThanGasSpent_actionId", gasLimit)));
+        Flow memory heavyFlow = Flow(5_000_000, localActionId, oraclePoolAddress, address(this), this.callback_HeavyComputation.selector);
+        IDepositManager(address(diamond)).addConsumer(subscriptionId, heavyFlow.consumer);
+
+        vm.mockCall(address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, localFlowId), abi.encode(heavyFlow));
+
+        // Create request
+        uint256 requestIdLocal = testObject.createRequest(localFlowId, subscriptionId);
+        TDTestData memory tdLocal = TD_validInQuex_inOraclePool;
+        OracleMessage memory messageLocal = OracleMessage(localActionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
+        ETHSignature memory signatureLocal = _signOracleMessage(messageLocal, tdLocal);
+
+        uint256 balanceBefore = relayer.balance;
+        uint256 gasStart = gasleft();
+
+        vm.prank(relayer);
+        testObject.fulfillRequest(messageLocal, signatureLocal, requestIdLocal, tdLocal.tdId);
+
+        uint256 gasUsed = gasStart - gasleft();
+        uint256 balanceAfter = relayer.balance;
+        uint256 refund = balanceAfter - balanceBefore;
+        uint256 spent = gasUsed * tx.gasprice;
+
+        console.log("!! gasUsed:", gasUsed);
+        console.log("!! balanceBefore:", balanceBefore);
+        console.log("!! balanceAfter:", balanceAfter);
+        console.log("!! balance diff:", balanceAfter - balanceBefore);
+        uint256 diff = refund > spent ? (refund - spent) / tx.gasprice : (spent - refund) / tx.gasprice;
+        console.log("!! diff:", diff);
+        assertGt(refund, spent, "Refund should exceed gas spent");
+    }
+
+    function callback_HeavyComputation(uint256 /*requestId*/, DataItem memory dataItem, IdType /*idType*/) public {
+        uint256 gasStart = gasleft();
+        bytes32 hash = keccak256(abi.encode(dataItem.timestamp));
+        for (uint i = 0; i < 2000; i++) {
+            hash = keccak256(abi.encode(hash, i));
+        }
+        require(hash != bytes32(0)); // Prevent optimizer from removing loop
+        uint256 gasUsed = gasStart - gasleft();
+
     }
 
     function callback_Reenter(uint256 requestId, DataItem memory dataItem, IdType /* idType */) public {

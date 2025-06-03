@@ -17,6 +17,8 @@ import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
 import {ITrustDomainRegistry} from "../../interfaces/core/ITrustDomainRegistry.sol";
 
 contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyGuard {
+    uint256 private constant RELAYER_GAS_OVERHEAD = 35000;
+
     // push events
     event DataPushed(uint256 flowId, address sender);
     event DataPushingFailed(uint256 flowId, address sender);
@@ -124,11 +126,13 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         uint256 reservedFee = request.quexFee + request.relayerPremium + request.oraclePoolFee;
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
+
+        uint256 gas1 = gasStart - gasleft();
         (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
 
         // Refund relayer with the gas used
         uint256 gasUsed = gasStart - gasleft();
-        uint256 refund = (gasUsed + QuexActionStorage.layout().quexFulfillingGasCost) * tx.gasprice;
+        uint256 refund = (gasUsed + RELAYER_GAS_OVERHEAD) * tx.gasprice;
         if (refund > request.relayerPremium) {
             refund = request.relayerPremium;
         }
