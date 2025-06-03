@@ -8,7 +8,8 @@ import {
     QuexDiamond,
     QuexDiamond__factory,
     IQuexMonetaryFacet__factory,
-    IQuexActionFacet__factory
+    IQuexActionFacet__factory,
+    IDepositManager__factory
 } from "../typechain";
 import QuexCoreCompleteDeployAndConfigurationModule from "../ignition/modules/core/QuexCoreCompleteDeployAndConfigurationModule";
 import { FunctionFragment } from "ethers";
@@ -45,6 +46,7 @@ async function validate_interfaces(diamond: QuexDiamond) {
     IQuexActionRegistry__factory.createInterface().forEachFunction((x) => validate_function(x));
     IQuexMonetary__factory.createInterface().forEachFunction((x) => validate_function(x));
     ITrustDomainRegistry__factory.createInterface().forEachFunction((x) => validate_function(x));
+    IDepositManager__factory.createInterface().forEachFunction((x) => validate_function(x));
 }
 
 async function configure_manager(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
