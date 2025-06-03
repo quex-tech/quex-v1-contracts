@@ -29,6 +29,7 @@ abstract contract QuexActionFacetTestBase is Test {
     uint256 internal constant flowId = 111;
     uint256 internal subscriptionId;
     address internal subscriptionOwner = address(0xA11CE);
+    address internal relayer;
     Flow internal flow = Flow(100, actionId, oraclePoolAddress, consumerAddress, callbackSignature);
 
     uint256 internal constant unknownFlowId = 2;
@@ -118,6 +119,7 @@ abstract contract QuexActionFacetTestBase is Test {
         subscriptionId = IDepositManager(address(diamond)).createSubscription();
         IDepositManager(address(diamond)).addConsumer(subscriptionId, flow.consumer);
         IDepositManager(address(diamond)).deposit{value: 1 ether}(subscriptionId);
+        relayer = address(this);
     }
 }
 

@@ -117,6 +117,21 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         assertEq(address(this).balance, initialBalance + gasFee * tx.gasprice);
     }
 
+    function test_TransfersTokensToDifferentRelayer() public {
+        address actualRelayer = address(0xBEEF);
+        OracleMessage memory msgWithRelayer = OracleMessage(actionId, message.dataItem, actualRelayer);
+        ETHSignature memory sig = _signOracleMessage(msgWithRelayer, td);
+
+        _mockSuccessfulCallback(requestId, msgWithRelayer.dataItem, IdType.RequestId);
+
+        uint256 initialBalance = actualRelayer.balance;
+
+        testObject.fulfillRequest(msgWithRelayer, sig, requestId, td.tdId);
+
+        uint256 expectedReward = requestPrice - quexFee - oraclePoolFee;
+        assertEq(actualRelayer.balance, initialBalance + expectedReward);
+    }
+
     function test_EmitsRequestFulfilledEvent() public {
         _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
 
@@ -139,7 +154,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_RevertsIf_ActionIdsMismatched() public {
-        OracleMessage memory msgMismatched = OracleMessage(actionId + 1, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory msgMismatched = OracleMessage(actionId + 1, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory sig = _signOracleMessage(msgMismatched, td);
 
         vm.expectRevert(IQuexActionRegistry.Action_MismatchIds.selector);
@@ -149,7 +164,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     function test_RevertsIf_TrustDomainIsNotValid() public {
         uint256 reqId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory tdNotValid = TD_notValidInQuex_inOraclePool;
-        OracleMessage memory msg = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory msg = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory sig = _signOracleMessage(msg, tdNotValid);
 
         vm.expectRevert(IQuexActionRegistry.TrustDomain_NotValid.selector);
@@ -159,7 +174,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     function test_RevertsIf_TrustDomainIsNotInOraclePool() public {
         uint256 reqId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory tdNotInOraclePool = TD_validInQuex_notInOraclePool;
-        OracleMessage memory msg = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory msg = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory sig = _signOracleMessage(msg, tdNotInOraclePool);
 
         vm.expectRevert(IQuexActionRegistry.TrustDomain_IsNotAllowedInOraclePool.selector);
@@ -177,7 +192,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     function test_RevertsIf_MessageIsOutdated() public {
         vm.warp(100000000); // set block's timestamp
         uint256 timestamp = vm.getBlockTimestamp() - pastTimeSkew - 1;
-        OracleMessage memory msg = OracleMessage(actionId, DataItem(timestamp, 0, abi.encode(1)));
+        OracleMessage memory msg = OracleMessage(actionId, DataItem(timestamp, 0, abi.encode(1)), relayer);
         ETHSignature memory sig = _signOracleMessage(msg, td);
 
         vm.expectRevert(IQuexActionRegistry.OracleMessage_OutdatedMessage.selector);
@@ -186,7 +201,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
 
     function test_RevertsIf_MessageFromFuture() public {
         uint256 timestamp = vm.getBlockTimestamp() + futureTimeSkew + 1;
-        OracleMessage memory msg = OracleMessage(actionId, DataItem(timestamp, 0, abi.encode(1)));
+        OracleMessage memory msg = OracleMessage(actionId, DataItem(timestamp, 0, abi.encode(1)), relayer);
         ETHSignature memory sig = _signOracleMessage(msg, td);
 
         vm.expectRevert(IQuexActionRegistry.OracleMessage_TimestampFromFuture.selector);
@@ -204,7 +219,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         uint256 requestPriceLocal = _getMinimumRequestPrice(flowIdLocal);
         uint256 requestIdLocal = testObject.createRequest(flowIdLocal, subscriptionId);
         TDTestData memory tdLocal = TD_validInQuex_inOraclePool;
-        OracleMessage memory messageLocal = OracleMessage(actionIdLocal, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory messageLocal = OracleMessage(actionIdLocal, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signatureLocal = _signOracleMessage(messageLocal, tdLocal);
 
         vm.expectCall(
@@ -241,7 +256,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         uint256 actionIdLocal = IFlowRegistry(address(testObject)).getFlow(flowId).actionId;
         TDTestData memory tdLocal = TD_validInQuex_inOraclePool;
 
-        OracleMessage memory messageLocal = OracleMessage(actionIdLocal, dataItem);
+        OracleMessage memory messageLocal = OracleMessage(actionIdLocal, dataItem, relayer);
         ETHSignature memory signatureLocal = _signOracleMessage(messageLocal, tdLocal);
 
         testObject.fulfillRequest(messageLocal, signatureLocal, requestId, tdLocal.tdId);
@@ -257,7 +272,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
     function _createRequest() private returns (uint256 requestId, TDTestData memory td, OracleMessage memory message, ETHSignature memory signature) {
         requestId = testObject.createRequest(flowId, subscriptionId);
         td = TD_validInQuex_inOraclePool;
-        message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         signature = _signOracleMessage(message, td);
     }
 

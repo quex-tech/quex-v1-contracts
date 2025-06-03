@@ -44,16 +44,16 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         payable(quexMonetary.getTreasury()).call{value: quexFee}("");
         if (msg.value > quexFee) {
             // todo: process situation when msg.sender is not payable
-            payable(msg.sender).call{value: msg.value - quexFee}("");
+            payable(message.relayer).call{value: msg.value - quexFee}("");
         }
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, flowId, message.dataItem, IdType.FlowId);
         (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
 
         if (success) {
-            emit DataPushed(flowId, msg.sender);
+            emit DataPushed(flowId, message.relayer);
         } else {
-            emit DataPushingFailed(flowId, msg.sender);
+            emit DataPushingFailed(flowId, message.relayer);
         }
     }
 
@@ -132,7 +132,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         if (refund > request.relayerPremium) {
             refund = request.relayerPremium;
         }
-        payable(msg.sender).call{value: refund}("");
+        payable(message.relayer).call{value: refund}("");
 
         uint256 actualFees = request.quexFee + refund + request.oraclePoolFee;
         DepositManagerFacet(address(this)).fulfill(request.subscriptionId, reservedFee, actualFees);

@@ -12,7 +12,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
     function test_CallsCallbackFunctionOnce() public {
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
-        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         _mockSuccessfulCallback(flowId, message.dataItem, IdType.FlowId);
@@ -29,7 +29,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
     function test_TransfersTokensToQuex() public {
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
-        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         _mockSuccessfulCallback(flowId, message.dataItem, IdType.FlowId);
@@ -43,7 +43,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
     function test_TransfersTokensToQuex_EvenIf_CallbackIsFailed() public {
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
-        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         _mockRevertedCallback(flowId, message.dataItem, IdType.FlowId);
@@ -57,7 +57,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
     function test_EmitsDataPushedEvent() public {
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
-        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         _mockSuccessfulCallback(flowId, message.dataItem, IdType.FlowId);
@@ -70,7 +70,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
     function test_EmitsDataPushingFailedEventIf_CallbackIsFailed() public {
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
-        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         _mockRevertedCallback(flowId, message.dataItem, IdType.FlowId);
@@ -83,7 +83,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
     function test_RevertsIf_FlowNotFound() public {
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
-        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectRevert(IQuexActionRegistry.Flow_NotFound.selector);
@@ -93,7 +93,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
     function test_RevertsIf_InsufficientFee() public {
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
-        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectRevert(IQuexActionRegistry.Subscription_InsufficientValue.selector);
@@ -103,7 +103,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
     function test_RevertsIf_ActionIdsMismatched() public {
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
-        OracleMessage memory message = OracleMessage(actionId + 1, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory message = OracleMessage(actionId + 1, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectRevert(IQuexActionRegistry.Action_MismatchIds.selector);
@@ -113,7 +113,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
     function test_RevertsIf_TrustDomainIsNotValid() public {
         TDTestData memory td = TD_notValidInQuex_inOraclePool;
 
-        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectRevert(IQuexActionRegistry.TrustDomain_NotValid.selector);
@@ -123,7 +123,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
     function test_RevertsIf_TrustDomainIsNotInOraclePool() public {
         TDTestData memory td = TD_validInQuex_notInOraclePool;
 
-        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectRevert(IQuexActionRegistry.TrustDomain_IsNotAllowedInOraclePool.selector);
@@ -134,7 +134,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         TDTestData memory td = TD_validInQuex_inOraclePool;
         TDTestData memory signerTD = TD_validInQuex_notInOraclePool;
 
-        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signature = _signOracleMessage(message, signerTD);
 
         vm.expectRevert(IQuexActionRegistry.OracleMessage_SignatureIsInvalid.selector);
@@ -149,7 +149,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
 
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
-        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectCall(
@@ -168,15 +168,15 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         TDTestData memory td = TD_validInQuex_inOraclePool;
         TDTestData memory signerTD = TD_validInQuex_notInOraclePool;
 
-        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signature = _signOracleMessage(message, signerTD);
- 
+
         // Create a malleable signature by modifying the s value
         // In ECDSA, if (s > n/2) then s' = n - s is also a valid signature
         // We'll modify the s value to create a malleable signature
         uint256 n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141; // secp256k1 curve order
         bytes32 malleableS = bytes32(n - uint256(signature.s));
-        
+
         // Create a new signature with the malleable s value
         ETHSignature memory malleableSignature = ETHSignature(
             signature.r,
@@ -192,7 +192,7 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         uint256 actionId = IFlowRegistry(address(testObject)).getFlow(flowId).actionId;
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
-        OracleMessage memory message = OracleMessage(actionId, dataItem);
+        OracleMessage memory message = OracleMessage(actionId, dataItem, relayer);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
