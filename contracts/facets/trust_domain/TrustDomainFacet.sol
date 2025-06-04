@@ -15,6 +15,9 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     error QERevocation_TDExist();
     error TeeTcbSvnRevocation_TDExist();
     error CpuSvnRevocation_QEExist();
+    error PlatformCAAlreadyExists();
+    error PCKAlreadyExists();
+    error TDAlreadyExists();
 
     function getRootKey() external view returns(ECKey memory) {
         return TrustDomainStorage.layout().rootCA;
@@ -30,6 +33,11 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         uint256 r,
         uint256 s
     ) external {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        if (layout.platformCAs[serial].notAfter != 0) {
+            revert PlatformCAAlreadyExists();
+        }
+
         uint256 notBeforeTimestamp = _fromDERToTimestamp(notBefore);
         uint256 notAfterTimestamp = _fromDERToTimestamp(notAfter);
         if (notBeforeTimestamp > block.timestamp || notAfterTimestamp < block.timestamp) {
@@ -37,7 +45,7 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         }
 
         QuoteVerifier.ensurePlatformCAKeyIsValid(x, y, serial, notBefore, extensions, r, s);
-        TrustDomainStorage.layout().platformCAs[serial] = ECKey(x, y, _fromDERToTimestamp(notBefore), _fromDERToTimestamp(notAfter));
+        layout.platformCAs[serial] = ECKey(x, y, notBeforeTimestamp, notAfterTimestamp);
 
         emit PlatformCAAdded(serial);
     }
@@ -57,6 +65,11 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         uint256 r,
         uint256 s
     ) external {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        if (layout.processorPCKs[authority][serial].notAfter != 0) {
+            revert PCKAlreadyExists();
+        }
+
         uint256 notBeforeTimestamp = _fromDERToTimestamp(notBefore);
         uint256 notAfterTimestamp = _fromDERToTimestamp(notAfter);
         if (notBeforeTimestamp > block.timestamp || notAfterTimestamp < block.timestamp) {
@@ -65,7 +78,6 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
 
         QuoteVerifier.ensurePCKIsValid(x, y, serial, notBefore, notAfter, extensions, authority, r, s);
 
-        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
         layout.processorPCKs[authority][serial] = ECKey(x, y, notBeforeTimestamp, notAfterTimestamp);
         layout.pckCounterByPlatformCA[authority]++;
 
@@ -113,6 +125,9 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
 
         tdId = _calculateTDId(tdQuote);
+        if (layout.tdQuotes[tdId].REPORT_DATA1 != 0) {
+            revert TDAlreadyExists();
+        }
 
         bytes memory publicKey = abi.encodePacked(tdQuote.REPORT_DATA1, tdQuote.REPORT_DATA2);
         address tdAddress = _convertPublicKeyToAddress(publicKey);
@@ -194,19 +209,22 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
             revert QERevocation_TDExist();
         }
         TrustDomainStorage.QEAuthority memory authority = layout.qeAuthorities[qeId];
+        layout.cpuSvnQECounter[layout.qeReports[qeId].CPUSVN]--;
+        layout.qeCounterByProcessorPCK[authority.platformSerial][authority.pckSerial]--;
         delete layout.qeReports[qeId];
         delete layout.qeAuthorities[qeId];
-        layout.qeCounterByProcessorPCK[authority.platformSerial][authority.pckSerial]--;
 
         emit QEReportRevoked(qeId);
     }
 
     function revokeTD(uint256 tdId) external onlyOwner {
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        layout.teeTcbSvnTDCounter[layout.tdQuotes[tdId].TEE_TCB_SVN]--;
         layout.tdCounterByQE[layout.tdToQe[tdId]]--;
         delete layout.tdQuotes[tdId];
         delete layout.tdSignerAddress[tdId];
         delete layout.tdToQe[tdId];
+        delete layout.tdValidityEnd[tdId];
 
         emit TDReportRevoked(tdId);
     }
