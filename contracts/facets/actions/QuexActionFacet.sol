@@ -18,6 +18,7 @@ import {ITrustDomainRegistry} from "../../interfaces/core/ITrustDomainRegistry.s
 
 contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyGuard {
     uint256 private constant RELAYER_GAS_OVERHEAD = 35000;
+    uint256 private constant GAS_PRICE_MULTIPLIER = 2;
 
     // push events
     event DataPushed(uint256 flowId, address sender);
@@ -71,9 +72,10 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
 
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
         uint256 quexFee = quexMonetary.getQuexFee(flowId);
-        uint256 relayerPremium = (flow.gasLimit + QuexActionStorage.layout().quexFulfillingGasCost) * tx.gasprice;
+        uint256 maxGasPrice = tx.gasprice * GAS_PRICE_MULTIPLIER;
+        uint256 maxRelayerRefund = (flow.gasLimit + QuexActionStorage.layout().quexFulfillingGasCost) * maxGasPrice;
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
-        DepositManagerFacet(address(this)).reserve(subscriptionId, quexFee + relayerPremium + oraclePoolFee);
+        DepositManagerFacet(address(this)).reserve(subscriptionId, quexFee + maxRelayerRefund + oraclePoolFee);
 
         requestId = ++QuexActionStorage.layout().lastRequestId;
         emit RequestCreated(requestId, flowId, flow.pool);
@@ -82,7 +84,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
             flowId,
             subscriptionId,
             quexFee,
-            relayerPremium,
+            maxRelayerRefund,
             oraclePoolFee,
             block.number,
             msg.sender
@@ -123,18 +125,16 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         payable(IOraclePool(flow.pool).getTreasury()).call{value: request.oraclePoolFee}("");
 
         // Release funds from reserve
-        uint256 reservedFee = request.quexFee + request.relayerPremium + request.oraclePoolFee;
+        uint256 reservedFee = request.quexFee + request.maxRelayerRefund + request.oraclePoolFee;
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
-
-        uint256 gas1 = gasStart - gasleft();
         (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
 
         // Refund relayer with the gas used
         uint256 gasUsed = gasStart - gasleft();
         uint256 refund = (gasUsed + RELAYER_GAS_OVERHEAD) * tx.gasprice;
-        if (refund > request.relayerPremium) {
-            refund = request.relayerPremium;
+        if (refund > request.maxRelayerRefund) {
+            refund = request.maxRelayerRefund;
         }
         payable(message.relayer).call{value: refund}("");
 
@@ -166,7 +166,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
 
         delete layout.requests[requestId];
-        uint256 requestPrice = request.quexFee + request.relayerPremium + request.oraclePoolFee;
+        uint256 requestPrice = request.quexFee + request.maxRelayerRefund + request.oraclePoolFee;
         DepositManagerFacet(address(this)).release(request.subscriptionId, requestPrice);
 
         emit RequestCancelled(requestId, request.flowId, msg.sender);
@@ -186,7 +186,8 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
 
         uint256 quexFulfillingGasCost = QuexActionStorage.layout().quexFulfillingGasCost;
-        return (quexFee + oraclePoolFee, flow.gasLimit + quexFulfillingGasCost);
+        uint256 gasAmount = flow.gasLimit + quexFulfillingGasCost;
+        return (quexFee + oraclePoolFee, gasAmount);
     }
 
     function getTimeSkew() external view returns (uint256 pastSkewInSeconds, uint256 futureSkewInSeconds) {

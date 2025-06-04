@@ -6,7 +6,7 @@ library QuexActionStorage {
         uint256 flowId;
         uint256 subscriptionId;
         uint256 quexFee;
-        uint256 relayerPremium;
+        uint256 maxRelayerRefund;
         uint256 oraclePoolFee;
         uint256 createdBlockNumber;
         address owner;

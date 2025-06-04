@@ -27,6 +27,7 @@ abstract contract QuexActionFacetTestBase is Test {
     bytes4 internal callbackSignature = 0x12345678;
     uint256 internal constant actionId = 15;
     uint256 internal constant flowId = 111;
+    uint256 internal constant GAS_PRICE_MULTIPLIER = 2;
     uint256 internal subscriptionId;
     address internal subscriptionOwner = address(0xA11CE);
     address internal relayer;

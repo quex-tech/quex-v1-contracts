@@ -104,7 +104,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         uint256 initialBalance = address(this).balance;
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
-        assertEq(address(this).balance, initialBalance + gasFee * tx.gasprice);
+        assertEq(address(this).balance, initialBalance + gasFee * tx.gasprice * GAS_PRICE_MULTIPLIER);
     }
 
     function test_TransfersTokensToRelayer_EvenIf_CallbackIsFailed() public {
@@ -115,7 +115,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         uint256 initialBalance = address(this).balance;
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
-        assertEq(address(this).balance, initialBalance + gasFee * tx.gasprice);
+        assertEq(address(this).balance, initialBalance + gasFee * tx.gasprice * GAS_PRICE_MULTIPLIER);
     }
 
     function test_TransfersTokensToDifferentRelayer() public {
@@ -319,7 +319,7 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
 
     function _getMinimumRequestPrice(uint256 flowId) private view returns (uint256) {
         (uint256 nativeFee, uint256 gasFee) = testObject.getRequestFee(flowId);
-        return nativeFee + gasFee * tx.gasprice;
+        return nativeFee + gasFee * tx.gasprice * GAS_PRICE_MULTIPLIER;
     }
 
     receive() external payable {}

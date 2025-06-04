@@ -36,7 +36,7 @@ contract QuexActionFacet_cancelRequest is QuexActionFacetTestBase {
         assertEq(preRequest.flowId, flowId, "Request should exist before cancellation");
 
         uint256 quexFee = IQuexMonetary(address(testObject)).getQuexFee(flowId);
-        uint256 relayerPremium = (flow.gasLimit + testObject.getQuexGas()) * tx.gasprice;
+        uint256 relayerPremium = (flow.gasLimit + testObject.getQuexGas()) * tx.gasprice * GAS_PRICE_MULTIPLIER;
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
         uint256 requestPrice = quexFee + relayerPremium + oraclePoolFee;
 
