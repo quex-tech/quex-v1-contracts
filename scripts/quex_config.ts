@@ -1,5 +1,12 @@
 import { AddressLike } from "ethers";
 
+export interface SupportedSvns {
+    cpuSvnsToAdd: string[];
+    cpuSvnsToRemove: string[];
+    teeTcbSvnsToAdd: string[];
+    teeTcbSvnsToRemove: string[];
+}
+
 export interface QuexCoreNetworkConfig {
     quexFee: bigint;
     quexFulfillingGasCost: bigint;
@@ -11,6 +18,7 @@ export interface RequestOracleConfig {
     actionFee: bigint;
     treasuryAddress: AddressLike;
     managerAddress: AddressLike;
+    maxResponseBlocks: bigint;
 }
 
 export interface QuexNetworkConfig {
@@ -18,6 +26,13 @@ export interface QuexNetworkConfig {
     coinMultiplier?: bigint;
     core: QuexCoreNetworkConfig;
     request: RequestOracleConfig;
+}
+
+export const supportedSvns: SupportedSvns = {
+    cpuSvnsToAdd: ["0x0202191b03ff00060000000000000000"],
+    cpuSvnsToRemove: [],
+    teeTcbSvnsToAdd: ["0x05010200000000000000000000000000"],
+    teeTcbSvnsToRemove: []
 }
 
 export const quexConfig: { [key: string]: QuexNetworkConfig } = {
@@ -31,7 +46,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-            managerAddress: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+            managerAddress: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 
+            maxResponseBlocks: 100n
         }
     },
     arbitrumSepolia: {
@@ -44,7 +60,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 1200n
         }
     },
     arbitrumOne: {
@@ -57,7 +74,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 1200n
         }
     },
     bscMainnet: {
@@ -70,7 +88,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 200n
         }
     },
     bscTestnet: {
@@ -83,7 +102,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 200n
         }
     },
     xdcMainnet: {
@@ -96,7 +116,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 150n
         }
     },
     xdcApothem: {
@@ -109,7 +130,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 150n
         }
     },
     berachain: {
@@ -122,7 +144,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 150n
         }
     },
     berachainBepolia: {
@@ -136,7 +159,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 150n
         }
     },
     ethereumSepolia: {
@@ -149,7 +173,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 25n
         }
     },
     ethereum: {
@@ -162,7 +187,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 25n
         }
     },
     avalancheFuji: {
@@ -175,7 +201,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 200n
         }
     },
     avalanche: {
@@ -188,7 +215,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 200n
         }
     },
     celoMainnet: {
@@ -202,7 +230,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 300n
         }
     },
     celoAlfajores: {
@@ -215,7 +244,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 300n
         }
     },
     redbellyTestnet: { // DO NOT USE AS A TEMPLATE. UNUSUAL SETTINGS
@@ -229,7 +259,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071",
-            managerAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071"
+            managerAddress: "0xddBC5104B9515C074C33644C5D0C4994b0c31071",
+            maxResponseBlocks: 100n
         }
     },
     redbellyMainnet: { // DO NOT USE AS A TEMPLATE. UNUSUAL SETTINGS
@@ -243,7 +274,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x450Ab8FAA76C561606400eF6a30397c396D524Ba",
-            managerAddress: "0x450Ab8FAA76C561606400eF6a30397c396D524Ba"
+            managerAddress: "0x450Ab8FAA76C561606400eF6a30397c396D524Ba",
+            maxResponseBlocks: 100n
         }
     },
     hederaTestnet: {
@@ -258,7 +290,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 150n
         }
     },
     hederaMainnet: {
@@ -273,7 +306,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24",
+            maxResponseBlocks: 150n
         }
     },
     waterfallTestnet9: {
@@ -287,7 +321,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         request: {
             actionFee: 0n,
             treasuryAddress: "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6",
-            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24"
+            managerAddress: "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24", 
+            maxResponseBlocks: 200n
         }
     }
 }

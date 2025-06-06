@@ -9,14 +9,15 @@ import {
     QuexDiamond__factory,
     IQuexMonetaryFacet__factory,
     IQuexActionFacet__factory,
-    IDepositManager__factory
+    IDepositManager__factory,
+    ITrustDomainRegistryExtended__factory
 } from "../typechain";
 import QuexCoreCompleteDeployAndConfigurationModule from "../ignition/modules/core/QuexCoreCompleteDeployAndConfigurationModule";
 import { FunctionFragment } from "ethers";
 import { ethers } from "hardhat";
 
 import env from "hardhat";
-import { quexConfig, QuexNetworkConfig, QuexCoreNetworkConfig } from "./quex_config";
+import { quexConfig, QuexNetworkConfig, QuexCoreNetworkConfig, supportedSvns, SupportedSvns } from "./quex_config";
 
 const pastTimeSkew = 15n * 60n; // 15 min
 const futureTimeSkew = 30n; // 30 sec
@@ -29,6 +30,7 @@ export async function run(quexNetworkConfig: QuexNetworkConfig) {
     await validate_interfaces(diamond);
     await configure_manager(diamond, quexNetworkConfig.core);
     await set_config_values(diamond, quexNetworkConfig.core);
+    await add_supported_svns(diamond, supportedSvns);
 }
 
 async function validate_interfaces(diamond: QuexDiamond) {
@@ -83,6 +85,22 @@ async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkCo
         const tx = await quexActions
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setTimeSkew(pastTimeSkew, futureTimeSkew);
+    }
+}
+
+async function add_supported_svns(diamond: QuexDiamond, supportedSvns: SupportedSvns) {
+    const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
+    for (const cpuSvn of supportedSvns.cpuSvnsToAdd) {
+        await (await tdRegistry.allowCpuSvn(cpuSvn)).wait();
+    }
+    for (const teeTcbSvn of supportedSvns.teeTcbSvnsToAdd) {
+        await (await tdRegistry.allowTeeTcbSvn(teeTcbSvn)).wait();
+    }
+    for (const cpuSvn of supportedSvns.cpuSvnsToRemove) {
+        await (await tdRegistry.revokeCpuSvn(cpuSvn)).wait();
+    }
+    for (const teeTcbSvn of supportedSvns.teeTcbSvnsToRemove) {
+        await (await tdRegistry.revokeTeeTcbSvn(teeTcbSvn)).wait();
     }
 }
 
