@@ -22,7 +22,7 @@ const pastTimeSkew = 15n * 60n; // 15 min
 const futureTimeSkew = 30n; // 30 sec
 
 export async function run(quexNetworkConfig: QuexNetworkConfig) {
-    const { quexCoreDiamond } = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule, { strategy: "create2" });
+    const { quexCoreDiamond } = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule, { strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2" });
 
     const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
 
@@ -49,17 +49,20 @@ async function validate_interfaces(diamond: QuexDiamond) {
 
 async function configure_manager(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
     const manager = "0xc8935964ff9a146a753e867ea3890f562b75604c6d6883305d776151177a5a74";
-    await diamond.grantRole(manager, config.managerAddress);
+    await (await diamond.grantRole(manager, config.managerAddress)).wait();
 }
 
 async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
     const quexMonetary = IQuexMonetaryFacet__factory.connect(await diamond.getAddress(), diamond.runner);
+
+    console.log(await quexMonetary.getQuexFee(1));
     if ((await quexMonetary.getQuexFee(1)) != config.quexFee) {
         await quexMonetary
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setQuexFee(config.quexFee);
     }
 
+    console.log(await quexMonetary.getTreasury());
     if ((await quexMonetary.getTreasury()) != config.treasuryAddress) {
         await quexMonetary
             .connect(await ethers.getSigner(<string>config.managerAddress))
@@ -67,6 +70,7 @@ async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkCo
     }
 
     const quexActions = IQuexActionFacet__factory.connect(await diamond.getAddress(), diamond.runner);
+    console.log(await quexActions.getQuexGas());
     if (await quexActions.getQuexGas() != config.quexFulfillingGasCost) {
         await quexActions
             .connect(await ethers.getSigner(<string>config.managerAddress))
@@ -74,8 +78,9 @@ async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkCo
     }
 
     const timeSkew = await quexActions.getTimeSkew();
+    console.log(timeSkew);
     if (timeSkew[0] != pastTimeSkew || timeSkew[1] != futureTimeSkew) {
-        await quexActions
+        const tx = await quexActions
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setTimeSkew(pastTimeSkew, futureTimeSkew);
     }
