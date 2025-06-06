@@ -13,7 +13,7 @@ const DeployRequestOracleDiamondModule = buildModule("DeployRequestOracleDiamond
     const proxyAddress = m.readEventArgument(callTx, "ProxyDeployed", 0);
 
     const requestsDiamond = m.contractAt("QuexDiamond", proxyAddress);
-    m.call(requestsDiamond, "init", []);
+    m.call(requestsDiamond, "init", [m.getAccount(0)]);
     return { requestsDiamond };
 });
 
