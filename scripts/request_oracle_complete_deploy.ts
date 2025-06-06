@@ -17,9 +17,7 @@ import { quexConfig, QuexNetworkConfig, RequestOracleConfig } from "./quex_confi
 import DeployQuexCoreDiamondModule from "../ignition/modules/core/DeployQuexCoreDiamondModule";
 import { assert } from "console";
 
-async function run() {
-    const quexNetworkConfig: QuexNetworkConfig = quexConfig[env.network.name];
-
+async function run(quexNetworkConfig: QuexNetworkConfig) {
     const { requestsDiamond } = await ignition.deploy(RequestOracleDeployAndConfigurationModule, { strategy: "create2" });
 
     const diamond = QuexDiamond__factory.connect(await requestsDiamond.getAddress(), requestsDiamond.runner);
@@ -211,4 +209,9 @@ async function add_td(quexCoreDiamond: Contract, diamond: QuexDiamond, config: R
         .addToPool(tdId);
 }
 
-run().catch(console.error);
+if (require.main === module) {
+    const quexNetworkConfig: QuexNetworkConfig = quexConfig[env.network.name];
+    run(quexNetworkConfig).catch(console.error);
+}
+
+export { run };

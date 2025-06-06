@@ -21,9 +21,7 @@ import { quexConfig, QuexNetworkConfig, QuexCoreNetworkConfig } from "./quex_con
 const pastTimeSkew = 15n * 60n; // 15 min
 const futureTimeSkew = 30n; // 30 sec
 
-async function run() {
-    const quexNetworkConfig: QuexNetworkConfig = quexConfig[env.network.name];
-
+export async function run(quexNetworkConfig: QuexNetworkConfig) {
     const { quexCoreDiamond } = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule, { strategy: "create2" });
 
     const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
@@ -83,4 +81,8 @@ async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkCo
     }
 }
 
-run().catch(console.error);
+if (require.main === module) {
+    const networkName = env.network.name;
+    const quexNetworkConfig = quexConfig[networkName];
+    run(quexNetworkConfig).catch(console.error);
+}
