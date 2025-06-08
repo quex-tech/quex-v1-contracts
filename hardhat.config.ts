@@ -6,10 +6,10 @@ import "hardhat-gas-reporter";
 const quexDeployerPrivateKey = process.env.QUEX_DEPLOYER_PRIVATE_KEY ?? "0x0000000000000000000000000000000000000000000000000000000000000001";
 const quexManagerPrivateKey = process.env.QUEX_MANAGER_PRIVATE_KEY ?? "0x0000000000000000000000000000000000000000000000000000000000000001";
 
-const quexRedbellyTestnetPrivateKey = vars.get("QUEX_REDBELLY_TESTNET_PRIVATE_KEY");
-const quexRedbellyMainnetPrivateKey = vars.get("QUEX_REDBELLY_MAINNET_PRIVATE_KEY");
+const quexRedbellyTestnetPrivateKey = process.env.QUEX_REDBELLY_TESTNET_PRIVATE_KEY ?? "0x0000000000000000000000000000000000000000000000000000000000000001";
+const quexRedbellyMainnetPrivateKey = process.env.QUEX_REDBELLY_MAINNET_PRIVATE_KEY ?? "0x0000000000000000000000000000000000000000000000000000000000000001";
 
-const alchemyApiKey = vars.get("ALCHEMY_API_KEY");
+const alchemyApiKey = process.env.ALCHEMY_API_KEY ?? "12345";
 
 const config: HardhatUserConfig = {
   solidity: {
