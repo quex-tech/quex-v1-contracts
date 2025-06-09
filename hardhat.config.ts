@@ -3,8 +3,8 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-foundry";
 import "hardhat-gas-reporter";
 
-const quexDeployerPrivateKey = process.env.QUEX_DEPLOYER_PRIVATE_KEY ?? "0x0000000000000000000000000000000000000000000000000000000000000001";
-const quexManagerPrivateKey = process.env.QUEX_MANAGER_PRIVATE_KEY ?? "0x0000000000000000000000000000000000000000000000000000000000000001";
+const quexDeployerPrivateKey = process.env.QUEX_DEPLOYER_PRIVATE_KEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+const quexManagerPrivateKey = process.env.QUEX_MANAGER_PRIVATE_KEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 
 const quexRedbellyTestnetPrivateKey = process.env.QUEX_REDBELLY_TESTNET_PRIVATE_KEY ?? "0x0000000000000000000000000000000000000000000000000000000000000001";
 const quexRedbellyMainnetPrivateKey = process.env.QUEX_REDBELLY_MAINNET_PRIVATE_KEY ?? "0x0000000000000000000000000000000000000000000000000000000000000001";
