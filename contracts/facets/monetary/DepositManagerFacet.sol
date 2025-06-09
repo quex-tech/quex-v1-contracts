@@ -16,6 +16,9 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
     }
 
     event SubscriptionCreated(uint256 indexed id, address indexed owner);
+    event OwnerUpdated(uint256 indexed id, address indexed owner);
+    event ConsumerAdded(uint256 indexed id, address indexed consumer);
+    event ConsumerRemoved(uint256 indexed id, address indexed consumer);
 
     function createSubscription() external override returns (uint256) {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
@@ -31,6 +34,7 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
             revert IQuexActionRegistry.Subscription_WrongCaller();
         }
         l.subscriptions[subscriptionId].owner = owner;
+        emit OwnerUpdated(subscriptionId, owner);
     }
 
     function deposit(uint256 subscriptionId) external payable override {
@@ -73,6 +77,7 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
             revert IQuexActionRegistry.Subscription_WrongCaller();
         }
         l.subscriptions[subscriptionId].consumers[consumer] = true;
+        emit ConsumerAdded(subscriptionId, consumer);
     }
 
     function removeConsumer(uint256 subscriptionId, address consumer) external override {
@@ -81,6 +86,7 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
             revert IQuexActionRegistry.Subscription_WrongCaller();
         }
         l.subscriptions[subscriptionId].consumers[consumer] = false;
+        emit ConsumerRemoved(subscriptionId, consumer);
     }
 
     function balance(uint256 subscriptionId) external view override returns (uint256) {

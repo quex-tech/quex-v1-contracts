@@ -9,28 +9,28 @@ import {
     QuexDiamond__factory,
     IQuexMonetaryFacet__factory,
     IQuexActionFacet__factory,
-    IDepositManager__factory
+    IDepositManager__factory,
+    ITrustDomainRegistryExtended__factory
 } from "../typechain";
 import QuexCoreCompleteDeployAndConfigurationModule from "../ignition/modules/core/QuexCoreCompleteDeployAndConfigurationModule";
 import { FunctionFragment } from "ethers";
 import { ethers } from "hardhat";
 
 import env from "hardhat";
-import { quexConfig, QuexNetworkConfig, QuexCoreNetworkConfig } from "./quex_config";
+import { quexConfig, QuexNetworkConfig, QuexCoreNetworkConfig, supportedSvns, SupportedSvns } from "./quex_config";
 
 const pastTimeSkew = 15n * 60n; // 15 min
 const futureTimeSkew = 30n; // 30 sec
 
-async function run() {
-    const quexNetworkConfig: QuexNetworkConfig = quexConfig[env.network.name];
-
-    const { quexCoreDiamond } = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule, { strategy: "create2" });
+export async function run(quexNetworkConfig: QuexNetworkConfig) {
+    const { quexCoreDiamond } = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule, { strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2" });
 
     const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
 
     await validate_interfaces(diamond);
     await configure_manager(diamond, quexNetworkConfig.core);
     await set_config_values(diamond, quexNetworkConfig.core);
+    await add_supported_svns(diamond, supportedSvns);
 }
 
 async function validate_interfaces(diamond: QuexDiamond) {
@@ -51,17 +51,20 @@ async function validate_interfaces(diamond: QuexDiamond) {
 
 async function configure_manager(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
     const manager = "0xc8935964ff9a146a753e867ea3890f562b75604c6d6883305d776151177a5a74";
-    await diamond.grantRole(manager, config.managerAddress);
+    await (await diamond.grantRole(manager, config.managerAddress)).wait();
 }
 
 async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
     const quexMonetary = IQuexMonetaryFacet__factory.connect(await diamond.getAddress(), diamond.runner);
+
+    console.log(await quexMonetary.getQuexFee(1));
     if ((await quexMonetary.getQuexFee(1)) != config.quexFee) {
         await quexMonetary
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setQuexFee(config.quexFee);
     }
 
+    console.log(await quexMonetary.getTreasury());
     if ((await quexMonetary.getTreasury()) != config.treasuryAddress) {
         await quexMonetary
             .connect(await ethers.getSigner(<string>config.managerAddress))
@@ -69,6 +72,7 @@ async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkCo
     }
 
     const quexActions = IQuexActionFacet__factory.connect(await diamond.getAddress(), diamond.runner);
+    console.log(await quexActions.getQuexGas());
     if (await quexActions.getQuexGas() != config.quexFulfillingGasCost) {
         await quexActions
             .connect(await ethers.getSigner(<string>config.managerAddress))
@@ -76,11 +80,32 @@ async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkCo
     }
 
     const timeSkew = await quexActions.getTimeSkew();
+    console.log(timeSkew);
     if (timeSkew[0] != pastTimeSkew || timeSkew[1] != futureTimeSkew) {
-        await quexActions
+        const tx = await quexActions
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setTimeSkew(pastTimeSkew, futureTimeSkew);
     }
 }
 
-run().catch(console.error);
+async function add_supported_svns(diamond: QuexDiamond, supportedSvns: SupportedSvns) {
+    const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
+    for (const cpuSvn of supportedSvns.cpuSvnsToAdd) {
+        await (await tdRegistry.allowCpuSvn(cpuSvn)).wait();
+    }
+    for (const teeTcbSvn of supportedSvns.teeTcbSvnsToAdd) {
+        await (await tdRegistry.allowTeeTcbSvn(teeTcbSvn)).wait();
+    }
+    for (const cpuSvn of supportedSvns.cpuSvnsToRemove) {
+        await (await tdRegistry.revokeCpuSvn(cpuSvn)).wait();
+    }
+    for (const teeTcbSvn of supportedSvns.teeTcbSvnsToRemove) {
+        await (await tdRegistry.revokeTeeTcbSvn(teeTcbSvn)).wait();
+    }
+}
+
+if (require.main === module) {
+    const networkName = env.network.name;
+    const quexNetworkConfig = quexConfig[networkName];
+    run(quexNetworkConfig).catch(console.error);
+}
