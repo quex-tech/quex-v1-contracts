@@ -106,6 +106,10 @@ async function add_supported_svns(diamond: QuexDiamond, supportedSvns: Supported
 
 if (require.main === module) {
     const networkName = env.network.name;
+    const hardhatConfig = require("hardhat").config;
     const quexNetworkConfig = quexConfig[networkName];
+    console.log("Start Core deploy for network:", networkName);
+    console.log(JSON.stringify(quexNetworkConfig, (_, v) => typeof v === "bigint" ? v.toString() : v, 2));
+    console.log("Deployment salt:", hardhatConfig.ignition.strategyConfig.create2.salt);
     run(quexNetworkConfig).catch(console.error);
 }

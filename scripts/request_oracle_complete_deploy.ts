@@ -1,4 +1,6 @@
 import env, { ethers, ignition } from "hardhat";
+import * as fs from "fs";
+import * as path from "path";
 import {
     IConstantPriceMonetaryFacet__factory,
     IOraclePool__factory,
@@ -17,18 +19,23 @@ import { quexConfig, QuexNetworkConfig, RequestOracleConfig } from "./quex_confi
 import DeployQuexCoreDiamondModule from "../ignition/modules/core/DeployQuexCoreDiamondModule";
 import { assert } from "console";
 
-async function run(quexNetworkConfig: QuexNetworkConfig) {
+async function run(quexNetworkConfig: QuexNetworkConfig, tdQuoteData) {
+    console.log("Start request oracle deploy");
     const { requestsDiamond } = await ignition.deploy(RequestOracleDeployAndConfigurationModule, { strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2" });
 
     const diamond = QuexDiamond__factory.connect(await requestsDiamond.getAddress(), requestsDiamond.runner);
 
     const { quexCoreDiamond } = await ignition.deploy(DeployQuexCoreDiamondModule);
 
+    console.log("Validating interfaces");
     await validate_interfaces(diamond);
+    console.log("Configure manager");
     await configure_manager(diamond, quexNetworkConfig.request);
     await set_config_values(diamond, quexNetworkConfig.request, await quexCoreDiamond.getAddress());
-    await add_qe(quexCoreDiamond, diamond);
-    await add_td(quexCoreDiamond, diamond, quexNetworkConfig.request);
+    console.log("Adding QE");
+    await add_qe(quexCoreDiamond, diamond, tdQuoteData);
+    console.log("Adding TD");
+    await add_td(quexCoreDiamond, diamond, quexNetworkConfig.request, tdQuoteData);
 }
 
 async function validate_interfaces(diamond: QuexDiamond) {
@@ -77,7 +84,8 @@ async function set_config_values(diamond: QuexDiamond, config: RequestOracleConf
     assert((await quexAddressFacet.getQuexAddress()) == quexCoreAddress);
 }
 
-async function add_qe(quexCoreDiamond: Contract, diamond: QuexDiamond) {
+async function add_qe(quexCoreDiamond: Contract, diamond: QuexDiamond, tdQuoteData) {
+
     const platformCaCert = {
         x: BigInt("24030003042588091771170974992323049441734798737906192722609658704857607787826"),
         y: BigInt("106254777459282516381561500528085635876136725707838022931959366032360701572062"),
@@ -103,21 +111,11 @@ async function add_qe(quexCoreDiamond: Contract, diamond: QuexDiamond) {
         s: BigInt("0xe2c0d05f02e43cd2e31efb19f7e615206c9dedca72a7e97639691f0d75254e16")
     };
 
-    const qeReportData = {
-        CPUSVN: "0x0202191b03ff00060000000000000000",
-        MISCSELECT: "0x00000000",
-        MRENCLAVE: "0xb7ae9ab69e76f7794a56b0db1915281d435d488c91d406ed33a7939caf8730f8",
-        attributes: "0x1500000000000000e700000000000000",
-        MRSIGNER: "0xdc9e2a7c6f948f17474e34a7fc43ed030f7c1563f1babddf6340c82e0e54a8c5",
-        ISVProdID: "0x0200",
-        ISVSVN: "0x0700",
-        REPORT_DATA1: "0xd0d0f33108c8d0b3a1fd12b89cbb2da83008fa7cf6bb8790bb1fce84bab50883",
-        REPORT_DATA2: "0x0000000000000000000000000000000000000000000000000000000000000000"
-    };
+    const qeReportData = tdQuoteData.qeReportData;
 
     const qeReportSignature = {
-        r: BigInt("0x7147cf25ee58424d74253a83a5fae1640d4b8205e25f771e58625745135fc7df"),
-        s: BigInt("0x641d51dafa5f09813ade394de15b45cf9d4c28a22bb27833298a8366b7777d0a")
+        r: BigInt(tdQuoteData.qeReportSignature.r),
+        s: BigInt(tdQuoteData.qeReportSignature.s)
     };
 
     const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
@@ -153,41 +151,17 @@ async function add_qe(quexCoreDiamond: Contract, diamond: QuexDiamond) {
     )).wait();
 }
 
-async function add_td(quexCoreDiamond: Contract, diamond: QuexDiamond, config: RequestOracleConfig) {
+async function add_td(quexCoreDiamond: Contract, diamond: QuexDiamond, config: RequestOracleConfig, tdQuoteData) {
     const attestationKey = {
-        x: BigInt("0xe5fd6c7662d01c628a462c8c788935592dce033aee1784545b5de995faed2cd6"),
-        y: BigInt("0x44d6886df0ad8aef9c8dcfce65e9b8fabd087df2cdb9211e4f0a0dcae23fdcb3")
+        x: BigInt(tdQuoteData.attestationKey.x),
+        y: BigInt(tdQuoteData.attestationKey.y)
     };
-    const qeAuthenticationData = "0x000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
-
+    const qeAuthenticationData = tdQuoteData.qeAuthenticationData;
     const quoteSignature = {
-        r: BigInt("0xa876c3ed6483720a58114075de9a10f20a15bae136240d3ac5f51881478b7af5"),
-        s: BigInt("0x6e5410251d716306ebe996e58f3e6125ce485a37cca6542d9feb838726e6faae")
+        r: BigInt(tdQuoteData.quoteSignature.r),
+        s: BigInt(tdQuoteData.quoteSignature.s)
     };
-
-    const tdQuote = {
-        USER_DATA: "0x9e7915cba6b92a808258e5db174b6f2d00000000",
-        TEE_TCB_SVN: "0x05010200000000000000000000000000",
-        MRSEAM: "0x1cc6a17ab799e9a693fac7536be61c12ee1e0fabada82d0c999e08ccee2aa86de77b0870f558c570e7ffe55d6d47fa04",
-        MRSIGNERSEAM:
-            "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        SEAMATTRIBUTES: "0x0000000000000000",
-        TDATTRIBUTES: "0x0000001000000000",
-        XFAM: "0xe702060000000000",
-        MRTD: "0x91eb2b44d141d4ece09f0c75c2c53d247a3c68edd7fafe8a3520c942a604a407de03ae6dc5f87f27428b2538873118b7",
-        MRCONFIGID:
-            "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        MROWNER: "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        MROWNERCONFIG:
-            "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        RTMR0: "0x6eb0eee908583acabdcf13eaaeade5db0f6e6054cdd8f79f9c028228194a17eba72d8b8c02d59cc0a572e1646d6966ec",
-        RTMR1: "0x19e7db5a1194a023562f0f7d740ea421bd0155d4721db626833ad9f8b92714a327d14a9cc9ad4a065739b6e97faf4055",
-        RTMR2: "0x69eeefd2c35a163f747ca1452973ef1aea9151643c7422a89da11e2193f1d9b15b007a619bbd84c21190691ca6044a14",
-        RTMR3: "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        REPORT_DATA1: "0x610e7707b0dbbed2bc6f1c66e9674955bae124e7a406ee64133d77c8bf0595c3",
-        REPORT_DATA2: "0xce6dcd75b4e289b14caf5ad4a15868a8fad54388ae091dd165e00bd5260206af"
-    };
-
+    const tdQuote = tdQuoteData.tdQuote;
     const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
 
     const tx = await tdRegistry.addTD(
@@ -211,7 +185,8 @@ async function add_td(quexCoreDiamond: Contract, diamond: QuexDiamond, config: R
 
 if (require.main === module) {
     const quexNetworkConfig: QuexNetworkConfig = quexConfig[env.network.name];
-    run(quexNetworkConfig).catch(console.error);
+    const tdQuoteData = JSON.parse(fs.readFileSync(path.join(__dirname, "td_quotes/td_quote_parsed.json"), "utf8"));
+    run(quexNetworkConfig, tdQuoteData).catch(console.error);
 }
 
 export { run };
