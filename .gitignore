@@ -8,3 +8,4 @@ typechain
 /ignition/deployments/*/build-info
 /out/
 /cache_forge/
+.env
