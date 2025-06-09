@@ -28,9 +28,6 @@ describe("Deploy full Quex stack", function () {
       console.log("Deploying core...");
       await runCoreDeploy(quexNetworkConfig);
 
-      console.log("Deploying request oracle...");
-      await runRequestDeploy(quexNetworkConfig);
-
     } catch (err) {
       console.error("Deployment failed", err);
       throw err;
