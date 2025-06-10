@@ -27,10 +27,15 @@ export async function run(quexNetworkConfig: QuexNetworkConfig) {
 
     const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
 
+    console.log("Validating interfaces");
     await validate_interfaces(diamond);
+    console.log("Configure manager");
     await configure_manager(diamond, quexNetworkConfig.core);
+    console.log("Setting config values");
     await set_config_values(diamond, quexNetworkConfig.core);
+    console.log("Adding supported SVNS");
     await add_supported_svns(diamond, supportedSvns);
+    console.log("Done");
 }
 
 async function validate_interfaces(diamond: QuexDiamond) {
@@ -57,35 +62,39 @@ async function configure_manager(diamond: QuexDiamond, config: QuexCoreNetworkCo
 async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
     const quexMonetary = IQuexMonetaryFacet__factory.connect(await diamond.getAddress(), diamond.runner);
 
-    console.log(await quexMonetary.getQuexFee(1));
     if ((await quexMonetary.getQuexFee(1)) != config.quexFee) {
         await quexMonetary
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setQuexFee(config.quexFee);
     }
+    const quexFee = await quexMonetary.getQuexFee(1)
+    console.log(`Quex fee: ${quexFee}`);
 
-    console.log(await quexMonetary.getTreasury());
     if ((await quexMonetary.getTreasury()) != config.treasuryAddress) {
         await quexMonetary
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setTreasury(config.treasuryAddress);
     }
+    const treasury = await quexMonetary.getTreasury();
+    console.log(`Quex treasury: ${treasury}`);
 
     const quexActions = IQuexActionFacet__factory.connect(await diamond.getAddress(), diamond.runner);
-    console.log(await quexActions.getQuexGas());
     if (await quexActions.getQuexGas() != config.quexFulfillingGasCost) {
         await quexActions
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setQuexGas(config.quexFulfillingGasCost);
     }
+    const quexGas = await quexActions.getQuexGas();
+    console.log(`Quex gas: ${quexGas}`);
 
-    const timeSkew = await quexActions.getTimeSkew();
-    console.log(timeSkew);
+    let timeSkew = await quexActions.getTimeSkew();
     if (timeSkew[0] != pastTimeSkew || timeSkew[1] != futureTimeSkew) {
         const tx = await quexActions
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setTimeSkew(pastTimeSkew, futureTimeSkew);
     }
+    timeSkew = await quexActions.getTimeSkew();
+    console.log(`Time skew: ${timeSkew}`);
 }
 
 async function add_supported_svns(diamond: QuexDiamond, supportedSvns: SupportedSvns) {

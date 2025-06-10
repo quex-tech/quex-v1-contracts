@@ -36,6 +36,7 @@ async function run(quexNetworkConfig: QuexNetworkConfig, tdQuoteData) {
     await add_qe(quexCoreDiamond, diamond, tdQuoteData);
     console.log("Adding TD");
     await add_td(quexCoreDiamond, diamond, quexNetworkConfig.request, tdQuoteData);
+    console.log("Done");
 }
 
 async function validate_interfaces(diamond: QuexDiamond) {
@@ -175,7 +176,7 @@ async function add_td(quexCoreDiamond: Contract, diamond: QuexDiamond, config: R
     );
     const txReceipt = await tx.wait();
     const tdId = (<EventLog>txReceipt?.logs[0]).args[0];
-    console.log(tdId);
+    console.log(`Registered TD with id: ${tdId}`);
 
     const tdPolicy = ITrustDomainPolicyFacet__factory.connect(await diamond.getAddress(), diamond.runner);
     await tdPolicy
