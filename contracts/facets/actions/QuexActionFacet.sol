@@ -60,7 +60,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
     }
 
-    function createRequest(uint256 flowId, uint256 subscriptionId) external nonReentrant returns (uint256 requestId) {
+    function composeRequest(uint256 flowId, uint256 subscriptionId) internal view returns (QuexActionStorage.Request memory request) {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
 
         if (flow.pool == address(0)) {
@@ -71,16 +71,12 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
 
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
+        (uint256 nativeFee, uint256 gasFee) = this.getRequestFee(flowId);
         uint256 quexFee = quexMonetary.getQuexFee(flowId);
         uint256 maxGasPrice = tx.gasprice * GAS_PRICE_MULTIPLIER;
-        uint256 maxRelayerRefund = (flow.gasLimit + QuexActionStorage.layout().quexFulfillingGasCost) * maxGasPrice;
+        uint256 maxRelayerRefund = gasFee * maxGasPrice;
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
-        DepositManagerFacet(address(this)).reserve(subscriptionId, quexFee + maxRelayerRefund + oraclePoolFee);
-
-        requestId = ++QuexActionStorage.layout().lastRequestId;
-        emit RequestCreated(requestId, flowId, flow.pool);
-
-        QuexActionStorage.layout().requests[requestId] = QuexActionStorage.Request(
+        QuexActionStorage.Request memory req = QuexActionStorage.Request(
             flowId,
             subscriptionId,
             quexFee,
@@ -89,7 +85,26 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
             block.number,
             msg.sender
         );
+        return req;
+    }
 
+    function reserveFunds(uint256 subscriptionId, QuexActionStorage.Request memory req) internal returns (uint256 requestId) {
+        uint256 totalFee = req.quexFee + req.maxRelayerRefund + req.oraclePoolFee;
+        DepositManagerFacet(address(this)).reserve(subscriptionId, totalFee);
+    }
+
+    function saveRequest(QuexActionStorage.Request memory req) internal returns (uint256 requestId) {
+        requestId = ++QuexActionStorage.layout().lastRequestId;
+        QuexActionStorage.layout().requests[requestId] = req;
+        return requestId;
+    }
+
+    function createRequest(uint256 flowId, uint256 subscriptionId) external returns (uint256 requestId) {
+        Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
+        QuexActionStorage.Request memory req = composeRequest(flowId, subscriptionId);
+        reserveFunds(subscriptionId, req);
+        requestId = saveRequest(req);
+        emit RequestCreated(requestId, flowId, flow.pool);
         return requestId;
     }
 

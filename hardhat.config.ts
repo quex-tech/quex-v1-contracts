@@ -39,7 +39,7 @@ const config: HardhatUserConfig = {
     },
     arbitrumSepolia: {
       chainId: 421614,
-      url: "https://sepolia-rollup.arbitrum.io/rpc",
+      url: `https://arb-sepolia.g.alchemy.com/v2/${alchemyApiKey}`,
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     },
     arbitrumOne: {
