@@ -60,7 +60,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
     }
 
-    function composeRequest(uint256 flowId, uint256 subscriptionId) internal view returns (QuexActionStorage.Request memory request) {
+    function composeRequest(uint256 flowId, uint256 subscriptionId) private view returns (QuexActionStorage.Request memory request) {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
 
         if (flow.pool == address(0)) {
@@ -99,7 +99,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         return requestId;
     }
 
-    function createRequest(uint256 flowId, uint256 subscriptionId) private returns (uint256 requestId) {
+    function createRequest(uint256 flowId, uint256 subscriptionId) public returns (uint256 requestId) {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
         QuexActionStorage.Request memory req = composeRequest(flowId, subscriptionId);
         reserveFunds(subscriptionId, req);
