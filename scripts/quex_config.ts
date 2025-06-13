@@ -1,4 +1,4 @@
-import { AddressLike } from "ethers";
+import {AddressLike} from "ethers";
 
 const DEFAULT_TREASURY = process.env.QUEX_TREASURY_ADDRESS ?? "0x6F373Fd4c0F501F5F6828bA21B1EA88fE4596cF6";
 const DEFAULT_MANAGER = process.env.QUEX_MANAGER_ADDRESS ?? "0xfC030Fe3499C1b34F4cdFF61078e44869661Dd24";

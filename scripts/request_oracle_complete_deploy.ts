@@ -1,4 +1,4 @@
-import env, { ethers, ignition } from "hardhat";
+import env, {ethers, ignition} from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
 import {
@@ -12,20 +12,20 @@ import {
     ITrustDomainRegistryExtended__factory,
     ITrustDomainPolicyFacet__factory
 } from "../typechain";
-import { AddressLike, Contract, EventLog, FunctionFragment } from "ethers";
+import {AddressLike, Contract, EventLog, FunctionFragment} from "ethers";
 import RequestOracleDeployAndConfigurationModule
     from "../ignition/modules/oracles/requests/RequestOracleDeployAndConfigurationModule";
-import { quexConfig, QuexNetworkConfig, RequestOracleConfig } from "./quex_config";
+import {quexConfig, QuexNetworkConfig, RequestOracleConfig} from "./quex_config";
 import DeployQuexCoreDiamondModule from "../ignition/modules/core/DeployQuexCoreDiamondModule";
-import { assert } from "console";
+import {assert} from "console";
 
 async function run(quexNetworkConfig: QuexNetworkConfig, tdQuoteData) {
     console.log("Start request oracle deploy");
-    const { requestsDiamond } = await ignition.deploy(RequestOracleDeployAndConfigurationModule, { strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2" });
+    const {requestsDiamond} = await ignition.deploy(RequestOracleDeployAndConfigurationModule, {strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2"});
 
     const diamond = QuexDiamond__factory.connect(await requestsDiamond.getAddress(), requestsDiamond.runner);
 
-    const { quexCoreDiamond } = await ignition.deploy(DeployQuexCoreDiamondModule);
+    const {quexCoreDiamond} = await ignition.deploy(DeployQuexCoreDiamondModule);
 
     console.log("Validating interfaces");
     await validate_interfaces(diamond);
@@ -190,4 +190,4 @@ if (require.main === module) {
     run(quexNetworkConfig, tdQuoteData).catch(console.error);
 }
 
-export { run };
+export {run};

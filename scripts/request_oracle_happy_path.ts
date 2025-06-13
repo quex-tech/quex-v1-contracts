@@ -1,14 +1,15 @@
-import env, { ignition } from "hardhat";
-import { RequestActionTestContract__factory } from "../typechain";
+import env, {ignition} from "hardhat";
+import {RequestActionTestContract__factory} from "../typechain";
 
-import DeployRequestActionTestContractModule from "../ignition/modules/test_contracts/DeployRequestActionTestContractModule";
-import { quexConfig, QuexNetworkConfig } from "./quex_config";
+import DeployRequestActionTestContractModule
+    from "../ignition/modules/test_contracts/DeployRequestActionTestContractModule";
+import {quexConfig, QuexNetworkConfig} from "./quex_config";
 
 async function run() {
     const strategy = "basic";
     console.log(`Start deploy test contract with strategy ${strategy}`);
 
-    const { requestActionTestContract } = await ignition.deploy(DeployRequestActionTestContractModule, { strategy: strategy });
+    const {requestActionTestContract} = await ignition.deploy(DeployRequestActionTestContractModule, {strategy: strategy});
 
     const testContract = RequestActionTestContract__factory.connect(
         await requestActionTestContract.getAddress(),
@@ -20,7 +21,7 @@ async function run() {
     const prevLastResponse = await testContract.getLastResponse();
     console.log(`prevLastResponse: ${prevLastResponse}`);
 
-    await testContract.setUpFlow({ value: ethers.parseEther("0.004") });
+    await testContract.setUpFlow({value: ethers.parseEther("0.004")});
     console.log(`Flow configured`);
 
     const status = await testContract.getFlowSubscriptionStatus();
@@ -28,7 +29,7 @@ async function run() {
 
     try {
         const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-        const tx = await testContract.createRequest({ gasLimit: 500_000 });
+        const tx = await testContract.createRequest({gasLimit: 500_000});
         const txReceipt = await tx.wait();
         if (txReceipt?.status !== 1) {
             console.log("Creating request failed");

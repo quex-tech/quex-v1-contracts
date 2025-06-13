@@ -23,7 +23,7 @@ library QuexActionStorage {
         uint256 timeSkewFuture;
     }
 
-    bytes32 internal constant STORAGE_SLOT = keccak256("quex.contracts.storage.QuexAction");
+    bytes32 internal constant STORAGE_SLOT = keccak256("quex.contracts.storage.Action");
     bytes32 internal constant TIME_SKEW_STORAGE_SLOT = keccak256("quex.contracts.storage.Action.TimeSkew");
 
     function layout() internal pure returns (Layout storage l) {

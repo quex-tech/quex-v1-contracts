@@ -88,18 +88,18 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         return req;
     }
 
-    function reserveFunds(uint256 subscriptionId, QuexActionStorage.Request memory req) internal returns (uint256 requestId) {
+    function reserveFunds(uint256 subscriptionId, QuexActionStorage.Request memory req) private returns (uint256 requestId) {
         uint256 totalFee = req.quexFee + req.maxRelayerRefund + req.oraclePoolFee;
         DepositManagerFacet(address(this)).reserve(subscriptionId, totalFee);
     }
 
-    function saveRequest(QuexActionStorage.Request memory req) internal returns (uint256 requestId) {
+    function saveRequest(QuexActionStorage.Request memory req) private returns (uint256 requestId) {
         requestId = ++QuexActionStorage.layout().lastRequestId;
         QuexActionStorage.layout().requests[requestId] = req;
         return requestId;
     }
 
-    function createRequest(uint256 flowId, uint256 subscriptionId) external returns (uint256 requestId) {
+    function createRequest(uint256 flowId, uint256 subscriptionId) private returns (uint256 requestId) {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
         QuexActionStorage.Request memory req = composeRequest(flowId, subscriptionId);
         reserveFunds(subscriptionId, req);
@@ -201,8 +201,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
 
         uint256 quexFulfillingGasCost = QuexActionStorage.layout().quexFulfillingGasCost;
-        uint256 gasAmount = flow.gasLimit + quexFulfillingGasCost;
-        return (quexFee + oraclePoolFee, gasAmount);
+        return (quexFee + oraclePoolFee, flow.gasLimit + quexFulfillingGasCost);
     }
 
     function getTimeSkew() external view returns (uint256 pastSkewInSeconds, uint256 futureSkewInSeconds) {

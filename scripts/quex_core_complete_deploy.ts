@@ -1,4 +1,4 @@
-import { ignition } from "hardhat";
+import {ignition} from "hardhat";
 import {
     IFlowRegistry__factory,
     IP256Verifier__factory,
@@ -13,17 +13,17 @@ import {
     ITrustDomainRegistryExtended__factory
 } from "../typechain";
 import QuexCoreCompleteDeployAndConfigurationModule from "../ignition/modules/core/QuexCoreCompleteDeployAndConfigurationModule";
-import { FunctionFragment } from "ethers";
-import { ethers } from "hardhat";
+import {FunctionFragment} from "ethers";
+import {ethers} from "hardhat";
 
 import env from "hardhat";
-import { quexConfig, QuexNetworkConfig, QuexCoreNetworkConfig, supportedSvns, SupportedSvns } from "./quex_config";
+import {quexConfig, QuexNetworkConfig, QuexCoreNetworkConfig, supportedSvns, SupportedSvns} from "./quex_config";
 
 const pastTimeSkew = 15n * 60n; // 15 min
 const futureTimeSkew = 30n; // 30 sec
 
 export async function run(quexNetworkConfig: QuexNetworkConfig) {
-    const { quexCoreDiamond } = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule, { strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2" });
+    const {quexCoreDiamond} = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule, {strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2"});
 
     const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
 
