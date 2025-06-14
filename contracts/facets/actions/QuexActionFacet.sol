@@ -17,7 +17,7 @@ import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
 import {ITrustDomainRegistry} from "../../interfaces/core/ITrustDomainRegistry.sol";
 
 contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyGuard {
-    uint256 private constant RELAYER_GAS_OVERHEAD = 35000;
+    uint256 private constant RELAYER_GAS_OVERHEAD = 50000;
     uint256 private constant GAS_PRICE_MULTIPLIER = 2;
 
     // push events
