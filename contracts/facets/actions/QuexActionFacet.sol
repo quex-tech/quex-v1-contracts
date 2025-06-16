@@ -142,8 +142,14 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
         (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
+        if (success) {
+            emit RequestFulfilled(requestId, request.flowId, msg.sender);
+        } else {
+            emit RequestFulfillingFailed(requestId, request.flowId, msg.sender);
+        }
 
         // Refund relayer with the gas used.
+        // All possible business logic should be before this line to calculate gas used correctly
         uint256 gasUsed = gasStart - gasleft();
         uint256 refund = (gasUsed + RELAYER_GAS_OVERHEAD) * tx.gasprice;
         if (refund > request.maxRelayerRefund) {
@@ -153,12 +159,6 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
 
         uint256 actualFees = request.quexFee + refund + request.oraclePoolFee;
         DepositManagerFacet(address(this)).fulfill(request.subscriptionId, reservedFee, actualFees);
-
-        if (success) {
-            emit RequestFulfilled(requestId, request.flowId, msg.sender);
-        } else {
-            emit RequestFulfillingFailed(requestId, request.flowId, msg.sender);
-        }
     }
 
     function cancelRequest(uint256 requestId) external nonReentrant {
