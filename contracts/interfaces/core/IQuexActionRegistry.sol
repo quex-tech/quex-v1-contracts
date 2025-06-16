@@ -42,7 +42,7 @@ interface IQuexActionRegistry {
     error OracleMessage_TimestampFromFuture();
     error OnlyCallableInternally();
     error Subscription_InsufficientValue();
-    error Subscription_NotFound();
+    error Subscription_NotFound(uint256 subscriptionId, address consumer);
     error Subscription_WrongCaller();
     error Subscription_TransferFailed();
     error Request_TooFreshToCancel();

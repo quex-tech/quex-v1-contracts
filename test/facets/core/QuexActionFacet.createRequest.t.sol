@@ -31,7 +31,7 @@ contract QuexActionFacet_createRequest is QuexActionFacetTestBase {
 
     function test_RevertsIf_InsufficientValue() public {
         uint256 zeroSubscriptionId = IDepositManager(address(diamond)).createSubscription();
-        IDepositManager(address(diamond)).addConsumer(zeroSubscriptionId, flow.consumer);
+        IDepositManager(address(diamond)).addConsumer(zeroSubscriptionId, address(this));
         vm.expectRevert(IQuexActionRegistry.Subscription_InsufficientValue.selector);
         testObject.createRequest(flowId, zeroSubscriptionId);
     }

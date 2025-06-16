@@ -118,7 +118,7 @@ abstract contract QuexActionFacetTestBase is Test {
         vm.label(consumerAddress, "Consumer");
 
         subscriptionId = IDepositManager(address(diamond)).createSubscription();
-        IDepositManager(address(diamond)).addConsumer(subscriptionId, flow.consumer);
+        IDepositManager(address(diamond)).addConsumer(subscriptionId, address(this));
         IDepositManager(address(diamond)).deposit{value: 1 ether}(subscriptionId);
         relayer = address(this);
     }

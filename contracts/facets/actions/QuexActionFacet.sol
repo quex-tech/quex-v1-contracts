@@ -66,7 +66,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
             revert Flow_NotFound();
         }
         if (!DepositManagerFacet(address(this)).hasAccessToSubscription(subscriptionId, msg.sender)) {
-            revert Subscription_NotFound();
+            revert Subscription_NotFound(subscriptionId, msg.sender);
         }
 
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
