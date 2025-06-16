@@ -25,7 +25,7 @@ const AddDepositManagerFacetToQuexCoreModule = buildModule("AddDepositManagerFac
                 facetInterface.getFunction("lock").selector,
 
                 // internal
-                facetInterface.getFunction("isValidSubscription").selector,
+                facetInterface.getFunction("hasAccessToSubscription").selector,
                 facetInterface.getFunction("reserve").selector,
                 facetInterface.getFunction("release").selector,
                 facetInterface.getFunction("fulfill").selector

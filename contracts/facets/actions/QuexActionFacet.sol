@@ -9,7 +9,6 @@ import "../../interfaces/core/IDepositManager.sol";
 import "./IQuexActionFacet.sol";
 import "./QuexActionStorage.sol";
 
-import {DepositManagerStorage} from "../monetary/DepositManagerStorage.sol";
 import {DepositManagerFacet} from "../monetary/DepositManagerFacet.sol";
 import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 import {ReentrancyGuard} from "@solidstate/contracts/security/reentrancy_guard/ReentrancyGuard.sol";
@@ -66,7 +65,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         if (flow.pool == address(0)) {
             revert Flow_NotFound();
         }
-        if (!DepositManagerFacet(address(this)).isValidSubscription(subscriptionId, flow.consumer)) {
+        if (!DepositManagerFacet(address(this)).hasAccessToSubscription(subscriptionId, msg.sender)) {
             revert Subscription_NotFound();
         }
 
@@ -111,7 +110,6 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
     function getRequest(uint256 requestId) external view returns (Request memory request) {
         QuexActionStorage.Request memory internalRequestModel = QuexActionStorage.layout().requests[requestId];
         if (internalRequestModel.flowId == 0) {
-            // TODO why do we need this?
             return Request(0, 0, address(0), 0);
         }
         Flow memory flow = IFlowRegistry(address(this)).getFlow(internalRequestModel.flowId);
@@ -145,7 +143,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
         (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
 
-        // Refund relayer with the gas used
+        // Refund relayer with the gas used.
         uint256 gasUsed = gasStart - gasleft();
         uint256 refund = (gasUsed + RELAYER_GAS_OVERHEAD) * tx.gasprice;
         if (refund > request.maxRelayerRefund) {

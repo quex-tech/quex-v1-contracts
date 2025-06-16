@@ -12,5 +12,5 @@ interface IDepositManager {
 
     function balance(uint256 subscriptionId) external view returns (uint256);
     function withdrawableBalance(uint256 subscriptionId) external view returns (uint256);
-    function isValidSubscription(uint256 subscriptionId, address consumer) external view returns (bool);
+    function hasAccessToSubscription(uint256 subscriptionId, address consumer) external view returns (bool);
 }

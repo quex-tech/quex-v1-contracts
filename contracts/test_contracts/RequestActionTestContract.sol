@@ -83,7 +83,7 @@ contract RequestActionTestContract {
         Flow memory flow = IFlowRegistry(quexCoreAddress).getFlow(flowId);
 
         address pool = flow.pool;
-        bool isValid = depositManager.isValidSubscription(subscriptionId, address(this));
+        bool isValid = depositManager.hasAccessToSubscription(subscriptionId, address(this));
         uint256 subscriptionBalance = depositManager.withdrawableBalance(subscriptionId);
         (uint256 nativeFee, uint256 gasFee) = quexAction.getRequestFee(flowId);
         return (flowId, subscriptionId, isValid, pool, subscriptionBalance);

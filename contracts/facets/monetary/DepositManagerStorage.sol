@@ -9,7 +9,7 @@ library DepositManagerStorage {
         uint256 reserved;
         uint256 locked;
         address owner;
-        mapping(address => bool) consumers;
+        mapping(address => uint256) consumers;
     }
 
     struct Layout {

@@ -76,7 +76,7 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         if (msg.sender != l.subscriptions[subscriptionId].owner) {
             revert IQuexActionRegistry.Subscription_WrongCaller();
         }
-        l.subscriptions[subscriptionId].consumers[consumer] = true;
+        l.subscriptions[subscriptionId].consumers[consumer] = 1;
         emit ConsumerAdded(subscriptionId, consumer);
     }
 
@@ -85,7 +85,7 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         if (msg.sender != l.subscriptions[subscriptionId].owner) {
             revert IQuexActionRegistry.Subscription_WrongCaller();
         }
-        l.subscriptions[subscriptionId].consumers[consumer] = false;
+        l.subscriptions[subscriptionId].consumers[consumer] = 0;
         emit ConsumerRemoved(subscriptionId, consumer);
     }
 
@@ -98,9 +98,9 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         return s.balance - s.reserved - s.locked;
     }
 
-    function isValidSubscription(uint256 subscriptionId, address consumer) external view returns (bool) {
+    function hasAccessToSubscription(uint256 subscriptionId, address consumer) external view returns (bool) {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
-        return l.subscriptions[subscriptionId].consumers[consumer];
+        return l.subscriptions[subscriptionId].consumers[consumer] == 1;
     }
 
     function reserve(uint256 subscriptionId, uint256 amount) external quexOnly {
@@ -115,11 +115,8 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
     function release(uint256 subscriptionId, uint256 amount) external quexOnly {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
         DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
-        if (s.reserved < amount) {
-            s.reserved = 0;
-        } else {
-            s.reserved -= amount;
-        }
+        require(s.reserved >= amount, "Trying to release funds that are not reserved");
+        s.reserved -= amount;
     }
 
     function fulfill(uint256 subscriptionId, uint256 reservedFee, uint256 actualFee) external quexOnly {
