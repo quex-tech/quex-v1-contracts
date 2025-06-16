@@ -7,6 +7,11 @@ import {DepositManagerStorage} from "./DepositManagerStorage.sol";
 import {IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 
 contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
+    struct Subscription {
+        address owner;
+        uint256 balance;
+        uint256 reserved;
+    }
 
     modifier quexOnly() {
         if (msg.sender != address(this)) {
@@ -118,4 +123,9 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         s.balance -= actualFee;
     }
 
+    function getSubscription(uint256 subscriptionId) external view returns (Subscription memory) {
+        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
+        DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
+        return Subscription(s.owner, s.balance, s.reserved);
+    }
 }
