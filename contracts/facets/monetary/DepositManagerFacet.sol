@@ -42,15 +42,6 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         l.subscriptions[subscriptionId].balance += msg.value;
     }
 
-    function lock(uint256 subscriptionId, uint256 amount) external {
-        DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
-        DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
-        if (msg.sender != s.owner) {
-            revert IQuexActionRegistry.Subscription_WrongCaller();
-        }
-        s.locked += amount;
-    }
-
     function withdraw(uint256 subscriptionId, address receiver) external override nonReentrant {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
         DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
@@ -95,7 +86,7 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
 
     function withdrawableBalance(uint256 subscriptionId) external view override returns (uint256) {
         DepositManagerStorage.Subscription storage s = DepositManagerStorage.layout().subscriptions[subscriptionId];
-        return s.balance - s.reserved - s.locked;
+        return s.balance - s.reserved;
     }
 
     function hasAccessToSubscription(uint256 subscriptionId, address consumer) external view returns (bool) {
@@ -124,12 +115,6 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
         require(s.reserved >= reservedFee, "Trying to release funds that are not reserved");
         s.reserved -= reservedFee;
-
-        if (s.locked >= actualFee) {
-            s.locked -= actualFee;
-        } else {
-            s.locked = 0;
-        }
         s.balance -= actualFee;
     }
 

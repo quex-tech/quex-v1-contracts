@@ -77,11 +77,10 @@ abstract contract QuexActionFacetTestBase is Test {
         depositSelectors[5] = IDepositManager.removeConsumer.selector;
         depositSelectors[6] = IDepositManager.balance.selector;
         depositSelectors[7] = IDepositManager.withdrawableBalance.selector;
-        depositSelectors[8] = IDepositManager.lock.selector;
-        depositSelectors[9] = DepositManagerFacet.release.selector;
-        depositSelectors[10] = DepositManagerFacet.hasAccessToSubscription.selector;
-        depositSelectors[11] = DepositManagerFacet.reserve.selector;
-        depositSelectors[12] = DepositManagerFacet.fulfill.selector;
+        depositSelectors[8] = DepositManagerFacet.release.selector;
+        depositSelectors[9] = DepositManagerFacet.hasAccessToSubscription.selector;
+        depositSelectors[10] = DepositManagerFacet.reserve.selector;
+        depositSelectors[11] = DepositManagerFacet.fulfill.selector;
 
         IERC2535DiamondCutInternal.FacetCut[] memory allCuts = new IERC2535DiamondCutInternal.FacetCut[](2);
         allCuts[0] = cuts[0];

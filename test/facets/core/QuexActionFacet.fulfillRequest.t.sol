@@ -24,22 +24,6 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         depositManager = IDepositManager(address(diamond));
     }
 
-    function test_UseLockedFunds() public {
-        _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
-        uint256 wb = depositManager.withdrawableBalance(subscriptionId);
-        uint tb = depositManager.balance(subscriptionId);
-        assertGt(wb, 0, "Non-zero balance");
-        assertGt(tb, 0, "Non-zero total balance");
-
-        depositManager.lock(subscriptionId, wb);
-        assertEq(depositManager.withdrawableBalance(subscriptionId), 0, "All balance should be locked");
-
-        testObject.fulfillRequest(message, signature, requestId, td.tdId);
-        uint nb = depositManager.balance(subscriptionId);
-        assertGt(tb, nb, "Balance should decrease");
-        assertEq(address(depositManager).balance, depositManager.balance(subscriptionId), "ETH balance mismatch");
-    }
-
     function test_CallsCallbackFunctionOnce() public {
         _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
 

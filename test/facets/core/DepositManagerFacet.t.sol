@@ -77,29 +77,6 @@ contract DepositManagerFacetTest is Test {
         facet.removeConsumer(id, user);
     }
 
-    function testLockIncreasesLockedAmount() public {
-        vm.prank(owner);
-        uint256 id = facet.createSubscription();
-        uint256 v = 0.12 ether;
-        uint256 lock = 0.02 ether;
-
-        vm.prank(owner);
-        facet.deposit{value: v}(id);
-        assertEq(facet.withdrawableBalance(id), v);
-
-        vm.prank(owner);
-        facet.lock(id, lock);
-        assertEq(facet.withdrawableBalance(id), v - lock);
-    }
-
-    function testOnlyOwnerCanLock() public {
-        vm.prank(owner);
-        uint256 id = facet.createSubscription();
-
-        vm.prank(user);
-        vm.expectRevert(IQuexActionRegistry.Subscription_WrongCaller.selector);
-        facet.lock(id, 1 ether);
-    }
 
     function testHasAccessToSubscription() public {
         vm.prank(owner);
@@ -171,7 +148,6 @@ contract DepositManagerFacetTest is Test {
         uint256 deposit = 1 ether;
         uint256 reservedFee = 0.25 ether;
         uint256 actualFee = 0.15 ether;
-        uint256 locked = 0.51 ether;
 
         uint256 id = facet.createSubscription();
         facet.deposit{value: deposit}(id);
@@ -180,42 +156,21 @@ contract DepositManagerFacetTest is Test {
         facet.reserve(id, reservedFee);
 
         vm.prank(owner);
-        facet.lock(id, locked);
 
         uint256 startBalance = facet.balance(id);
         uint256 withdrawableBalance = facet.withdrawableBalance(id);
 
         assertEq(startBalance, deposit);
-        assertEq(withdrawableBalance, deposit - reservedFee - locked);
+        assertEq(withdrawableBalance, deposit - reservedFee);
 
         vm.prank(address(facet));
         facet.fulfill(id, reservedFee, actualFee);
 
-        // Check that reserved is reduced, locked is reduced, balance is reduced
+        // Check that reserved is reduced, balance is reduced
         assertEq(facet.balance(id), startBalance - actualFee, "Balance");
-        assertEq(facet.withdrawableBalance(id), deposit - locked, "Withdrawable balance");
+        assertEq(facet.withdrawableBalance(id), startBalance - actualFee, "Withdrawable balance");
     }
 
-    function testFulfillHandlesLowLockedAmount() public {
-        vm.prank(owner);
-        uint256 id = facet.createSubscription();
-        facet.deposit{value: 1 ether}(id);
-
-        // Reserve 0.2 ether
-        vm.prank(address(facet));
-        facet.reserve(id, 0.2 ether);
-
-        // Lock only 0.1 ether
-        vm.prank(owner);
-        facet.lock(id, 0.1 ether);
-
-        // Fulfill with reserved = 0.2 ether, actualFee = 0.3 ether
-        vm.prank(address(facet));
-        facet.fulfill(id, 0.2 ether, 0.3 ether);
-
-        // Locked should now be 0 and balance reduced
-        assertEq(facet.balance(id), 0.7 ether);
-    }
 
     function testFulfillOnlyCallableInternally() public {
         vm.prank(owner);
