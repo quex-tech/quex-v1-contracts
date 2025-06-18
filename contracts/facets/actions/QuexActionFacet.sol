@@ -136,9 +136,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
         payable(quexMonetary.getTreasury()).call{value: request.quexFee}("");
         payable(IOraclePool(flow.pool).getTreasury()).call{value: request.oraclePoolFee}("");
-
-        // Release funds from reserve
-        uint256 reservedFee = request.quexFee + request.maxRelayerRefund + request.oraclePoolFee;
+        uint256 staticFees = request.quexFee + request.oraclePoolFee;
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
         (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
@@ -157,7 +155,9 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
         payable(message.relayer).call{value: refund}("");
 
-        uint256 actualFees = request.quexFee + refund + request.oraclePoolFee;
+        // Release funds from reserve and decrease subscription balance
+        uint256 actualFees = staticFees + refund;
+        uint256 reservedFee = staticFees + request.maxRelayerRefund;
         DepositManagerFacet(address(this)).fulfill(request.subscriptionId, reservedFee, actualFees);
     }
 
