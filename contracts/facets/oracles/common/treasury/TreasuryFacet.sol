@@ -17,6 +17,7 @@ contract TreasuryFacet is ITreasuryFacet, AccessControlInternal {
     }
 
     function setTreasury(address treasuryAddress) external onlyRole(QuexRoles.Manager) {
+        require(treasuryAddress != address(0), "Treasury cannot be zero address");
         TreasuryStorage.layout().treasuryAddress = treasuryAddress;
     }
 }

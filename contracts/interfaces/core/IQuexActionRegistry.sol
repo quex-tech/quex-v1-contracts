@@ -27,6 +27,7 @@ struct Request {
     uint256 requestId;
     uint256 flowId;
     address oraclePool;
+    uint256 createdBlockNumber;
 }
 
 interface IQuexActionRegistry {
@@ -39,6 +40,8 @@ interface IQuexActionRegistry {
     error OracleMessage_OutdatedMessage();
     error OracleMessage_TimestampFromFuture();
     error InsufficientValue();
+    error Request_TooFreshToCancel();
+    error Request_NotOwnedBySender();
 
     event RequestCreated(uint256 requestId, uint256 flowId, address oraclePool);
 
@@ -47,4 +50,5 @@ interface IQuexActionRegistry {
     function fulfillRequest(OracleMessage memory message, ETHSignature memory signature, uint256 requestId, uint256 tdId) external;
     function getRequestFee(uint256 flowId) external view returns (uint256 nativeFee, uint256 gasFee);
     function getRequest(uint256 requestId) external view returns (Request memory request);
+    function cancelRequest(uint256 requestId) external;
 }

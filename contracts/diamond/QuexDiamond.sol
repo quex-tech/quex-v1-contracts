@@ -25,7 +25,7 @@ contract QuexDiamond is
     Initializable,
     AccessControl
 {
-    function init() external initializer {
+    function init(address initialOwner) external initializer {
         bytes4[] memory selectors = new bytes4[](18);
         uint256 selectorIndex;
 
@@ -71,8 +71,8 @@ contract QuexDiamond is
 
         // set owner
 
-        _setOwner(msg.sender);
-        _grantRole(QuexRoles.DefaultAdminRole, msg.sender);
+        _setOwner(initialOwner);
+        _grantRole(QuexRoles.DefaultAdminRole, initialOwner);
     }
 
     receive() external payable {}

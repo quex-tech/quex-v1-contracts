@@ -149,6 +149,8 @@ export namespace ContractHelpers {
                         // revoke
                         facet.interface.getFunction("revokePlatformCA").selector,
                         facet.interface.getFunction("revokePCK").selector,
+                        facet.interface.getFunction("revokeQE").selector,
+                        facet.interface.getFunction("revokeTD").selector,
 
                         // get
                         facet.interface.getFunction("getRootKey").selector,
@@ -158,6 +160,23 @@ export namespace ContractHelpers {
                         facet.interface.getFunction("getTD").selector,
                         facet.interface.getFunction("isTDValid").selector,
                         facet.interface.getFunction("getTDSignerAddress").selector,
+                        facet.interface.getFunction("getQEId").selector,
+                        facet.interface.getFunction("getQEAuthority").selector,
+
+                        // CPU_SVN and TEE_TCB_SVN
+                        facet.interface.getFunction("allowTeeTcbSvn").selector,
+                        facet.interface.getFunction("allowCpuSvn").selector,
+                        facet.interface.getFunction("revokeTeeTcbSvn").selector,
+                        facet.interface.getFunction("revokeCpuSvn").selector,
+                        facet.interface.getFunction("isTeeTcbSvnAllowed").selector,
+                        facet.interface.getFunction("isCpuSvnAllowed").selector,
+
+                        // get counters
+                        facet.interface.getFunction("getPCKCounterByPlatformCA").selector,
+                        facet.interface.getFunction("getQECounterByProcessorPCK").selector,
+                        facet.interface.getFunction("getTDCounterByQE").selector,
+                        facet.interface.getFunction("getTeeTcbSvnTDCounter").selector,
+                        facet.interface.getFunction("getCpuSvnQECounter").selector,
                     ]
                 }
             ];
@@ -197,9 +216,30 @@ export namespace ContractHelpers {
                 );
         }
 
-        export async function addQE(diamond: QuexDiamond) {
+        export async function allowTeeTcbSvn(diamond: QuexDiamond) {
             const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
-            await tdRegistry
+            await tdRegistry.allowTeeTcbSvn(TestData.tdQuote.TEE_TCB_SVN);
+        }
+
+        export async function allowCpuSvn(diamond: QuexDiamond) {
+            const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
+            await tdRegistry.allowCpuSvn(TestData.qeReportData.CPUSVN);
+        }
+
+        export async function revokeTeeTcbSvn(diamond: QuexDiamond) {
+            const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
+            await tdRegistry.revokeTeeTcbSvn(TestData.tdQuote.TEE_TCB_SVN);
+        }
+
+        export async function revokeCpuSvn(diamond: QuexDiamond) {
+            const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
+            await tdRegistry.revokeCpuSvn(TestData.qeReportData.CPUSVN);
+        }
+
+        export async function addQE(diamond: QuexDiamond) {
+            await allowCpuSvn(diamond);
+            const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
+            const tx = await tdRegistry
                 .addQE(
                     TestData.qeReportData,
                     TestData.platformCaCert.serial,
@@ -207,9 +247,12 @@ export namespace ContractHelpers {
                     TestData.qeReportSignature.r,
                     TestData.qeReportSignature.s
                 );
+            const txReceipt = await tx.wait();
+            return (<EventLog>txReceipt?.logs[0]).args[0];
         }
 
         export async function addTD(diamond: QuexDiamond) {
+            await allowTeeTcbSvn(diamond);
             const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
             const tx = await tdRegistry
                 .addTD(

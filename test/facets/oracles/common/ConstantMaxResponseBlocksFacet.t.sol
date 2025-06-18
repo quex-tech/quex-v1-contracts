@@ -2,14 +2,14 @@
 pragma solidity 0.8.22;
 
 import "../../../../contracts/diamond/QuexDiamond.sol";
-import "../../../../contracts/facets/oracles/common/quex_address/QuexAddressFacet.sol";
+import "../../../../contracts/facets/oracles/common/constant_max_response_blocks/ConstantMaxResponseBlocksFacet.sol";
 import "@solidstate/contracts/interfaces/IERC2535DiamondCutInternal.sol";
 import "forge-std/Script.sol";
 import "forge-std/Test.sol";
 
-contract QuexAddressFacetTest is Test {
+contract ConstantMaxResponseBlocksFacetTest is Test {
     QuexDiamond internal diamond;
-    IQuexAddressFacet internal testObject;
+    IConstantMaxResponseBlocksFacet internal testObject;
 
     address private manager = vm.createWallet("manager").addr;
 
@@ -18,12 +18,12 @@ contract QuexAddressFacetTest is Test {
         diamond.init(address(this));
         diamond.grantRole(QuexRoles.Manager, manager);
 
-        QuexAddressFacet facet = new QuexAddressFacet();
+        ConstantMaxResponseBlocksFacet facet = new ConstantMaxResponseBlocksFacet();
         IERC2535DiamondCutInternal.FacetCut[] memory cuts = new IERC2535DiamondCutInternal.FacetCut[](1);
         bytes4[] memory selectors = new bytes4[](2);
 
-        selectors[0] = QuexAddressFacet.setQuexAddress.selector;
-        selectors[1] = QuexAddressFacet.getQuexAddress.selector;
+        selectors[0] = ConstantMaxResponseBlocksFacet.getMaxResponseBlocks.selector;
+        selectors[1] = ConstantMaxResponseBlocksFacet.setMaxResponseBlocks.selector;
 
         cuts[0] = IERC2535DiamondCutInternal.FacetCut({
             target: address(facet),
@@ -32,25 +32,18 @@ contract QuexAddressFacetTest is Test {
         });
 
         diamond.diamondCut(cuts, address(0), "");
-        testObject = IQuexAddressFacet(address(diamond));
+        testObject = IConstantMaxResponseBlocksFacet(address(diamond));
     }
 
-    function testFuzz_setQuexAddress_SetsAddress(address quexAddress) public {
-        vm.assume(quexAddress != address(0));
+    function testFuzz_setMaxResponseBlocks_SetsBlocks(uint256 blocks) public {
         vm.prank(manager);
-        testObject.setQuexAddress(quexAddress);
+        testObject.setMaxResponseBlocks(blocks);
 
-        vm.assertEq(quexAddress, testObject.getQuexAddress());
+        vm.assertEq(blocks, testObject.getMaxResponseBlocks(0));
     }
 
-    function test_setQuexAddress_RevertsIf_CallerIsNotManager() public {
+    function test_setMaxResponseBlocks_RevertsIf_CallerIsNotManager() public {
         vm.expectRevert();
-        testObject.setQuexAddress(address(100));
-    }
-
-    function test_setQuexAddress_RevertsIf_AddressIsZero() public {
-        vm.prank(manager);
-        vm.expectRevert("Quex address cannot be 0");
-        testObject.setQuexAddress(address(0));
+        testObject.setMaxResponseBlocks(100);
     }
 }

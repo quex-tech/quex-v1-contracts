@@ -13,6 +13,7 @@ interface IQuexAddressFacet {
 
 contract QuexAddressFacet is AccessControlInternal {
     function setQuexAddress(address quexAddress) external onlyRole(QuexRoles.Manager) {
+        require(quexAddress != address(0), "Quex address cannot be 0");
         QuexAddressStorage.layout().quexAddress = quexAddress;
     }
 

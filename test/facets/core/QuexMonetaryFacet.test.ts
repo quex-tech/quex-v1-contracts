@@ -85,6 +85,13 @@ describe("QuexMonetaryFacet", () => {
                 await expect(testObject.connect(owner).setTreasury(treasuryAddress))
                     .to.be.revertedWith(RegExp("AccessControl:.*"));
             });
+
+            it("treasury address is zero address", async () => {
+                const zeroAddress = ethers.ZeroAddress;
+
+                await expect(testObject.connect(manager).setTreasury(zeroAddress))
+                    .to.be.revertedWith("Treasury cannot be zero address");
+            });
         });
     });
 });

@@ -1,4 +1,4 @@
-import { HardhatEthersSigner, SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 import { describeBehaviorOfSolidStateDiamond, describeBehaviorOfAccessControl } from "@solidstate/spec";
 import { expect } from "chai";
 import { ethers } from "hardhat";
@@ -6,7 +6,6 @@ import {
     QuexDiamond,
     QuexDiamond__factory
 } from "../typechain";
-import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 
 describe("QuexDiamond", () => {
     let owner: SignerWithAddress;
@@ -31,27 +30,27 @@ describe("QuexDiamond", () => {
         it("transfers ownership to caller", async () => {
             const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 
-            await expect(instance.connect(owner).init())
+            await expect(instance.connect(owner).init(owner.address))
                 .to.emit(instance, "OwnershipTransferred")
                 .withArgs(anyValue, owner)
         });
 
         it("grants default admin role to caller", async () => {
-            await expect(instance.connect(owner).init())
+            await expect(instance.connect(owner).init(owner.address))
                 .to.emit(instance, "RoleGranted")
                 .withArgs(ethers.ZeroHash, owner, owner);
         });
 
         it("performs facet cut", async () => {
-            await expect(instance.init())
+            await expect(instance.init(owner.address))
                 .to.emit(instance, "DiamondCut");
         });
 
         describe("reverts if", () => {
             it("already called", async() => {
-                await instance.init();
+                await instance.init(owner.address);
 
-                await expect(instance.init())
+                await expect(instance.init(owner.address))
                     .to.be.revertedWithCustomError(instance, "Initializable__AlreadyInitialized");
             })
         })
@@ -59,7 +58,7 @@ describe("QuexDiamond", () => {
 
     describe("::initialized diamond", () => {
         beforeEach(async () => {
-            await instance.init();
+            await instance.init(owner.address);
 
             const facets = await instance.facets.staticCall();
 

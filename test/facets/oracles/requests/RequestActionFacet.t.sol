@@ -22,7 +22,7 @@ contract RequestActionFacetTest is Test {
 
     function setUp() public virtual {
         diamond = new QuexDiamond();
-        diamond.init();
+        diamond.init(address(this));
         RequestActionFacet facet = new RequestActionFacet();
         IERC2535DiamondCutInternal.FacetCut[] memory cuts = new IERC2535DiamondCutInternal.FacetCut[](1);
         bytes4[] memory selectors = new bytes4[](7);

@@ -10,6 +10,7 @@ import "./QuexActionStorage.sol";
 
 import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 import {ReentrancyGuard} from "@solidstate/contracts/security/reentrancy_guard/ReentrancyGuard.sol";
+import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
 import {ITrustDomainRegistry} from "../../interfaces/core/ITrustDomainRegistry.sol";
 
 contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyGuard {
@@ -20,6 +21,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
     // request events
     event RequestFulfilled(uint256 requestId, uint256 flowId, address relayer);
     event RequestFulfillingFailed(uint256 requestId, uint256 flowId, address relayer);
+    event RequestCancelled(uint256 requestId, uint256 flowId, address owner);
 
     function pushData(
         OracleMessage memory message,
@@ -76,7 +78,9 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
             flowId,
             quexFee,
             relayerPremium,
-            oraclePoolFee
+            oraclePoolFee,
+            block.number,
+            msg.sender
         );
 
         if (msg.value > requestPrice) {
@@ -90,10 +94,10 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
     function getRequest(uint256 requestId) external view returns (Request memory request) {
         QuexActionStorage.Request memory internalRequestModel = QuexActionStorage.layout().requests[requestId];
         if (internalRequestModel.flowId == 0) {
-            return Request(0, 0, address(0));
+            return Request(0, 0, address(0), 0);
         }
         Flow memory flow = IFlowRegistry(address(this)).getFlow(internalRequestModel.flowId);
-        return Request(requestId, internalRequestModel.flowId, flow.pool);
+        return Request(requestId, internalRequestModel.flowId, flow.pool, internalRequestModel.createdBlockNumber);
     }
 
     function fulfillRequest(
@@ -125,6 +129,28 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         } else {
             emit RequestFulfillingFailed(requestId, request.flowId, msg.sender);
         }
+    }
+
+    function cancelRequest(uint256 requestId) external nonReentrant {
+        QuexActionStorage.Layout storage layout = QuexActionStorage.layout();
+        QuexActionStorage.Request memory request = layout.requests[requestId];
+        if (request.flowId == 0) {
+            revert Request_NotFound();
+        }
+
+        if (request.owner != msg.sender) {
+            revert Request_NotOwnedBySender();
+        }
+
+        Flow memory flow = IFlowRegistry(address(this)).getFlow(request.flowId);
+        uint256 maxResponseBlocks = IOraclePool(flow.pool).getMaxResponseBlocks(flow.actionId);
+        if (block.number - request.createdBlockNumber < maxResponseBlocks) {
+            revert Request_TooFreshToCancel();
+        }
+
+        delete layout.requests[requestId];
+        payable(msg.sender).call{value: request.quexFee + request.relayerPremium + request.oraclePoolFee}("");
+        emit RequestCancelled(requestId, request.flowId, msg.sender);
     }
 
     function getQuexGas() external view returns (uint256) {
@@ -202,7 +228,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
     ) private pure returns (bool) {
         bytes memory message = abi.encode(oracleMessage);
         bytes32 messageHash = keccak256(message);
-        bytes32 ethSignedMessageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", messageHash));
-        return ecrecover(ethSignedMessageHash, signature.v, signature.r, signature.s) == tdAddress;
+        bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(messageHash);
+        return ECDSA.recover(ethSignedMessageHash, signature.v, signature.r, signature.s) == tdAddress;
     }
 }

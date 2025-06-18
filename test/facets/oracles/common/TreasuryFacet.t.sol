@@ -15,7 +15,7 @@ contract TreasuryFacetTest is Test {
 
     function setUp() public virtual {
         diamond = new QuexDiamond();
-        diamond.init();
+        diamond.init(address(this));
         diamond.grantRole(QuexRoles.Manager, manager);
 
         TreasuryFacet facet = new TreasuryFacet();
@@ -36,6 +36,7 @@ contract TreasuryFacetTest is Test {
     }
 
     function testFuzz_setTreasury_SetsAddress(address treasuryAddress) public {
+        vm.assume(treasuryAddress != address(0));
         vm.prank(manager);
         testObject.setTreasury(treasuryAddress);
 
@@ -45,5 +46,11 @@ contract TreasuryFacetTest is Test {
     function test_setTreasury_RevertsIf_CallerIsNotManager(address treasuryAddress) public {
         vm.expectRevert();
         testObject.setTreasury(treasuryAddress);
+    }
+
+    function test_setTreasury_RevertsIf_ZeroAddress() public {
+        vm.prank(manager);
+        vm.expectRevert("Treasury cannot be zero address");
+        testObject.setTreasury(address(0));
     }
 }

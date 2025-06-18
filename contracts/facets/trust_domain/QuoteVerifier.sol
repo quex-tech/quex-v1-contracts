@@ -14,6 +14,9 @@ library QuoteVerifier {
     error QEReport_InvalidSignature();
     error TDReport_InvalidQuote();
     error TDReport_InvalidSignature();
+    error TDReport_UnsafeAttributes();   
+    error TDReport_InvalidTeeTcbSvn();
+    error QEReport_InvalidCpuSvn();
 
     bytes private constant TD_HEADER_PREAMBLE = hex"040002008100000000000000939A7233F79C4CA9940A0DB3957F0607";
 
@@ -45,7 +48,12 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        ECKey memory authorityKey = TrustDomainStorage.certificateLayout().processorPCKs[platformSerial][pckSerial];
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        if (layout.allowedCpuSvn[qeReport.CPUSVN] == 0) {
+            revert QEReport_InvalidCpuSvn();
+        }
+
+        ECKey memory authorityKey = layout.processorPCKs[platformSerial][pckSerial];
         if (authorityKey.x == 0) {
             revert PCKNotFound();
         }
@@ -90,10 +98,14 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        TrustDomainStorage.QELayout storage layout = TrustDomainStorage.qeLayout();
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+
+        if (layout.allowedTeeTcbSvn[tdQuote.TEE_TCB_SVN] == 0) {
+            revert TDReport_InvalidTeeTcbSvn();
+        }
 
         bytes32 qeReportData = sha256(bytes.concat(bytes32(x), bytes32(y), authenticationData));
-        if (layout.qeReports[qeId].REPORT_DATA1 != qeReportData) {
+        if (layout.qeReports[qeId].REPORT_DATA1 != qeReportData) { 
             revert TDReport_InvalidQuote();
         }
 
@@ -137,7 +149,7 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        ECKey memory rootCA = TrustDomainStorage.certificateLayout().rootCA;
+        ECKey memory rootCA = TrustDomainStorage.layout().rootCA;
         if (rootCA.notAfter < block.timestamp) {
             revert RootCA_Expired();
         }
@@ -160,7 +172,7 @@ library QuoteVerifier {
         uint256 r,
         uint256 s
     ) internal view {
-        ECKey memory authorityKey = TrustDomainStorage.certificateLayout().platformCAs[authority];
+        ECKey memory authorityKey = TrustDomainStorage.layout().platformCAs[authority];
         if (authorityKey.x == 0) {
             revert PlatformCA_NotFound();
         }
@@ -172,6 +184,19 @@ library QuoteVerifier {
 
         if (!_verifySignatureAllowMalleability(hash, r, s, authorityKey.x, authorityKey.y)) {
             revert InvalidPCK();
+        }
+    }
+
+    function ensureTDAttributesSafe(
+        TDQuote memory tdQuote
+    ) internal pure {
+        // mask & value == 0: bits 0-27, 29, and 32-62 should be zero
+        uint64 mask = 0xFFFFFF2FFFFFFF7F;
+        
+        uint64 attributes = uint64(tdQuote.TDATTRIBUTES);
+
+        if ((attributes & mask) != 0) {
+            revert TDReport_UnsafeAttributes();
         }
     }
 

@@ -10,9 +10,17 @@ import {DateTimeLib} from "solady/src/utils/DateTimeLib.sol";
 
 contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     error Certificate_WrongValidityPeriod();
+    error PlatformCARevocation_PCKsExist();
+    error PCKRevocation_QEExist();
+    error QERevocation_TDExist();
+    error TeeTcbSvnRevocation_TDExist();
+    error CpuSvnRevocation_QEExist();
+    error PlatformCAAlreadyExists();
+    error PCKAlreadyExists();
+    error TDAlreadyExists();
 
     function getRootKey() external view returns(ECKey memory) {
-        return TrustDomainStorage.certificateLayout().rootCA;
+        return TrustDomainStorage.layout().rootCA;
     }
 
     function addPlatformCAKey(
@@ -25,6 +33,11 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         uint256 r,
         uint256 s
     ) external {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        if (layout.platformCAs[serial].notAfter != 0) {
+            revert PlatformCAAlreadyExists();
+        }
+
         uint256 notBeforeTimestamp = _fromDERToTimestamp(notBefore);
         uint256 notAfterTimestamp = _fromDERToTimestamp(notAfter);
         if (notBeforeTimestamp > block.timestamp || notAfterTimestamp < block.timestamp) {
@@ -32,11 +45,13 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         }
 
         QuoteVerifier.ensurePlatformCAKeyIsValid(x, y, serial, notBefore, extensions, r, s);
-        TrustDomainStorage.certificateLayout().platformCAs[serial] = ECKey(x, y, _fromDERToTimestamp(notBefore), _fromDERToTimestamp(notAfter));
+        layout.platformCAs[serial] = ECKey(x, y, notBeforeTimestamp, notAfterTimestamp);
+
+        emit PlatformCAAdded(serial);
     }
 
     function getPlatformCAKey(uint256 serial) external view returns(ECKey memory) {
-        return TrustDomainStorage.certificateLayout().platformCAs[serial];
+        return TrustDomainStorage.layout().platformCAs[serial];
     }
 
     function addPCK(
@@ -50,6 +65,11 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         uint256 r,
         uint256 s
     ) external {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        if (layout.processorPCKs[authority][serial].notAfter != 0) {
+            revert PCKAlreadyExists();
+        }
+
         uint256 notBeforeTimestamp = _fromDERToTimestamp(notBefore);
         uint256 notAfterTimestamp = _fromDERToTimestamp(notAfter);
         if (notBeforeTimestamp > block.timestamp || notAfterTimestamp < block.timestamp) {
@@ -58,31 +78,14 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
 
         QuoteVerifier.ensurePCKIsValid(x, y, serial, notBefore, notAfter, extensions, authority, r, s);
 
-        TrustDomainStorage.CertificateLayout storage layout = TrustDomainStorage.certificateLayout();
         layout.processorPCKs[authority][serial] = ECKey(x, y, notBeforeTimestamp, notAfterTimestamp);
-        layout.processorPCKSerials[authority].push(serial);
+        layout.pckCounterByPlatformCA[authority]++;
+
+        emit PCKAdded(authority, serial);
     }
 
     function getPCK(uint256 platformSerial, uint256 pckSerial) external view returns (ECKey memory) {
-        return TrustDomainStorage.certificateLayout().processorPCKs[platformSerial][pckSerial];
-    }
-
-    function revokePCK(uint256 platformSerial, uint256 pckSerial) external onlyOwner {
-        delete TrustDomainStorage.certificateLayout().processorPCKs[platformSerial][pckSerial];
-    }
-
-    // TODO rewrite such that unneeded items are popped
-    function revokePlatformCA(uint256 serial) external onlyOwner {
-        TrustDomainStorage.CertificateLayout storage layout = TrustDomainStorage.certificateLayout();
-        delete layout.platformCAs[serial];
-        uint256 curr_len = layout.processorPCKSerials[serial].length;
-
-        while (curr_len > 0) {
-            uint256 pck_serial = layout.processorPCKSerials[serial][curr_len - 1];
-            delete layout.processorPCKs[serial][pck_serial];
-            layout.processorPCKSerials[serial].pop();
-            curr_len -= 1;
-        }
+        return TrustDomainStorage.layout().processorPCKs[platformSerial][pckSerial];
     }
 
     function addQE(
@@ -93,13 +96,15 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         uint256 s
     ) external returns (uint256 qeId) {
         QuoteVerifier.ensureQEReportIsValid(qeReport, platformSerial, pckSerial, r, s);
-        TrustDomainStorage.QELayout storage layout = TrustDomainStorage.qeLayout();
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
 
         // TODO: Are all fields needed for storage?
         qeId = layout.qeReportsCounter;
         layout.qeAuthorities[qeId] = TrustDomainStorage.QEAuthority(platformSerial, pckSerial);
         layout.qeReports[qeId] = qeReport;
         layout.qeReportsCounter++;
+        layout.qeCounterByProcessorPCK[platformSerial][pckSerial]++;
+        layout.cpuSvnQECounter[qeReport.CPUSVN]++;
 
         emit QEReportAdded(qeId);
 
@@ -115,18 +120,36 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         uint256 r,
         uint256 s
     ) external returns (uint256 tdId) {
+        QuoteVerifier.ensureTDAttributesSafe(tdQuote);
         QuoteVerifier.ensureTDQuoteIsValid(tdQuote, qeId, x, y, authenticationData, r, s);
-        TrustDomainStorage.TDLayout storage layout = TrustDomainStorage.tdLayout();
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
 
         tdId = _calculateTDId(tdQuote);
+        if (layout.tdQuotes[tdId].REPORT_DATA1 != 0) {
+            revert TDAlreadyExists();
+        }
 
         bytes memory publicKey = abi.encodePacked(tdQuote.REPORT_DATA1, tdQuote.REPORT_DATA2);
         address tdAddress = _convertPublicKeyToAddress(publicKey);
+
+        // Get certificate chain validity timestamps
+        TrustDomainStorage.QEAuthority memory authority = layout.qeAuthorities[qeId];
+        ECKey memory rootCA = layout.rootCA;
+        ECKey memory platformCA = layout.platformCAs[authority.platformSerial];
+        ECKey memory pck = layout.processorPCKs[authority.platformSerial][authority.pckSerial];
+
+        // Find minimum validity timestamp
+        uint256 minValidity = rootCA.notAfter;
+        if (platformCA.notAfter < minValidity) minValidity = platformCA.notAfter;
+        if (pck.notAfter < minValidity) minValidity = pck.notAfter;
 
         // TODO Optimize storage
         layout.tdQuotes[tdId] = tdQuote;
         layout.tdToQe[tdId] = qeId;
         layout.tdSignerAddress[tdId] = tdAddress;
+        layout.tdValidityEnd[tdId] = minValidity;
+        layout.tdCounterByQE[qeId]++;
+        layout.teeTcbSvnTDCounter[tdQuote.TEE_TCB_SVN]++;
 
         emit TDReportAdded(tdId);
 
@@ -134,29 +157,130 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     }
 
     function isTDValid(uint256 tdId) external view returns (bool) {
-        // todo: check QE/certs validity?
-        return TrustDomainStorage.tdLayout().tdQuotes[tdId].REPORT_DATA1 != 0;
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        return layout.tdQuotes[tdId].REPORT_DATA1 != 0 && block.timestamp <= layout.tdValidityEnd[tdId];
     }
 
     function getTDSignerAddress(uint256 tdId) external view returns (address) {
-        return TrustDomainStorage.tdLayout().tdSignerAddress[tdId];
+        return TrustDomainStorage.layout().tdSignerAddress[tdId];
     }
 
     function getTD(uint256 tdId) external view returns (TDQuote memory) {
-        return TrustDomainStorage.tdLayout().tdQuotes[tdId];
+        return TrustDomainStorage.layout().tdQuotes[tdId];
     }
 
     function getQE(uint256 qeId) external view returns (QEReport memory) {
-        return TrustDomainStorage.qeLayout().qeReports[qeId];
+        return TrustDomainStorage.layout().qeReports[qeId];
     }
 
     function getQEId(uint256 tdId) external view returns (uint256 qeId) {
-        return TrustDomainStorage.tdLayout().tdToQe[tdId];
+        return TrustDomainStorage.layout().tdToQe[tdId];
     }
 
     function getQEAuthority(uint256 qeId) external view returns (uint256 platformSerial, uint256 pckSerial) {
-        TrustDomainStorage.QEAuthority memory authority = TrustDomainStorage.qeLayout().qeAuthorities[qeId];
+        TrustDomainStorage.QEAuthority memory authority = TrustDomainStorage.layout().qeAuthorities[qeId];
         return (authority.platformSerial, authority.pckSerial);
+    }
+
+    function revokePlatformCA(uint256 serial) external onlyOwner {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        if (layout.pckCounterByPlatformCA[serial] > 0) {
+            revert PlatformCARevocation_PCKsExist();
+        }
+        delete layout.platformCAs[serial];
+
+        emit PlatformCARevoked(serial);
+    }
+
+    function revokePCK(uint256 platformSerial, uint256 pckSerial) external onlyOwner {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        if (layout.qeCounterByProcessorPCK[platformSerial][pckSerial] > 0) {
+            revert PCKRevocation_QEExist();
+        }
+        delete layout.processorPCKs[platformSerial][pckSerial];
+        layout.pckCounterByPlatformCA[platformSerial]--;
+
+        emit PCKRevoked(platformSerial, pckSerial);
+    }
+
+    function revokeQE(uint256 qeId) external onlyOwner {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        if (layout.tdCounterByQE[qeId] > 0) {
+            revert QERevocation_TDExist();
+        }
+        TrustDomainStorage.QEAuthority memory authority = layout.qeAuthorities[qeId];
+        layout.cpuSvnQECounter[layout.qeReports[qeId].CPUSVN]--;
+        layout.qeCounterByProcessorPCK[authority.platformSerial][authority.pckSerial]--;
+        delete layout.qeReports[qeId];
+        delete layout.qeAuthorities[qeId];
+
+        emit QEReportRevoked(qeId);
+    }
+
+    function revokeTD(uint256 tdId) external onlyOwner {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        layout.teeTcbSvnTDCounter[layout.tdQuotes[tdId].TEE_TCB_SVN]--;
+        layout.tdCounterByQE[layout.tdToQe[tdId]]--;
+        delete layout.tdQuotes[tdId];
+        delete layout.tdSignerAddress[tdId];
+        delete layout.tdToQe[tdId];
+        delete layout.tdValidityEnd[tdId];
+
+        emit TDReportRevoked(tdId);
+    }
+
+    function allowTeeTcbSvn(bytes16 tcbSvn) external onlyOwner {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        layout.allowedTeeTcbSvn[tcbSvn] = 1;
+    }
+
+    function allowCpuSvn(bytes16 cpuSvn) external onlyOwner {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        layout.allowedCpuSvn[cpuSvn] = 1;
+    }
+
+    function revokeTeeTcbSvn(bytes16 tcbSvn) external onlyOwner {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        if (layout.teeTcbSvnTDCounter[tcbSvn] > 0) {
+            revert TeeTcbSvnRevocation_TDExist();
+        }
+        delete layout.allowedTeeTcbSvn[tcbSvn];
+    }
+
+    function revokeCpuSvn(bytes16 cpuSvn) external onlyOwner {
+        TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        if (layout.cpuSvnQECounter[cpuSvn] > 0) {
+            revert CpuSvnRevocation_QEExist();
+        }
+        delete layout.allowedCpuSvn[cpuSvn];
+    }
+
+    function getPCKCounterByPlatformCA(uint256 platformSerial) external view returns (uint256) {
+        return TrustDomainStorage.layout().pckCounterByPlatformCA[platformSerial];
+    }
+    
+    function getQECounterByProcessorPCK(uint256 platformSerial, uint256 pckSerial) external view returns (uint256) {
+        return TrustDomainStorage.layout().qeCounterByProcessorPCK[platformSerial][pckSerial];
+    }
+
+    function getTDCounterByQE(uint256 qeId) external view returns (uint256) {
+        return TrustDomainStorage.layout().tdCounterByQE[qeId];
+    }
+
+    function isTeeTcbSvnAllowed(bytes16 tcbSvn) external view returns (bool) {
+        return TrustDomainStorage.layout().allowedTeeTcbSvn[tcbSvn] == 1;
+    }
+
+    function isCpuSvnAllowed(bytes16 cpuSvn) external view returns (bool) {
+        return TrustDomainStorage.layout().allowedCpuSvn[cpuSvn] == 1;
+    }
+
+    function getTeeTcbSvnTDCounter(bytes16 tcbSvn) external view returns (uint256) {
+        return TrustDomainStorage.layout().teeTcbSvnTDCounter[tcbSvn];
+    }
+
+    function getCpuSvnQECounter(bytes16 cpuSvn) external view returns (uint256) {
+        return TrustDomainStorage.layout().cpuSvnQECounter[cpuSvn];
     }
 
     function _convertPublicKeyToAddress(bytes memory publicKey) private pure returns (address) {
