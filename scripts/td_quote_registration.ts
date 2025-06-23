@@ -378,7 +378,16 @@ if (require.main === module) {
     process.stdin.on('data', chunk => {
         jsonData += chunk;
     });
-    process.stdin.on('end', () => {
+    process.stdin.on('end', async () => {
+        if (env.network.name === 'localhost') {
+            await network.provider.send("evm_setNextBlockTimestamp", [Math.floor(Date.now() / 1000)]);
+            await network.provider.send("evm_mine");
+
+            const blockNumber = await env.network.provider.send("eth_blockNumber", []);
+            const block = await env.network.provider.send("eth_getBlockByNumber", [blockNumber, false]);
+            const timestamp = parseInt(block.timestamp, 16);
+            console.log(`Current block timestamp: ${timestamp} (${new Date(timestamp * 1000).toISOString()})`);
+        }
         const quoteData = JSON.parse(jsonData);
         run(quexConfig[env.network.name], quoteData).catch(console.error);
     });
