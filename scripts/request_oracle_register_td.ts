@@ -11,7 +11,7 @@ const run = async (quexNetworkConfig: QuexNetworkConfig, tdId: bigint) => {
         .connect(await ethers.getSigner(<string>quexNetworkConfig.request.managerAddress))
         .addToPool(tdId);
     await tx.wait();
-    console.log(`TD ${tdId} added to request oracle`);
+    console.log(`TD ${tdId} added to request oracle\nDone!`);
 }
 
 if (require.main === module) {

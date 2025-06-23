@@ -46,7 +46,7 @@ async function run(quexNetworkConfig: QuexNetworkConfig, quoteData: any) {
 
     const calculatedTdId = calculateTDId(addTDArgs.tdQuote);
     if (await isTDRegistered(trustDomainRegistry, calculatedTdId)) {
-        console.log(`TD with id ${calculatedTdId} already registered`);
+        console.log(`TD with id ${calculatedTdId} already registered\nDone!`);
         return;
     }
 
@@ -57,6 +57,7 @@ async function run(quexNetworkConfig: QuexNetworkConfig, quoteData: any) {
     if (tdId != calculatedTdId) {
         console.log(`Calculated TD id is not the same as the one returned by the contract: ${calculatedTdId} != ${tdId}`);
     }
+    console.log(`Done!`);
 }
 
 function parseCertificates(certificationData: string): { platformCA: CertificateData, processorPck: CertificateData } {
