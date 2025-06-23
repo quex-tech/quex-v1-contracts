@@ -180,6 +180,7 @@ async function addProcessorPck(tdRegistry: ITrustDomainRegistryExtended, process
 }
 
 async function addQE(tdRegistry: ITrustDomainRegistryExtended, addQEArgs: AddQEArgs) {
+    console.log(`Adding QE with report:\n${JSON.stringify(addQEArgs.qeReport, null, 2)}`);
     const tx = await tdRegistry.addQE(
         addQEArgs.qeReport,
         addQEArgs.platformSerial,
@@ -194,6 +195,7 @@ async function addQE(tdRegistry: ITrustDomainRegistryExtended, addQEArgs: AddQEA
 }
 
 async function addTD(tdRegistry: ITrustDomainRegistryExtended, qeId: bigint, addTDArgs: AddTDArgs) {
+    console.log(`Adding TD with quote:\n${JSON.stringify(addTDArgs.tdQuote, null, 2)}`);
     const tx = await tdRegistry.addTD(
         addTDArgs.tdQuote,
         qeId,
