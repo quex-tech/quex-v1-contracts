@@ -43,11 +43,17 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
             revert Subscription_InsufficientValue();
         }
 
-        payable(quexMonetary.getTreasury()).call{value: quexFee}("");
         if (msg.value > quexFee) {
-            // todo: process situation when msg.sender is not payable
-            payable(message.relayer).call{value: msg.value - quexFee}("");
+            (bool sent,) = payable(message.relayer).call{value: msg.value - quexFee}("");
+            if (sent) {
+                payable(quexMonetary.getTreasury()).call{value: quexFee}("");
+            } else {
+                payable(quexMonetary.getTreasury()).call{value: msg.value}("");
+            }
+        } else {
+            payable(quexMonetary.getTreasury()).call{value: quexFee}("");
         }
+
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, flowId, message.dataItem, IdType.FlowId);
         (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
@@ -153,7 +159,10 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         if (refund > request.maxRelayerRefund) {
             refund = request.maxRelayerRefund;
         }
-        payable(message.relayer).call{value: refund}("");
+        (bool sent,) = payable(message.relayer).call{value: refund}("");
+        if (!sent) {
+            payable(quexMonetary.getTreasury()).call{value: refund}("");
+        }
 
         // Release funds from reserve and decrease subscription balance
         uint256 actualFees = staticFees + refund;
