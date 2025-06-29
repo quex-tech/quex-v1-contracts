@@ -44,6 +44,7 @@ interface IQuexActionRegistry {
     error Subscription_InsufficientValue();
     error Subscription_NotFound(uint256 subscriptionId, address consumer);
     error Subscription_WrongCaller();
+    error ZeroAddressForbidden();
     error Subscription_TransferFailed();
     error Request_TooFreshToCancel();
     error Request_NotOwnedBySender();
