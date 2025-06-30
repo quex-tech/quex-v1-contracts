@@ -16,7 +16,7 @@ import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
 import {ITrustDomainRegistry} from "../../interfaces/core/ITrustDomainRegistry.sol";
 
 contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyGuard {
-    uint256 private constant RELAYER_GAS_OVERHEAD = 50000;
+    uint256 private constant RELAYER_GAS_OVERHEAD = 80_000;
     uint256 private constant GAS_PRICE_MULTIPLIER = 2;
 
     // push events
@@ -131,6 +131,8 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         uint256 gasStart = gasleft();
         QuexActionStorage.Layout storage layout = QuexActionStorage.layout();
         QuexActionStorage.Request memory request = layout.requests[requestId];
+        IQuexMonetary quexMonetary = IQuexMonetary(address(this));
+
         if (request.flowId == 0) {
             revert Request_NotFound();
         }
@@ -139,9 +141,11 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         Flow memory flow = IFlowRegistry(address(this)).getFlow(request.flowId);
         _ensureOracleMessageIsValid(message, signature, flow, tdId);
 
-        IQuexMonetary quexMonetary = IQuexMonetary(address(this));
-        payable(quexMonetary.getTreasury()).call{value: request.quexFee}("");
-        payable(IOraclePool(flow.pool).getTreasury()).call{value: request.oraclePoolFee}("");
+        uint256 quexFee = request.quexFee;
+        (bool poolSent,) = payable(IOraclePool(flow.pool).getTreasury()).call{value: request.oraclePoolFee}("");
+        if (!poolSent) {
+            quexFee += request.oraclePoolFee;
+        }
         uint256 staticFees = request.quexFee + request.oraclePoolFee;
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
@@ -159,10 +163,11 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         if (refund > request.maxRelayerRefund) {
             refund = request.maxRelayerRefund;
         }
-        (bool sent,) = payable(message.relayer).call{value: refund}("");
-        if (!sent) {
-            payable(quexMonetary.getTreasury()).call{value: refund}("");
+        (bool relayerSent,) = payable(message.relayer).call{value: refund}("");
+        if (!relayerSent) {
+            quexFee += refund;
         }
+        payable(quexMonetary.getTreasury()).call{value: quexFee}("");
 
         // Release funds from reserve and decrease subscription balance
         uint256 actualFees = staticFees + refund;
