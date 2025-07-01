@@ -45,14 +45,11 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
 
         if (msg.value > quexFee) {
             (bool sent,) = payable(message.relayer).call{value: msg.value - quexFee}("");
-            if (sent) {
-                payable(quexMonetary.getTreasury()).call{value: quexFee}("");
-            } else {
-                payable(quexMonetary.getTreasury()).call{value: msg.value}("");
+            if (!sent) {
+                quexFee = msg.value;
             }
-        } else {
-            payable(quexMonetary.getTreasury()).call{value: quexFee}("");
         }
+        payable(quexMonetary.getTreasury()).call{value: quexFee}("");
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, flowId, message.dataItem, IdType.FlowId);
         bool success = _safeCallbackCall(flow.consumer, flow.gasLimit, payload);
