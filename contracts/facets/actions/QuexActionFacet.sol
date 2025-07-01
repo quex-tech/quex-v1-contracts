@@ -54,9 +54,8 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
             payable(quexMonetary.getTreasury()).call{value: quexFee}("");
         }
 
-
         bytes memory payload = abi.encodeWithSelector(flow.callback, flowId, message.dataItem, IdType.FlowId);
-        (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
+        bool success = _safeCallbackCall(flow.consumer, flow.gasLimit, payload);
 
         if (success) {
             emit DataPushed(flowId, message.relayer);
@@ -149,11 +148,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         uint256 staticFees = request.quexFee + request.oraclePoolFee;
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
-        require(
-            gasleft() >= flow.gasLimit + flow.gasLimit / 63,
-            "Not enough gas left to safely execute callback"
-        );
-        (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
+        bool success = _safeCallbackCall(flow.consumer, flow.gasLimit, payload);
         if (success) {
             emit RequestFulfilled(requestId, request.flowId, msg.sender);
         } else {
@@ -280,5 +275,13 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         bytes32 messageHash = keccak256(message);
         bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(messageHash);
         return ECDSA.recover(ethSignedMessageHash, signature.v, signature.r, signature.s) == tdAddress;
+    }
+
+    function _safeCallbackCall(address consumer, uint256 gasLimit, bytes memory payload) private returns (bool success) {
+        require(
+            gasleft() >= gasLimit + gasLimit / 63,
+            "Not enough gas left to safely execute callback"
+        );
+        (success,) = consumer.call{gas: gasLimit}(payload);
     }
 }
