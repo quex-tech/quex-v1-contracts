@@ -121,6 +121,25 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         assertEq(quexTreasury.balance, treasuryInitialBalance + expectedFallback + quexFee);
     }
 
+    function test_RevertsIf_NotEnoughGasLeftForCallback() public {
+        _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
+
+        // Set a small gas limit in the flow to trigger the internal check
+        uint256 localFlowId = uint256(keccak256("test_RevertsIf_NotEnoughGasLeftForCallback_flowId"));
+        uint256 localActionId = uint256(keccak256("test_RevertsIf_NotEnoughGasLeftForCallback_actionId"));
+        Flow memory flow = Flow(5_000_000, localActionId, oraclePoolAddress, address(this), this.callback_HeavyComputation.selector);
+        IDepositManager(address(diamond)).addConsumer(subscriptionId, flow.consumer);
+        vm.mockCall(address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, localFlowId), abi.encode(flow));
+
+        uint256 reqId = testObject.createRequest(localFlowId, subscriptionId);
+        TDTestData memory tdLocal = TD_validInQuex_inOraclePool;
+        OracleMessage memory msg = OracleMessage(localActionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
+        ETHSignature memory sig = _signOracleMessage(msg, tdLocal);
+
+        vm.expectRevert("Not enough gas left to safely execute callback");
+        testObject.fulfillRequest{gas: 5_000_100}(msg, sig, reqId, tdLocal.tdId);
+    }
+
     function test_TransfersTokensToRelayer() public {
         _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
 

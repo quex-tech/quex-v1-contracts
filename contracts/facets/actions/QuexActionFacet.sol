@@ -149,6 +149,10 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         uint256 staticFees = request.quexFee + request.oraclePoolFee;
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
+        require(
+            gasleft() >= flow.gasLimit + flow.gasLimit / 63,
+            "Not enough gas left to safely execute callback"
+        );
         (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
         if (success) {
             emit RequestFulfilled(requestId, request.flowId, msg.sender);
