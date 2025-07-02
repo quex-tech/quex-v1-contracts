@@ -7,6 +7,7 @@ import {QuexActionFacetTestDataBase} from "./QuexActionFacet.t.sol";
 import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
 import {IdType, DataItem, OracleMessage, ETHSignature, IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
+import {IOraclePool} from "../../../contracts/interfaces/core/IOraclePool.sol";
 import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
 
 contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
@@ -78,6 +79,65 @@ contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
         assertEq(oraclePoolTreasury.balance, initialBalance + oraclePoolFee);
+    }
+
+    function test_FallbackToQuexTreasury_If_OraclePoolTransferFails() public {
+        _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
+
+        // Mock the oracle pool to return the non-payable address
+        vm.mockCall(
+            address(oraclePoolAddress),
+            abi.encodeWithSelector(IOraclePool.getTreasury.selector),
+            abi.encode(nonPayableAddress)
+        );
+        assertEq(IOraclePool(flow.pool).getTreasury(), nonPayableAddress);
+
+        (, uint256 gasFee) = testObject.getRequestFee(flowId);
+        uint256 expectedRelayerReward = gasFee * tx.gasprice * GAS_PRICE_MULTIPLIER;
+
+        uint256 relayerInitialBalance = address(this).balance;
+        uint256 treasuryInitialBalance = quexTreasury.balance;
+
+        testObject.fulfillRequest(message, signature, requestId, td.tdId);
+
+        assertEq(address(this).balance, relayerInitialBalance + expectedRelayerReward);
+        assertEq(quexTreasury.balance, treasuryInitialBalance + oraclePoolFee + quexFee);
+    }
+
+    function test_FallbackToQuexTreasury_If_RelayerTransferFails() public {
+        _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
+
+        // Create non-payable relayer
+        OracleMessage memory msgWithRelayer = OracleMessage(actionId, message.dataItem, nonPayableAddress);
+        ETHSignature memory sig = _signOracleMessage(msgWithRelayer, td);
+
+        uint256 treasuryInitialBalance = quexTreasury.balance;
+
+        testObject.fulfillRequest(msgWithRelayer, sig, requestId, td.tdId);
+
+        // gasFee is redirected to Quex treasury
+        (, uint256 gasFee) = testObject.getRequestFee(flowId);
+        uint256 expectedFallback = gasFee * tx.gasprice * GAS_PRICE_MULTIPLIER;
+        assertEq(quexTreasury.balance, treasuryInitialBalance + expectedFallback + quexFee);
+    }
+
+    function test_RevertsIf_NotEnoughGasLeftForCallback() public {
+        _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
+
+        // Set a small gas limit in the flow to trigger the internal check
+        uint256 localFlowId = uint256(keccak256("test_RevertsIf_NotEnoughGasLeftForCallback_flowId"));
+        uint256 localActionId = uint256(keccak256("test_RevertsIf_NotEnoughGasLeftForCallback_actionId"));
+        Flow memory flow = Flow(5_000_000, localActionId, oraclePoolAddress, address(this), this.callback_HeavyComputation.selector);
+        IDepositManager(address(diamond)).addConsumer(subscriptionId, flow.consumer);
+        vm.mockCall(address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, localFlowId), abi.encode(flow));
+
+        uint256 reqId = testObject.createRequest(localFlowId, subscriptionId);
+        TDTestData memory tdLocal = TD_validInQuex_inOraclePool;
+        OracleMessage memory msg = OracleMessage(localActionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
+        ETHSignature memory sig = _signOracleMessage(msg, tdLocal);
+
+        vm.expectRevert("Not enough gas left to safely execute callback");
+        testObject.fulfillRequest{gas: 5_000_100}(msg, sig, reqId, tdLocal.tdId);
     }
 
     function test_TransfersTokensToRelayer() public {

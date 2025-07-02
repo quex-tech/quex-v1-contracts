@@ -38,6 +38,9 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         if (msg.sender != l.subscriptions[subscriptionId].owner) {
             revert IQuexActionRegistry.Subscription_WrongCaller();
         }
+        if (owner == address(0)) {
+            revert IQuexActionRegistry.ZeroAddressForbidden();
+        }
         l.subscriptions[subscriptionId].owner = owner;
         emit OwnerUpdated(subscriptionId, owner);
     }

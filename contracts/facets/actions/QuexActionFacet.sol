@@ -16,7 +16,7 @@ import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
 import {ITrustDomainRegistry} from "../../interfaces/core/ITrustDomainRegistry.sol";
 
 contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyGuard {
-    uint256 private constant RELAYER_GAS_OVERHEAD = 50000;
+    uint256 private constant RELAYER_GAS_OVERHEAD = 80_000;
     uint256 private constant GAS_PRICE_MULTIPLIER = 2;
 
     // push events
@@ -43,14 +43,16 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
             revert Subscription_InsufficientValue();
         }
 
-        payable(quexMonetary.getTreasury()).call{value: quexFee}("");
         if (msg.value > quexFee) {
-            // todo: process situation when msg.sender is not payable
-            payable(message.relayer).call{value: msg.value - quexFee}("");
+            (bool sent,) = payable(message.relayer).call{value: msg.value - quexFee}("");
+            if (!sent) {
+                quexFee = msg.value;
+            }
         }
+        payable(quexMonetary.getTreasury()).call{value: quexFee}("");
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, flowId, message.dataItem, IdType.FlowId);
-        (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
+        bool success = _safeCallbackCall(flow.consumer, flow.gasLimit, payload);
 
         if (success) {
             emit DataPushed(flowId, message.relayer);
@@ -125,6 +127,8 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         uint256 gasStart = gasleft();
         QuexActionStorage.Layout storage layout = QuexActionStorage.layout();
         QuexActionStorage.Request memory request = layout.requests[requestId];
+        IQuexMonetary quexMonetary = IQuexMonetary(address(this));
+
         if (request.flowId == 0) {
             revert Request_NotFound();
         }
@@ -133,13 +137,15 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         Flow memory flow = IFlowRegistry(address(this)).getFlow(request.flowId);
         _ensureOracleMessageIsValid(message, signature, flow, tdId);
 
-        IQuexMonetary quexMonetary = IQuexMonetary(address(this));
-        payable(quexMonetary.getTreasury()).call{value: request.quexFee}("");
-        payable(IOraclePool(flow.pool).getTreasury()).call{value: request.oraclePoolFee}("");
+        uint256 quexFee = request.quexFee;
+        (bool poolSent,) = payable(IOraclePool(flow.pool).getTreasury()).call{value: request.oraclePoolFee}("");
+        if (!poolSent) {
+            quexFee += request.oraclePoolFee;
+        }
         uint256 staticFees = request.quexFee + request.oraclePoolFee;
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
-        (bool success,) = flow.consumer.call{gas: flow.gasLimit}(payload);
+        bool success = _safeCallbackCall(flow.consumer, flow.gasLimit, payload);
         if (success) {
             emit RequestFulfilled(requestId, request.flowId, msg.sender);
         } else {
@@ -153,7 +159,11 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         if (refund > request.maxRelayerRefund) {
             refund = request.maxRelayerRefund;
         }
-        payable(message.relayer).call{value: refund}("");
+        (bool relayerSent,) = payable(message.relayer).call{value: refund}("");
+        if (!relayerSent) {
+            quexFee += refund;
+        }
+        payable(quexMonetary.getTreasury()).call{value: quexFee}("");
 
         // Release funds from reserve and decrease subscription balance
         uint256 actualFees = staticFees + refund;
@@ -262,5 +272,13 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         bytes32 messageHash = keccak256(message);
         bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(messageHash);
         return ECDSA.recover(ethSignedMessageHash, signature.v, signature.r, signature.s) == tdAddress;
+    }
+
+    function _safeCallbackCall(address consumer, uint256 gasLimit, bytes memory payload) private returns (bool success) {
+        require(
+            gasleft() >= gasLimit + gasLimit / 63,
+            "Not enough gas left to safely execute callback"
+        );
+        (success,) = consumer.call{gas: gasLimit}(payload);
     }
 }
