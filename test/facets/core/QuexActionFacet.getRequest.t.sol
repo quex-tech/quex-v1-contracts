@@ -16,9 +16,13 @@ contract QuexActionFacet_getRequest is QuexActionFacetTestDataBase {
 
     function test_ReturnsEmpty_IfRequestFulfilled() public {
         uint256 requestPrice = _getMinimumRequestPrice(flowId);
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
-        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)));
+        OracleMessage memory message = OracleMessage({
+            actionId: actionId,
+            dataItem: DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)),
+            relayer: relayer
+        });
         ETHSignature memory signature = _signOracleMessage(message, td);
         _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
@@ -31,7 +35,7 @@ contract QuexActionFacet_getRequest is QuexActionFacetTestDataBase {
 
     function test_ReturnsRequest() public {
         uint256 requestPrice = _getMinimumRequestPrice(flowId);
-        uint256 requestId = testObject.createRequest{value:requestPrice}(flowId);
+        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
 
         Request memory request = testObject.getRequest(requestId);
         vm.assertEq(request.requestId, requestId);

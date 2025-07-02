@@ -3,7 +3,10 @@ pragma solidity 0.8.22;
 
 import "../interfaces/core/IFlowRegistry.sol";
 import "../interfaces/core/IQuexActionRegistry.sol";
+import "../interfaces/core/IDepositManager.sol";
+import "../interfaces/core/IQuexMonetary.sol";
 import "../interfaces/oracles/IRequestOraclePool.sol";
+import "../facets/actions/QuexActionFacet.sol";
 
 struct Order {
     uint256 price;
@@ -17,9 +20,14 @@ struct OrderBook {
 }
 
 contract RequestActionTestContract {
+    event log_uint(uint256 value);
+    event log_address(address value);
+
     address quexCoreAddress;
     address oraclePoolAddress;
     uint256 lastRequestId;
+    uint256 subscriptionId;
+    uint256 flowId;
     OrderBook lastResponse;
 
     constructor(address quexCoreAddress_, address oraclePoolAddress_) {
@@ -27,7 +35,7 @@ contract RequestActionTestContract {
         oraclePoolAddress = oraclePoolAddress_;
     }
 
-    function createRequest() external payable {
+    function setUpFlow() external payable {
         IRequestOraclePool requestOracle = IRequestOraclePool(oraclePoolAddress);
         QueryParameter[] memory parameters = new QueryParameter[](2);
         parameters[0] = QueryParameter("symbol", "BTCUSDT");
@@ -56,16 +64,44 @@ contract RequestActionTestContract {
 
         IFlowRegistry flowRegistry = IFlowRegistry(quexCoreAddress);
         Flow memory flow = Flow(1000000, actionId, oraclePoolAddress, address(this), this.fulfillRequest.selector);
-        uint256 flowId = flowRegistry.createFlow(flow);
+        flowId = flowRegistry.createFlow(flow);
 
+        IDepositManager depositManager = IDepositManager(quexCoreAddress);
+
+        // create subscription and fund it
+        subscriptionId = depositManager.createSubscription();
+        emit log_uint(subscriptionId);
+        depositManager.addConsumer(subscriptionId, flow.consumer);
+        emit log_address(flow.consumer);
+        depositManager.deposit{value: msg.value}(subscriptionId);
+        emit log_uint(msg.value);
+    }
+
+    function getFlowSubscriptionStatus() external view returns (uint256, uint256, bool, address, uint256) {
+        IDepositManager depositManager = IDepositManager(quexCoreAddress);
+        QuexActionFacet quexAction = QuexActionFacet(quexCoreAddress);
+        Flow memory flow = IFlowRegistry(quexCoreAddress).getFlow(flowId);
+
+        address pool = flow.pool;
+        bool isValid = depositManager.hasAccessToSubscription(subscriptionId, address(this));
+        uint256 subscriptionBalance = depositManager.withdrawableBalance(subscriptionId);
+        (uint256 nativeFee, uint256 gasFee) = quexAction.getRequestFee(flowId);
+        return (flowId, subscriptionId, isValid, pool, subscriptionBalance);
+    }
+
+    function createRequest() external {
         IQuexActionRegistry actionRegistry = IQuexActionRegistry(quexCoreAddress);
-        (uint256 nativeFee, uint256 gasFee) = actionRegistry.getRequestFee(flowId);
-        uint256 totalRequestPrice = nativeFee + gasFee * tx.gasprice;
-        lastRequestId = actionRegistry.createRequest{value: totalRequestPrice}(flowId);
+        lastRequestId = actionRegistry.createRequest(flowId, subscriptionId);
+    }
 
-        if (msg.value > totalRequestPrice) {
-            payable(msg.sender).transfer(msg.value - totalRequestPrice);
-        }
+    function deposit() external payable {
+        IDepositManager depositManager = IDepositManager(quexCoreAddress);
+        depositManager.deposit{value: msg.value}(subscriptionId);
+    }
+
+    function withdraw() external {
+        IDepositManager depositManager = IDepositManager(quexCoreAddress);
+        depositManager.withdraw(subscriptionId, msg.sender);
     }
 
     function fulfillRequest(uint256 requestId, DataItem memory dataItem, IdType /* idType */) external {
@@ -76,6 +112,13 @@ contract RequestActionTestContract {
 
     function getLastRequestId() external view returns (uint256 requestId) {
         return lastRequestId;
+    }
+
+    function getLastRequest() external view returns (Request memory) {
+        QuexActionFacet quexAction = QuexActionFacet(quexCoreAddress);
+        Request memory req = quexAction.getRequest(lastRequestId);
+
+        return req;
     }
 
     function getLastResponse() external view returns (OrderBook memory) {

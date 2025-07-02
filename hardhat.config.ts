@@ -1,15 +1,17 @@
-import { HardhatUserConfig, vars } from "hardhat/config";
+import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-foundry";
 import "hardhat-gas-reporter";
 
-const quexDeployerPrivateKey = vars.get("QUEX_DEPLOYER_PRIVATE_KEY");
-const quexManagerPrivateKey = vars.get("QUEX_MANAGER_PRIVATE_KEY");
+const deploySalt = process.env.IGNITION_SALT ?? "0x19b1da12264f86ca7aa41516ff68f9fbae4086ddca5a5cdf0274984451220c9d";
 
-const quexRedbellyTestnetPrivateKey = vars.get("QUEX_REDBELLY_TESTNET_PRIVATE_KEY");
-const quexRedbellyMainnetPrivateKey = vars.get("QUEX_REDBELLY_MAINNET_PRIVATE_KEY");
+const quexDeployerPrivateKey = process.env.QUEX_DEPLOYER_PRIVATE_KEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+const quexManagerPrivateKey = process.env.QUEX_MANAGER_PRIVATE_KEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 
-const alchemyApiKey = vars.get("ALCHEMY_API_KEY");
+const quexRedbellyTestnetPrivateKey = process.env.QUEX_REDBELLY_TESTNET_PRIVATE_KEY ?? "0x0000000000000000000000000000000000000000000000000000000000000001";
+const quexRedbellyMainnetPrivateKey = process.env.QUEX_REDBELLY_MAINNET_PRIVATE_KEY ?? "0x0000000000000000000000000000000000000000000000000000000000000001";
+
+const alchemyApiKey = process.env.ALCHEMY_API_KEY ?? "12345";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -37,7 +39,7 @@ const config: HardhatUserConfig = {
     },
     arbitrumSepolia: {
       chainId: 421614,
-      url: "https://sepolia-rollup.arbitrum.io/rpc",
+      url: `https://arb-sepolia.g.alchemy.com/v2/${alchemyApiKey}`,
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     },
     arbitrumOne: {
@@ -137,7 +139,7 @@ const config: HardhatUserConfig = {
   ignition: {
     strategyConfig: {
       create2: {
-        salt: "0x19b1da12264f86ca7aa41516ff68f9fbae4086ddca5a5cdf0274984451220c9d"
+        salt: deploySalt
       }
     }
   }

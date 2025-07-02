@@ -1,4 +1,4 @@
-import { ignition } from "hardhat";
+import {ignition} from "hardhat";
 import {
     IFlowRegistry__factory,
     IP256Verifier__factory,
@@ -8,28 +8,34 @@ import {
     QuexDiamond,
     QuexDiamond__factory,
     IQuexMonetaryFacet__factory,
-    IQuexActionFacet__factory
+    IQuexActionFacet__factory,
+    IDepositManager__factory,
+    ITrustDomainRegistryExtended__factory
 } from "../typechain";
 import QuexCoreCompleteDeployAndConfigurationModule from "../ignition/modules/core/QuexCoreCompleteDeployAndConfigurationModule";
-import { FunctionFragment } from "ethers";
-import { ethers } from "hardhat";
+import {FunctionFragment} from "ethers";
+import {ethers} from "hardhat";
 
 import env from "hardhat";
-import { quexConfig, QuexNetworkConfig, QuexCoreNetworkConfig } from "./quex_config";
+import {quexConfig, QuexNetworkConfig, QuexCoreNetworkConfig, supportedSvns, SupportedSvns} from "./quex_config";
 
 const pastTimeSkew = 15n * 60n; // 15 min
 const futureTimeSkew = 30n; // 30 sec
 
-async function run() {
-    const quexNetworkConfig: QuexNetworkConfig = quexConfig[env.network.name];
-
-    const { quexCoreDiamond } = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule, { strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2" });
+export async function run(quexNetworkConfig: QuexNetworkConfig) {
+    const {quexCoreDiamond} = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule, {strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2"});
 
     const diamond = QuexDiamond__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
 
+    console.log("Validating interfaces");
     await validate_interfaces(diamond);
+    console.log("Configure manager");
     await configure_manager(diamond, quexNetworkConfig.core);
+    console.log("Setting config values");
     await set_config_values(diamond, quexNetworkConfig.core);
+    console.log("Adding supported SVNS");
+    await add_supported_svns(diamond, supportedSvns);
+    console.log("Done");
 }
 
 async function validate_interfaces(diamond: QuexDiamond) {
@@ -45,6 +51,7 @@ async function validate_interfaces(diamond: QuexDiamond) {
     IQuexActionRegistry__factory.createInterface().forEachFunction((x) => validate_function(x));
     IQuexMonetary__factory.createInterface().forEachFunction((x) => validate_function(x));
     ITrustDomainRegistry__factory.createInterface().forEachFunction((x) => validate_function(x));
+    IDepositManager__factory.createInterface().forEachFunction((x) => validate_function(x));
 }
 
 async function configure_manager(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
@@ -55,35 +62,63 @@ async function configure_manager(diamond: QuexDiamond, config: QuexCoreNetworkCo
 async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
     const quexMonetary = IQuexMonetaryFacet__factory.connect(await diamond.getAddress(), diamond.runner);
 
-    console.log(await quexMonetary.getQuexFee(1));
     if ((await quexMonetary.getQuexFee(1)) != config.quexFee) {
         await quexMonetary
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setQuexFee(config.quexFee);
     }
+    const quexFee = await quexMonetary.getQuexFee(1)
+    console.log(`Quex fee: ${quexFee}`);
 
-    console.log(await quexMonetary.getTreasury());
     if ((await quexMonetary.getTreasury()) != config.treasuryAddress) {
         await quexMonetary
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setTreasury(config.treasuryAddress);
     }
+    const treasury = await quexMonetary.getTreasury();
+    console.log(`Quex treasury: ${treasury}`);
 
     const quexActions = IQuexActionFacet__factory.connect(await diamond.getAddress(), diamond.runner);
-    console.log(await quexActions.getQuexGas());
     if (await quexActions.getQuexGas() != config.quexFulfillingGasCost) {
         await quexActions
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setQuexGas(config.quexFulfillingGasCost);
     }
+    const quexGas = await quexActions.getQuexGas();
+    console.log(`Quex gas: ${quexGas}`);
 
-    const timeSkew = await quexActions.getTimeSkew();
-    console.log(timeSkew);
+    let timeSkew = await quexActions.getTimeSkew();
     if (timeSkew[0] != pastTimeSkew || timeSkew[1] != futureTimeSkew) {
         const tx = await quexActions
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setTimeSkew(pastTimeSkew, futureTimeSkew);
     }
+    timeSkew = await quexActions.getTimeSkew();
+    console.log(`Time skew: ${timeSkew}`);
 }
 
-run().catch(console.error);
+async function add_supported_svns(diamond: QuexDiamond, supportedSvns: SupportedSvns) {
+    const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
+    for (const cpuSvn of supportedSvns.cpuSvnsToAdd) {
+        await (await tdRegistry.allowCpuSvn(cpuSvn)).wait();
+    }
+    for (const teeTcbSvn of supportedSvns.teeTcbSvnsToAdd) {
+        await (await tdRegistry.allowTeeTcbSvn(teeTcbSvn)).wait();
+    }
+    for (const cpuSvn of supportedSvns.cpuSvnsToRemove) {
+        await (await tdRegistry.revokeCpuSvn(cpuSvn)).wait();
+    }
+    for (const teeTcbSvn of supportedSvns.teeTcbSvnsToRemove) {
+        await (await tdRegistry.revokeTeeTcbSvn(teeTcbSvn)).wait();
+    }
+}
+
+if (require.main === module) {
+    const networkName = env.network.name;
+    const hardhatConfig = require("hardhat").config;
+    const quexNetworkConfig = quexConfig[networkName];
+    console.log("Start Core deploy for network:", networkName);
+    console.log(JSON.stringify(quexNetworkConfig, (_, v) => typeof v === "bigint" ? v.toString() : v, 2));
+    console.log("Deployment salt:", hardhatConfig.ignition.strategyConfig.create2.salt);
+    run(quexNetworkConfig).catch(console.error);
+}

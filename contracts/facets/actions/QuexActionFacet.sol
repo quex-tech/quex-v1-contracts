@@ -5,15 +5,20 @@ import "../../QuexRoles.sol";
 import "../../interfaces/core/IFlowRegistry.sol";
 import "../../interfaces/core/IOraclePool.sol";
 import "../../interfaces/core/IQuexMonetary.sol";
+import "../../interfaces/core/IDepositManager.sol";
 import "./IQuexActionFacet.sol";
 import "./QuexActionStorage.sol";
 
+import {DepositManagerFacet} from "../monetary/DepositManagerFacet.sol";
 import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 import {ReentrancyGuard} from "@solidstate/contracts/security/reentrancy_guard/ReentrancyGuard.sol";
 import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
 import {ITrustDomainRegistry} from "../../interfaces/core/ITrustDomainRegistry.sol";
 
 contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyGuard {
+    uint256 private constant RELAYER_GAS_OVERHEAD = 80_000;
+    uint256 private constant GAS_PRICE_MULTIPLIER = 2;
+
     // push events
     event DataPushed(uint256 flowId, address sender);
     event DataPushingFailed(uint256 flowId, address sender);
@@ -35,59 +40,72 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
         uint quexFee = quexMonetary.getQuexFee(flowId);
         if (msg.value < quexFee) {
-            revert InsufficientValue();
+            revert Subscription_InsufficientValue();
         }
 
-        payable(quexMonetary.getTreasury()).call{value: quexFee}("");
         if (msg.value > quexFee) {
-            // todo: process situation when msg.sender is not payable
-            payable(msg.sender).call{value: msg.value - quexFee}("");
+            (bool sent,) = payable(message.relayer).call{value: msg.value - quexFee}("");
+            if (!sent) {
+                quexFee = msg.value;
+            }
         }
+        payable(quexMonetary.getTreasury()).call{value: quexFee}("");
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, flowId, message.dataItem, IdType.FlowId);
-        (bool success, ) = flow.consumer.call{gas: flow.gasLimit}(payload);
+        bool success = _safeCallbackCall(flow.consumer, flow.gasLimit, payload);
 
         if (success) {
-            emit DataPushed(flowId, msg.sender);
+            emit DataPushed(flowId, message.relayer);
         } else {
-            emit DataPushingFailed(flowId, msg.sender);
+            emit DataPushingFailed(flowId, message.relayer);
         }
     }
 
-    function createRequest(uint256 flowId) external payable nonReentrant returns (uint256 requestId) {
+    function composeRequest(uint256 flowId, uint256 subscriptionId) private view returns (QuexActionStorage.Request memory request) {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
 
         if (flow.pool == address(0)) {
             revert Flow_NotFound();
         }
-
-        IQuexMonetary quexMonetary = IQuexMonetary(address(this));
-        uint256 quexFee = quexMonetary.getQuexFee(flowId);
-        uint256 relayerPremium = (flow.gasLimit + QuexActionStorage.layout().quexFulfillingGasCost) * tx.gasprice;
-        uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
-        uint256 requestPrice = quexFee + relayerPremium + oraclePoolFee;
-
-        if (msg.value < requestPrice) {
-            revert InsufficientValue();
+        if (!DepositManagerFacet(address(this)).hasAccessToSubscription(subscriptionId, msg.sender)) {
+            revert Subscription_NotFound(subscriptionId, msg.sender);
         }
 
-        requestId = ++QuexActionStorage.layout().lastRequestId;
-        emit RequestCreated(requestId, flowId, flow.pool);
-
-        QuexActionStorage.layout().requests[requestId] = QuexActionStorage.Request(
+        IQuexMonetary quexMonetary = IQuexMonetary(address(this));
+        (uint256 nativeFee, uint256 gasFee) = this.getRequestFee(flowId);
+        uint256 quexFee = quexMonetary.getQuexFee(flowId);
+        uint256 maxGasPrice = tx.gasprice * GAS_PRICE_MULTIPLIER;
+        uint256 maxRelayerRefund = gasFee * maxGasPrice;
+        uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
+        QuexActionStorage.Request memory req = QuexActionStorage.Request(
             flowId,
+            subscriptionId,
             quexFee,
-            relayerPremium,
+            maxRelayerRefund,
             oraclePoolFee,
             block.number,
             msg.sender
         );
+        return req;
+    }
 
-        if (msg.value > requestPrice) {
-            // todo: process situation when msg.sender is not payable
-            payable(msg.sender).call{value: msg.value - requestPrice}("");
-        }
+    function reserveFunds(uint256 subscriptionId, QuexActionStorage.Request memory req) private returns (uint256 requestId) {
+        uint256 totalFee = req.quexFee + req.maxRelayerRefund + req.oraclePoolFee;
+        DepositManagerFacet(address(this)).reserve(subscriptionId, totalFee);
+    }
 
+    function saveRequest(QuexActionStorage.Request memory req) private returns (uint256 requestId) {
+        requestId = ++QuexActionStorage.layout().lastRequestId;
+        QuexActionStorage.layout().requests[requestId] = req;
+        return requestId;
+    }
+
+    function createRequest(uint256 flowId, uint256 subscriptionId) public returns (uint256 requestId) {
+        Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
+        QuexActionStorage.Request memory req = composeRequest(flowId, subscriptionId);
+        reserveFunds(subscriptionId, req);
+        requestId = saveRequest(req);
+        emit RequestCreated(requestId, flowId, flow.pool);
         return requestId;
     }
 
@@ -106,8 +124,11 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         uint256 requestId,
         uint256 tdId
     ) external nonReentrant {
+        uint256 gasStart = gasleft();
         QuexActionStorage.Layout storage layout = QuexActionStorage.layout();
         QuexActionStorage.Request memory request = layout.requests[requestId];
+        IQuexMonetary quexMonetary = IQuexMonetary(address(this));
+
         if (request.flowId == 0) {
             revert Request_NotFound();
         }
@@ -116,19 +137,38 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         Flow memory flow = IFlowRegistry(address(this)).getFlow(request.flowId);
         _ensureOracleMessageIsValid(message, signature, flow, tdId);
 
-        IQuexMonetary quexMonetary = IQuexMonetary(address(this));
-        payable(quexMonetary.getTreasury()).call{value: request.quexFee}("");
-        payable(IOraclePool(flow.pool).getTreasury()).call{value: request.oraclePoolFee}("");
-        payable(msg.sender).call{value: request.relayerPremium}("");
+        uint256 quexFee = request.quexFee;
+        (bool poolSent,) = payable(IOraclePool(flow.pool).getTreasury()).call{value: request.oraclePoolFee}("");
+        if (!poolSent) {
+            quexFee += request.oraclePoolFee;
+        }
+        uint256 staticFees = request.quexFee + request.oraclePoolFee;
 
         bytes memory payload = abi.encodeWithSelector(flow.callback, requestId, message.dataItem, IdType.RequestId);
-        (bool success, ) = flow.consumer.call{gas: flow.gasLimit}(payload);
-
+        bool success = _safeCallbackCall(flow.consumer, flow.gasLimit, payload);
         if (success) {
             emit RequestFulfilled(requestId, request.flowId, msg.sender);
         } else {
             emit RequestFulfillingFailed(requestId, request.flowId, msg.sender);
         }
+
+        // Refund relayer with the gas used.
+        // All possible business logic should be before this line to calculate gas used correctly
+        uint256 gasUsed = gasStart - gasleft();
+        uint256 refund = (gasUsed + RELAYER_GAS_OVERHEAD) * tx.gasprice;
+        if (refund > request.maxRelayerRefund) {
+            refund = request.maxRelayerRefund;
+        }
+        (bool relayerSent,) = payable(message.relayer).call{value: refund}("");
+        if (!relayerSent) {
+            quexFee += refund;
+        }
+        payable(quexMonetary.getTreasury()).call{value: quexFee}("");
+
+        // Release funds from reserve and decrease subscription balance
+        uint256 actualFees = staticFees + refund;
+        uint256 reservedFee = staticFees + request.maxRelayerRefund;
+        DepositManagerFacet(address(this)).fulfill(request.subscriptionId, reservedFee, actualFees);
     }
 
     function cancelRequest(uint256 requestId) external nonReentrant {
@@ -149,7 +189,9 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
 
         delete layout.requests[requestId];
-        payable(msg.sender).call{value: request.quexFee + request.relayerPremium + request.oraclePoolFee}("");
+        uint256 requestPrice = request.quexFee + request.maxRelayerRefund + request.oraclePoolFee;
+        DepositManagerFacet(address(this)).release(request.subscriptionId, requestPrice);
+
         emit RequestCancelled(requestId, request.flowId, msg.sender);
     }
 
@@ -230,5 +272,13 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         bytes32 messageHash = keccak256(message);
         bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(messageHash);
         return ECDSA.recover(ethSignedMessageHash, signature.v, signature.r, signature.s) == tdAddress;
+    }
+
+    function _safeCallbackCall(address consumer, uint256 gasLimit, bytes memory payload) private returns (bool success) {
+        require(
+            gasleft() >= gasLimit + gasLimit / 63,
+            "Not enough gas left to safely execute callback"
+        );
+        (success,) = consumer.call{gas: gasLimit}(payload);
     }
 }

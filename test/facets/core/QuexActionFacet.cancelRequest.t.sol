@@ -4,8 +4,10 @@ pragma solidity 0.8.22;
 import {IQuexActionRegistry, Request} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 import {IOraclePool} from "../../../contracts/interfaces/core/IOraclePool.sol";
 import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
+import {IDepositManager} from "../../../contracts/interfaces/core/IDepositManager.sol";
 import {QuexActionFacetTestBase} from "./QuexActionFacet.t.sol";
 import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
+import {IQuexMonetary} from "../../../contracts/interfaces/core/IQuexMonetary.sol";
 import "forge-std/console.sol";
 
 contract QuexActionFacet_cancelRequest is QuexActionFacetTestBase {
@@ -16,10 +18,9 @@ contract QuexActionFacet_cancelRequest is QuexActionFacetTestBase {
     function setUp() public override {
         QuexActionFacetTestBase.setUp();
         requestOwner = address(this);
-        requestPrice = _getMinimumRequestPrice();
-        
+
         // Create a request that we can cancel
-        requestId = testObject.createRequest{value: requestPrice}(flowId);
+        requestId = testObject.createRequest(flowId, subscriptionId);
     }
 
     function test_SuccessfullyCancelsRequest() public {
@@ -30,22 +31,33 @@ contract QuexActionFacet_cancelRequest is QuexActionFacetTestBase {
             abi.encode(10)
         );
 
+        // Ensure request exists and funds are locked
+        Request memory preRequest = testObject.getRequest(requestId);
+        assertEq(preRequest.flowId, flowId, "Request should exist before cancellation");
+
+        uint256 quexFee = IQuexMonetary(address(testObject)).getQuexFee(flowId);
+        uint256 relayerPremium = (flow.gasLimit + testObject.getQuexGas()) * tx.gasprice * GAS_PRICE_MULTIPLIER;
+        uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
+        uint256 requestPrice = quexFee + relayerPremium + oraclePoolFee;
+
+        uint256 lockedBefore = IDepositManager(address(testObject)).balance(subscriptionId) -
+            IDepositManager(address(testObject)).withdrawableBalance(subscriptionId);
+        assertEq(lockedBefore, requestPrice, "Funds should be locked before cancellation");
+
         // Move blocks forward to allow cancellation
         vm.roll(block.number + 11);
-
-        // Get initial balance
-        uint256 initialBalance = address(this).balance;
 
         // Cancel the request
         testObject.cancelRequest(requestId);
 
-        // Verify request is deleted
-        Request memory request = testObject.getRequest(requestId);
-        assertEq(request.flowId, 0, "Request should be deleted");
+        // Ensure request is deleted
+        Request memory postRequest = testObject.getRequest(requestId);
+        assertEq(postRequest.flowId, 0, "Request should be deleted after cancellation");
 
-        // Verify refund
-        uint256 expectedRefund = requestPrice;
-        assertLt(initialBalance + expectedRefund - address(this).balance, 200000, "Should receive full refund"); // 200000 is for gas costs
+        // Ensure funds are unlocked
+        uint256 lockedAfter = IDepositManager(address(testObject)).balance(subscriptionId) -
+            IDepositManager(address(testObject)).withdrawableBalance(subscriptionId);
+        assertEq(lockedAfter, 0, "Funds should be unlocked after cancellation");
     }
 
     function test_RevertsIf_RequestNotFound() public {

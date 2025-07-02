@@ -5,6 +5,7 @@ import AddQuexAddressFacetToRequestOracleModule from "./AddQuexAddressFacetToReq
 import AddRequestActionFacetToRequestOracleModule from "./AddRequestActionFacetToRequestOracleModule";
 import AddTreasuryFacetToRequestOracleModule from "./AddTreasuryFacetToRequestOracleModule";
 import AddTrustDomainPolicyFacetToRequestOracleModule from "./AddTrustDomainPolicyFacetToRequestOracleModule";
+import AddConstantMaxResponseBlocksFacetToRequestOracleModule from "./AddConstantMaxResponseBlocksFacetToRequestOracleModule";
 
 const RequestOracleDeployAndConfigurationModule = buildModule("RequestOracleDeployAndConfigurationModule", (m) => {
     const requestsDiamond = m.useModule(DeployRequestOracleDiamondModule).requestsDiamond;
@@ -14,6 +15,7 @@ const RequestOracleDeployAndConfigurationModule = buildModule("RequestOracleDepl
     m.useModule(AddRequestActionFacetToRequestOracleModule);
     m.useModule(AddTreasuryFacetToRequestOracleModule);
     m.useModule(AddTrustDomainPolicyFacetToRequestOracleModule);
+    m.useModule(AddConstantMaxResponseBlocksFacetToRequestOracleModule);
 
     return { requestsDiamond };
 });
