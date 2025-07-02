@@ -36,6 +36,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.2",
     "@solidstate/contracts": "^0.0.60",
+    "asn1js": "^3.0.6",
     "solady": "^0.0.285"
   },
   "resolutions": {
