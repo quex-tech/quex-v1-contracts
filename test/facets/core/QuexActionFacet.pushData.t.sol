@@ -54,6 +54,20 @@ contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
         assertEq(quexTreasury.balance, initialQuexTreasuryBalance + quexFee);
     }
 
+    function test_TransfersToQuexIfRelayerTransferFails() public {
+        TDTestData memory td = TD_validInQuex_inOraclePool;
+
+        OracleMessage memory message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), nonPayableAddress);
+        ETHSignature memory signature = _signOracleMessage(message, td);
+
+        uint256 initialQuexTreasuryBalance = quexTreasury.balance;
+        uint256 biggerPushValue = pushFee + 1234;
+
+        testObject.pushData{value: biggerPushValue}(message, signature, flowId, td.tdId);
+
+        assertEq(quexTreasury.balance, initialQuexTreasuryBalance + biggerPushValue);
+    }
+
     function test_EmitsDataPushedEvent() public {
         TDTestData memory td = TD_validInQuex_inOraclePool;
 

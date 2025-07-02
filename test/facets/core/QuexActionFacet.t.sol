@@ -31,6 +31,7 @@ abstract contract QuexActionFacetTestBase is Test {
     uint256 internal subscriptionId;
     address internal subscriptionOwner = address(0xA11CE);
     address internal relayer;
+    address internal nonPayableAddress;
     Flow internal flow = Flow(100, actionId, oraclePoolAddress, consumerAddress, callbackSignature);
 
     uint256 internal constant unknownFlowId = 2;
@@ -120,6 +121,9 @@ abstract contract QuexActionFacetTestBase is Test {
         IDepositManager(address(diamond)).addConsumer(subscriptionId, address(this));
         IDepositManager(address(diamond)).deposit{value: 1 ether}(subscriptionId);
         relayer = address(this);
+
+        NonPayable nonPayable = new NonPayable();
+        nonPayableAddress = address(nonPayable);
     }
 }
 
@@ -144,7 +148,7 @@ contract QuexActionFacetTestDataBase is QuexActionFacetTestBase {
         QuexActionFacetTestBase.setUp();
 
         uint256 privateKey1 = 0x123abc;
-        TD_validInQuex_inOraclePool = TDTestData(privateKey1, vm.addr(privateKey1) ,1);
+        TD_validInQuex_inOraclePool = TDTestData(privateKey1, vm.addr(privateKey1), 1);
 
         uint256 privateKey2 = 0x987fed;
         TD_validInQuex_notInOraclePool = TDTestData(privateKey2, vm.addr(privateKey2), 2);
@@ -255,4 +259,8 @@ contract QuexActionFacetTestDataBase is QuexActionFacetTestBase {
             abi.encode("REVERT_MESSAGE")
         );
     }
+}
+
+contract NonPayable {
+    fallback() external {revert();}
 }
