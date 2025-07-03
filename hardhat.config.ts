@@ -2,8 +2,11 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-foundry";
 import "hardhat-gas-reporter";
+import dotenv from "dotenv";
 
-const deploySalt = process.env.IGNITION_SALT ?? "0x19b1da12264f86ca7aa41516ff68f9fbae4086ddca5a5cdf0274984451220c9d";
+dotenv.config();
+
+const deploySalt = process.env.IGNITION_SALT ?? "0x29b1da12264f86ca7aa41516ff68f9fbae4086ddca5a5cdf0274984451220c9d";
 
 const quexDeployerPrivateKey = process.env.QUEX_DEPLOYER_PRIVATE_KEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 const quexManagerPrivateKey = process.env.QUEX_MANAGER_PRIVATE_KEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
