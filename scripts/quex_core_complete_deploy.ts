@@ -56,7 +56,10 @@ async function validate_interfaces(diamond: QuexDiamond) {
 
 async function configure_manager(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
     const manager = "0xc8935964ff9a146a753e867ea3890f562b75604c6d6883305d776151177a5a74";
-    await (await diamond.grantRole(manager, config.managerAddress)).wait();
+    const hasRole = await diamond.hasRole(manager, config.managerAddress);
+    if (!hasRole) {
+        await (await diamond.grantRole(manager, config.managerAddress)).wait();
+    }
 }
 
 async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
@@ -100,15 +103,31 @@ async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkCo
 async function add_supported_svns(diamond: QuexDiamond, supportedSvns: SupportedSvns) {
     const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
     for (const cpuSvn of supportedSvns.cpuSvnsToAdd) {
+        const isAllowed = await tdRegistry.isCpuSvnAllowed(cpuSvn);
+        if (isAllowed) {
+            continue;
+        }
         await (await tdRegistry.allowCpuSvn(cpuSvn)).wait();
     }
     for (const teeTcbSvn of supportedSvns.teeTcbSvnsToAdd) {
+        const isAllowed = await tdRegistry.isTeeTcbSvnAllowed(teeTcbSvn);
+        if (isAllowed) {
+            continue;
+        }
         await (await tdRegistry.allowTeeTcbSvn(teeTcbSvn)).wait();
     }
     for (const cpuSvn of supportedSvns.cpuSvnsToRemove) {
+        const isAllowed = await tdRegistry.isCpuSvnAllowed(cpuSvn);
+        if (!isAllowed) {
+            continue;
+        }
         await (await tdRegistry.revokeCpuSvn(cpuSvn)).wait();
     }
     for (const teeTcbSvn of supportedSvns.teeTcbSvnsToRemove) {
+        const isAllowed = await tdRegistry.isTeeTcbSvnAllowed(teeTcbSvn);
+        if (!isAllowed) {
+            continue;
+        }
         await (await tdRegistry.revokeTeeTcbSvn(teeTcbSvn)).wait();
     }
 }
