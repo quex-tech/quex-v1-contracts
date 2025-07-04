@@ -330,5 +330,20 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
             managerAddress: DEFAULT_MANAGER,
             maxResponseBlocks: 200n
         }
+    },
+    waterfallMainnet: {
+        disableCreate2: true,
+        core: {
+            quexFee: 300_000_000_000_000_000_000n, // 300 WATER
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: "0x70beA06316c51097dF67496feaFb7F50758019b9", // Relayer address
+            managerAddress: DEFAULT_MANAGER
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
     }
 }

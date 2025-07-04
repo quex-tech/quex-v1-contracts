@@ -134,6 +134,11 @@ const config: HardhatUserConfig = {
       chainId: 1501869,
       url: `https://rpc.testnet9.waterfall.network/`,
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    },
+    waterfallMainnet: {
+      chainId: 181,
+      url: `https://rpc.waterfall.network/`,
+      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     }
   },
   gasReporter: {
