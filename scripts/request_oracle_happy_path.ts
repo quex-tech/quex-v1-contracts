@@ -42,7 +42,7 @@ async function run() {
         const request = await testContract.getLastRequest()
         console.log("Last request:", JSON.stringify(request, (_, v) => typeof v === 'bigint' ? v.toString() : v));
 
-        for (let i = 0; i < 60; i++) {
+        for (let i = 0; i < 100; i++) {
             const lastResponse = await testContract.getLastResponse();
             if (lastResponse[0] != prevLastResponse[0]) {
                 console.log(`Attempt ${i + 1}: Test passed!`);
