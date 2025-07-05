@@ -14,5 +14,6 @@
   "DeployTreasuryFacetModule#TreasuryFacet": "0x5872bcE9e56e639dD5BA1102afdF023896338B55",
   "DeployTrustDomainPolicyFacetModule#TrustDomainPolicyFacet": "0xa6429bEB045821e69b50a4e49A3C8cA5353f9f25",
   "ProxyFactory#ProxyFactory": "0x2bEc255fa0707F59D90258a45171c8254fB5c544",
-  "DeployRequestOracleDiamondModule#QuexDiamond": "0x7C428E3d48Fc393de3206D37f46f5BFEd8042F34"
+  "DeployRequestOracleDiamondModule#QuexDiamond": "0x7C428E3d48Fc393de3206D37f46f5BFEd8042F34",
+  "DeployRequestActionTestContractModule#RequestActionTestContract": "0xD05EC2fC2d95893Fb0710271cf59e2f56C17935B"
 }
