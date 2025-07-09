@@ -65,45 +65,27 @@ contract RequestActionTestContract {
         IFlowRegistry flowRegistry = IFlowRegistry(quexCoreAddress);
         Flow memory flow = Flow(1000000, actionId, oraclePoolAddress, address(this), this.fulfillRequest.selector);
         flowId = flowRegistry.createFlow(flow);
-
-        IDepositManager depositManager = IDepositManager(quexCoreAddress);
-
-        // create subscription and fund it
-        subscriptionId = depositManager.createSubscription();
-        emit log_uint(subscriptionId);
-        depositManager.addConsumer(subscriptionId, flow.consumer);
-        emit log_address(flow.consumer);
-        depositManager.deposit{value: msg.value}(subscriptionId);
-        emit log_uint(msg.value);
     }
 
-    function getFlowSubscriptionStatus() external view returns (uint256, uint256, bool, address, uint256) {
+    function getFlowSubscriptionStatus() external view returns (uint256, uint256, uint256, bool, uint256, uint256) {
         IDepositManager depositManager = IDepositManager(quexCoreAddress);
         QuexActionFacet quexAction = QuexActionFacet(quexCoreAddress);
-        Flow memory flow = IFlowRegistry(quexCoreAddress).getFlow(flowId);
 
-        address pool = flow.pool;
-        bool isValid = depositManager.hasAccessToSubscription(subscriptionId, address(this));
+        bool isSubscriptionValid = depositManager.hasAccessToSubscription(subscriptionId, address(this));
         uint256 subscriptionBalance = depositManager.withdrawableBalance(subscriptionId);
-        (uint256 nativeFee, uint256 gasFee) = quexAction.getRequestFee(flowId);
-        return (flowId, subscriptionId, isValid, pool, subscriptionBalance);
+        (uint256 nativeFee, uint256 gasFee) = flowId == 0 ? (0, 0) : quexAction.getRequestFee(flowId);
+        return (flowId, subscriptionId, subscriptionBalance, isSubscriptionValid, nativeFee, gasFee);
+    }
+
+    function setSubscriptionId(uint256 _subscriptionId) external {
+        subscriptionId = _subscriptionId;
     }
 
     function createRequest() external {
         IQuexActionRegistry actionRegistry = IQuexActionRegistry(quexCoreAddress);
         lastRequestId = actionRegistry.createRequest(flowId, subscriptionId);
     }
-
-    function deposit() external payable {
-        IDepositManager depositManager = IDepositManager(quexCoreAddress);
-        depositManager.deposit{value: msg.value}(subscriptionId);
-    }
-
-    function withdraw() external {
-        IDepositManager depositManager = IDepositManager(quexCoreAddress);
-        depositManager.withdraw(subscriptionId, msg.sender);
-    }
-
+    
     function fulfillRequest(uint256 requestId, DataItem memory dataItem, IdType /* idType */) external {
         require(msg.sender == quexCoreAddress);
         require(requestId == lastRequestId);
