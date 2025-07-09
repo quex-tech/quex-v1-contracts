@@ -5,7 +5,6 @@ import DeployRequestActionTestContractModule
     from "../ignition/modules/test_contracts/DeployRequestActionTestContractModule";
 import {quexConfig, QuexNetworkConfig} from "./quex_config";
 import DeployQuexCoreDiamondModule from "../ignition/modules/core/DeployQuexCoreDiamondModule";
-import { EventLog } from "ethers";
 
 async function run(quexNetworkConfig: QuexNetworkConfig) {
     const strategy = quexNetworkConfig.disableCreate2 ? "basic" : "create2";
