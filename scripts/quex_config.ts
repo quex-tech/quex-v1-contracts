@@ -171,7 +171,7 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
     },
     ethereumSepolia: {
         core: {
-            quexFee: 30_000_000_000_000n, // 0.00003 ETH
+            quexFee: 300_000_000_000_000n, // 0.0003 ETH
             quexFulfillingGasCost: 110_000n,
             treasuryAddress: DEFAULT_TREASURY,
             managerAddress: DEFAULT_MANAGER
@@ -185,7 +185,7 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
     },
     ethereum: {
         core: {
-            quexFee: 30_000_000_000_000n, // 0.00003 ETH
+            quexFee: 300_000_000_000_000n, // 0.0003 ETH
             quexFulfillingGasCost: 110_000n,
             treasuryAddress: DEFAULT_TREASURY,
             managerAddress: DEFAULT_MANAGER
