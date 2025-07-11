@@ -38,7 +38,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         _ensureOracleMessageIsValid(message, signature, flow, tdId);
 
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
-        uint quexFee = quexMonetary.getQuexFee(flowId);
+        uint256 quexFee = quexMonetary.getQuexFee(flowId);
         if (msg.value < quexFee) {
             revert Subscription_InsufficientValue();
         }
@@ -72,7 +72,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
 
         IQuexMonetary quexMonetary = IQuexMonetary(address(this));
-        (uint256 nativeFee, uint256 gasFee) = this.getRequestFee(flowId);
+        (, uint256 gasFee) = this.getRequestFee(flowId);
         uint256 quexFee = quexMonetary.getQuexFee(flowId);
         uint256 maxGasPrice = tx.gasprice * GAS_PRICE_MULTIPLIER;
         uint256 maxRelayerRefund = gasFee * maxGasPrice;
@@ -278,6 +278,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         if (gasleft() < gasLimit + gasLimit / 63) {
             revert Callback_NotEnoughGas();
         }
+        // solhint-disable-next-line avoid-low-level-calls
         (success,) = consumer.call{gas: gasLimit}(payload);
     }
 }

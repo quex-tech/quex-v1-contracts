@@ -290,6 +290,7 @@ abstract contract DiamondWritableInternal is IDiamondWritableInternal {
                     revert DiamondWritable__TargetHasNoCode();
             }
 
+            // solhint-disable-next-line avoid-low-level-calls
             (bool success, ) = target.delegatecall(data);
 
             if (!success) {
