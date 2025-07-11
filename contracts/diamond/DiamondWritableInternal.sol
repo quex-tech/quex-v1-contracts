@@ -116,7 +116,7 @@ abstract contract DiamondWritableInternal is IDiamondWritableInternal {
                 revert DiamondWritable__SelectorIsImmutable();
             }
 
-            for (uint256 i; i < facetCut.selectors.length; i++) {
+            for (uint256 i; i < facetCut.selectors.length; ++i) {
                 bytes4 selector = facetCut.selectors[i];
 
                 if (l.selectorInfo[selector] != bytes32(0))
@@ -142,7 +142,7 @@ abstract contract DiamondWritableInternal is IDiamondWritableInternal {
                     l.selectorSlugs[selectorCount >> 3] = lastSlug;
                 }
 
-                selectorCount++;
+                ++selectorCount;
             }
 
             return (selectorCount, lastSlug);
@@ -173,7 +173,7 @@ abstract contract DiamondWritableInternal is IDiamondWritableInternal {
 
             for (uint256 i; i < facetCut.selectors.length; ++i) {
                 // selectorCount is used to derive the index of the last selector, so decrement it before each loop
-                selectorCount--;
+                --selectorCount;
 
                 bytes4 selector = facetCut.selectors[i];
 
@@ -250,7 +250,7 @@ abstract contract DiamondWritableInternal is IDiamondWritableInternal {
             if (!facetCut.target.isContract())
                 revert DiamondWritable__TargetHasNoCode();
 
-            for (uint256 i; i < facetCut.selectors.length; i++) {
+            for (uint256 i; i < facetCut.selectors.length; ++i) {
                 bytes4 selector = facetCut.selectors[i];
                 bytes32 selectorInfo = l.selectorInfo[selector];
                 address oldFacetAddress = address(bytes20(selectorInfo));

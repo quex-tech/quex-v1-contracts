@@ -31,35 +31,35 @@ contract QuexDiamond is
 
         // register DiamondFallback
 
-        selectors[selectorIndex++] = IDiamondFallback.getFallbackAddress.selector;
-        selectors[selectorIndex++] = IDiamondFallback.setFallbackAddress.selector;
+        selectors[++selectorIndex] = IDiamondFallback.getFallbackAddress.selector;
+        selectors[++selectorIndex] = IDiamondFallback.setFallbackAddress.selector;
 
         // register DiamondWritable
 
-        selectors[selectorIndex++] = IERC2535DiamondCut.diamondCut.selector;
+        selectors[++selectorIndex] = IERC2535DiamondCut.diamondCut.selector;
 
         // register DiamondReadable
 
-        selectors[selectorIndex++] = IERC2535DiamondLoupe.facets.selector;
-        selectors[selectorIndex++] = IERC2535DiamondLoupe.facetFunctionSelectors.selector;
-        selectors[selectorIndex++] = IERC2535DiamondLoupe.facetAddresses.selector;
-        selectors[selectorIndex++] = IERC2535DiamondLoupe.facetAddress.selector;
+        selectors[++selectorIndex] = IERC2535DiamondLoupe.facets.selector;
+        selectors[++selectorIndex] = IERC2535DiamondLoupe.facetFunctionSelectors.selector;
+        selectors[++selectorIndex] = IERC2535DiamondLoupe.facetAddresses.selector;
+        selectors[++selectorIndex] = IERC2535DiamondLoupe.facetAddress.selector;
 
         // register SafeOwnable
 
-        selectors[selectorIndex++] = Ownable.owner.selector;
-        selectors[selectorIndex++] = SafeOwnable.nomineeOwner.selector;
-        selectors[selectorIndex++] = Ownable.transferOwnership.selector;
-        selectors[selectorIndex++] = SafeOwnable.acceptOwnership.selector;
+        selectors[++selectorIndex] = Ownable.owner.selector;
+        selectors[++selectorIndex] = SafeOwnable.nomineeOwner.selector;
+        selectors[++selectorIndex] = Ownable.transferOwnership.selector;
+        selectors[++selectorIndex] = SafeOwnable.acceptOwnership.selector;
 
         // register AccessControl
-        selectors[selectorIndex++] = AccessControl.grantRole.selector;
-        selectors[selectorIndex++] = AccessControl.getRoleAdmin.selector;
-        selectors[selectorIndex++] = AccessControl.getRoleMember.selector;
-        selectors[selectorIndex++] = AccessControl.getRoleMemberCount.selector;
-        selectors[selectorIndex++] = AccessControl.hasRole.selector;
-        selectors[selectorIndex++] = AccessControl.renounceRole.selector;
-        selectors[selectorIndex++] = AccessControl.revokeRole.selector;
+        selectors[++selectorIndex] = AccessControl.grantRole.selector;
+        selectors[++selectorIndex] = AccessControl.getRoleAdmin.selector;
+        selectors[++selectorIndex] = AccessControl.getRoleMember.selector;
+        selectors[++selectorIndex] = AccessControl.getRoleMemberCount.selector;
+        selectors[++selectorIndex] = AccessControl.hasRole.selector;
+        selectors[++selectorIndex] = AccessControl.renounceRole.selector;
+        selectors[++selectorIndex] = AccessControl.revokeRole.selector;
 
         // diamond cut
 

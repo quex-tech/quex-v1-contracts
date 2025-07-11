@@ -122,7 +122,7 @@ contract P256VerifierFacet is IP256Verifier {
         // Find the first bit index that's active in either scalar_u or scalar_v.
         while(index >= 0) {
             bitpair = computeBitpair(uint256(index), scalarU, scalarV);
-            index--;
+            --index;
             if (bitpair != 0) break;
         }
 
@@ -143,7 +143,7 @@ contract P256VerifierFacet is IP256Verifier {
             (tX, tY, zz, zzz) = ecZZDoubleZz(tX, tY, zz, zzz);
 
             bitpair = computeBitpair(uint256(index), scalarU, scalarV);
-            index--;
+            --index;
 
             if (bitpair == 0) {
                 continue;
