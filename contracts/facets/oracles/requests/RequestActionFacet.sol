@@ -6,7 +6,9 @@ import {RequestOracleStorage} from "./RequestOracleStorage.sol";
 
 contract RequestActionFacet is IRequestOraclePool {
     function addRequest(HTTPRequest memory request) public returns (bytes32 requestId) {
-        require(bytes(request.host).length > 0, "Host is required");
+        if (bytes(request.host).length == 0) {
+            revert HostRequired();
+        }
 
         requestId = keccak256(abi.encode(request));
         RequestOracleStorage.layout().requests[requestId] = request;
@@ -19,7 +21,9 @@ contract RequestActionFacet is IRequestOraclePool {
             ? bytes32(0)
             : keccak256(abi.encode(privatePatch));
         if (patchId != 0) {
-            require(privatePatch.tdAddress != address(0));
+            if (privatePatch.tdAddress == address(0)) {
+                revert TDAddressRequired();
+            }
             RequestOracleStorage.layout().privatePatches[patchId] = privatePatch;
         }
         emit PrivatePatchAdded(patchId);
@@ -27,7 +31,9 @@ contract RequestActionFacet is IRequestOraclePool {
     }
 
     function addJqFilter(string memory jqFilter) public returns (bytes32 filterId) {
-        require(bytes(jqFilter).length > 0, "Filter couldn't be empty");
+        if (bytes(jqFilter).length == 0) {
+            revert FilterEmpty();
+        }
         filterId = keccak256(bytes(jqFilter));
         RequestOracleStorage.layout().jqFilters[filterId] = jqFilter;
         emit JqFilterAdded(filterId);
@@ -35,7 +41,9 @@ contract RequestActionFacet is IRequestOraclePool {
     }
 
     function addResponseSchema(string memory responseSchema) public returns (bytes32 schemaId) {
-        require(bytes(responseSchema).length > 0, "Schema couldn't be empty");
+        if (bytes(responseSchema).length == 0) {
+            revert SchemaEmpty();
+        }
         schemaId = keccak256(bytes(responseSchema));
         RequestOracleStorage.layout().resultSchemas[schemaId] = responseSchema;
         emit ResultSchemaAdded(schemaId);

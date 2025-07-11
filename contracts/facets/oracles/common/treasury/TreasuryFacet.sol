@@ -6,6 +6,8 @@ import {TreasuryStorage} from "./TreasuryStorage.sol";
 import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 
 interface ITreasuryFacet {
+    error Treasury_ZeroAddress();
+
     function getTreasury() external view returns (address);
 
     function setTreasury(address treasuryAddress) external;
@@ -17,7 +19,9 @@ contract TreasuryFacet is ITreasuryFacet, AccessControlInternal {
     }
 
     function setTreasury(address treasuryAddress) external onlyRole(QuexRoles.MANAGER) {
-        require(treasuryAddress != address(0), "Treasury cannot be zero address");
+        if (treasuryAddress == address(0)) {
+            revert Treasury_ZeroAddress();
+        }
         TreasuryStorage.layout().treasuryAddress = treasuryAddress;
     }
 }

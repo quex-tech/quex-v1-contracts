@@ -275,10 +275,9 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
     }
 
     function _safeCallbackCall(address consumer, uint256 gasLimit, bytes memory payload) private returns (bool success) {
-        require(
-            gasleft() >= gasLimit + gasLimit / 63,
-            "Not enough gas left to safely execute callback"
-        );
+        if (gasleft() < gasLimit + gasLimit / 63) {
+            revert Callback_NotEnoughGas();
+        }
         (success,) = consumer.call{gas: gasLimit}(payload);
     }
 }

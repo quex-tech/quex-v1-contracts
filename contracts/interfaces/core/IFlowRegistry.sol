@@ -10,6 +10,7 @@ struct Flow {
 }
 
 interface IFlowRegistry {
+    error Flow_SelfCallForbidden();
     event FlowAdded(uint256 flowId);
 
     function createFlow(Flow memory flow) external returns (uint256 flowId);

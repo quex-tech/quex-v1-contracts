@@ -114,14 +114,18 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
     function release(uint256 subscriptionId, uint256 amount) external quexOnly {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
         DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
-        require(s.reserved >= amount, "Trying to release funds that are not reserved");
+        if (s.reserved < amount) {
+            revert IQuexActionRegistry.Subscription_InsufficientReservedValue();
+        }
         s.reserved -= amount;
     }
 
     function fulfill(uint256 subscriptionId, uint256 reservedFee, uint256 actualFee) external quexOnly {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
         DepositManagerStorage.Subscription storage s = l.subscriptions[subscriptionId];
-        require(s.reserved >= reservedFee, "Trying to release funds that are not reserved");
+        if (s.reserved < reservedFee) {
+            revert IQuexActionRegistry.Subscription_InsufficientReservedValue();
+        }
         s.reserved -= reservedFee;
         s.balance -= actualFee;
     }

@@ -6,6 +6,8 @@ import {QuexAddressStorage} from "./QuexAddressStorage.sol";
 import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 
 interface IQuexAddressFacet {
+    error QuexAddress_ZeroAddress();
+
     function setQuexAddress(address quexAddress) external;
 
     function getQuexAddress() external view returns (address);
@@ -13,7 +15,9 @@ interface IQuexAddressFacet {
 
 contract QuexAddressFacet is AccessControlInternal {
     function setQuexAddress(address quexAddress) external onlyRole(QuexRoles.MANAGER) {
-        require(quexAddress != address(0), "Quex address cannot be 0");
+        if (quexAddress == address(0)) {
+            revert QuexAddress_ZeroAddress();
+        }
         QuexAddressStorage.layout().quexAddress = quexAddress;
     }
 

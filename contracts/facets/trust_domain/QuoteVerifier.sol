@@ -17,6 +17,8 @@ library QuoteVerifier {
     error TDReport_UnsafeAttributes();   
     error TDReport_InvalidTeeTcbSvn();
     error QEReport_InvalidCpuSvn();
+    error IndexOutOfBounds();
+    error CanOnlyEncodeSmallIntegers();
 
     bytes private constant TD_HEADER_PREAMBLE = hex"040002008100000000000000939A7233F79C4CA9940A0DB3957F0607";
 
@@ -273,10 +275,9 @@ library QuoteVerifier {
     }
 
     function _uintToBytesDER(uint256 n) private pure returns (bytes memory) {
-        require(
-            n < 0x8000000000000000000000000000000000000000000000000000000000000000,
-            "Can only encode small integers"
-        );
+        if (n >= 0x8000000000000000000000000000000000000000000000000000000000000000) {
+            revert CanOnlyEncodeSmallIntegers();
+        }
         if (n == 0) {
             return hex"0000";
         } else {
@@ -293,7 +294,9 @@ library QuoteVerifier {
     }
 
     function _tail(bytes memory data, uint256 startIndex) internal pure returns (bytes memory tail) {
-        require(startIndex < data.length, "Start index out of bounds");
+        if (startIndex >= data.length) {
+            revert IndexOutOfBounds();
+        }
 
         assembly {
             tail := mload(0x40)

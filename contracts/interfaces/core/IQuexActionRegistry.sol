@@ -48,6 +48,8 @@ interface IQuexActionRegistry {
     error Subscription_TransferFailed();
     error Request_TooFreshToCancel();
     error Request_NotOwnedBySender();
+    error Callback_NotEnoughGas();
+    error Subscription_InsufficientReservedValue();
 
     event RequestCreated(uint256 requestId, uint256 flowId, address oraclePool);
 

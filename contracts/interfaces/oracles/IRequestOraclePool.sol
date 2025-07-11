@@ -56,6 +56,11 @@ struct RequestAction {
 }
 
 interface IRequestOraclePool {
+    error HostRequired();
+    error FilterEmpty();
+    error SchemaEmpty();
+    error TDAddressRequired();
+    
     error RequestNotFound();
     error PrivatePatchNotFound();
     error JqFilterNotFound();

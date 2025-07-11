@@ -6,7 +6,9 @@ import {FlowStorage} from "./FlowStorage.sol";
 
 contract FlowFacet is IFlowRegistry {
     function createFlow(Flow calldata flow) external returns (uint256 flowId) {
-        require(flow.consumer != address(this), "Self-calls forbidden");
+        if (flow.consumer == address(this)) {
+            revert Flow_SelfCallForbidden();
+        }
         FlowStorage.Layout storage layout = FlowStorage.layout();
         flowId = layout.lastFlowId + 1;
         layout.flows[flowId] = flow;
