@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "./TrustDomainStorage.sol";
+import {TrustDomainStorage, TDQuote, QEReport, ECKey} from "./TrustDomainStorage.sol";
 import {IP256Verifier} from "../../interfaces/core/IP256Verifier.sol";
 
 library QuoteVerifier {
@@ -21,25 +21,25 @@ library QuoteVerifier {
     bytes private constant TD_HEADER_PREAMBLE = hex"040002008100000000000000939A7233F79C4CA9940A0DB3957F0607";
 
     // root cert template
-    bytes private constant ri1 = hex"30";
-    bytes private constant ri3 = hex"a00302010202";
-    bytes private constant ri7 =
+    bytes private constant RI1 = hex"30";
+    bytes private constant RI3 = hex"a00302010202";
+    bytes private constant RI7 =
         hex"300a06082a8648ce3d0403023068311a301806035504030c11496e74656c2053475820526f6f74204341311a3018060355040a0c11496e74656c20436f72706f726174696f6e3114301206035504070c0b53616e746120436c617261310b300906035504080c024341310b3009060355040613025553301e170d";
-    bytes private constant ri11 =
+    bytes private constant RI11 =
         hex"170d3333303532313130353031305a30703122302006035504030c19496e74656c205347582050434b20506c6174666f726d204341311a3018060355040a0c11496e74656c20436f72706f726174696f6e3114301206035504070c0b53616e746120436c617261310b300906035504080c024341310b30090603550406130255533059301306072a8648ce3d020106082a8648ce3d03010703420004";
-    bytes private constant ri16 = hex"a3";
-    uint256 private constant rbase_len = 349;
+    bytes private constant RI16 = hex"a3";
+    uint256 private constant RBASE_LEN = 349;
 
     // platform cert template
-    bytes private constant pi1 = hex"30";
-    bytes private constant pi3 = hex"a00302010202";
-    bytes private constant pi7 =
+    bytes private constant PI1 = hex"30";
+    bytes private constant PI3 = hex"a00302010202";
+    bytes private constant PI7 =
         hex"300a06082a8648ce3d04030230703122302006035504030c19496e74656c205347582050434b20506c6174666f726d204341311a3018060355040a0c11496e74656c20436f72706f726174696f6e3114301206035504070c0b53616e746120436c617261310b300906035504080c024341310b3009060355040613025553301e170d";
-    bytes private constant pi11 = hex"170d";
-    bytes private constant pi13 =
+    bytes private constant PI11 = hex"170d";
+    bytes private constant PI13 =
         hex"30703122302006035504030c19496e74656c205347582050434b204365727469666963617465311a3018060355040a0c11496e74656c20436f72706f726174696f6e3114301206035504070c0b53616e746120436c617261310b300906035504080c024341310b30090603550406130255533059301306072a8648ce3d020106082a8648ce3d03010703420004";
-    bytes private constant pi16 = hex"a3";
-    uint256 private constant pbase_len = 344;
+    bytes private constant PI16 = hex"a3";
+    uint256 private constant PBASE_LEN = 344;
 
     function ensureQEReportIsValid(
         QEReport memory qeReport,
@@ -91,7 +91,7 @@ library QuoteVerifier {
 
     function ensureTDQuoteIsValid(
         TDQuote memory tdQuote,
-        uint qeId,
+        uint256 qeId,
         uint256 x,
         uint256 y,
         bytes32 authenticationData,
@@ -207,7 +207,7 @@ library QuoteVerifier {
         uint256 x,
         uint256 y
     ) internal view returns (bool) {
-        return IP256Verifier(address(this)).ecdsa_verify(messageHash, r, s, [x, y]);
+        return IP256Verifier(address(this)).ecdsaVerify(messageHash, r, s, [x, y]);
     }
 
     function _rootCertBodyHash(
@@ -220,22 +220,22 @@ library QuoteVerifier {
         bytes memory i17 = _encodeLengthDER(extensions.length);
         bytes memory i5 = _encodeLengthDER(serial.length);
         bytes memory i2 = _encodeLengthDER(
-            rbase_len + i17.length + i5.length + extensions.length + serial.length + notBefore.length
+            RBASE_LEN + i17.length + i5.length + extensions.length + serial.length + notBefore.length
         );
         return
             sha256(
                 bytes.concat(
-                    ri1,
+                    RI1,
                     i2,
-                    ri3,
+                    RI3,
                     i5,
                     serial,
-                    ri7,
+                    RI7,
                     notBefore,
-                    ri11,
+                    RI11,
                     bytes32(x),
                     bytes32(y),
-                    ri16,
+                    RI16,
                     i17,
                     extensions
                 )
@@ -253,10 +253,10 @@ library QuoteVerifier {
         bytes memory i17 = _encodeLengthDER(extensions.length);
         bytes memory i5 = _encodeLengthDER(serial.length);
         bytes memory i2 = _encodeLengthDER(
-            pbase_len + i17.length + i5.length + extensions.length + serial.length + notBefore.length + notAfter.length
+            PBASE_LEN + i17.length + i5.length + extensions.length + serial.length + notBefore.length + notAfter.length
         );
-        bytes memory part_sum = bytes.concat(pi1, i2, pi3, i5, serial, pi7, notBefore, pi11, notAfter);
-        return sha256(bytes.concat(part_sum, pi13, bytes32(x), bytes32(y), pi16, i17, extensions));
+        bytes memory part_sum = bytes.concat(PI1, i2, PI3, i5, serial, PI7, notBefore, PI11, notAfter);
+        return sha256(bytes.concat(part_sum, PI13, bytes32(x), bytes32(y), PI16, i17, extensions));
     }
 
     function _encodeLengthDER(uint256 n) internal pure returns (bytes memory) {
@@ -266,7 +266,7 @@ library QuoteVerifier {
             bytes memory nb = abi.encodePacked(n);
             uint8 i = 0;
             while (nb[i] == 0x00) {
-                i++;
+                ++i;
             }
             return bytes.concat(bytes1((32 - i) | 0x80), _tail(nb, i));
         }
@@ -281,12 +281,12 @@ library QuoteVerifier {
             return hex"0000";
         } else {
             bytes memory b = abi.encodePacked(n);
-            uint i = 0;
+            uint256 i = 0;
             while (b[i] == 0) {
-                i++;
+                ++i;
             }
             if ((b[i] & 0x80) != 0) {
-                i--;
+                --i;
             }
             return _tail(b, i);
         }

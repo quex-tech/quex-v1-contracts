@@ -72,7 +72,7 @@ contract QuexDiamond is
         // set owner
 
         _setOwner(initialOwner);
-        _grantRole(QuexRoles.DefaultAdminRole, initialOwner);
+        _grantRole(QuexRoles.DEFAULT_ADMIN_ROLE, initialOwner);
     }
 
     receive() external payable {}

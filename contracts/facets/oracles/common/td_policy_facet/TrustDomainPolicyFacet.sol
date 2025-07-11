@@ -18,11 +18,11 @@ contract TrustDomainPolicyFacet is ITrustDomainPolicyFacet, AccessControlInterna
         return TrustDomainPolicyStorage.layout().allowedTDs[tdId] == 1;
     }
 
-    function addToPool(uint256 tdId) external onlyRole(QuexRoles.Manager) {
+    function addToPool(uint256 tdId) external onlyRole(QuexRoles.MANAGER) {
         TrustDomainPolicyStorage.layout().allowedTDs[tdId] = 1;
     }
 
-    function removeFromPool(uint256 tdId) external onlyRole(QuexRoles.Manager) {
+    function removeFromPool(uint256 tdId) external onlyRole(QuexRoles.MANAGER) {
         TrustDomainPolicyStorage.layout().allowedTDs[tdId] = 0;
     }
 }

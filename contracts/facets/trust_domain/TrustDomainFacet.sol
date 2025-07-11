@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "./TrustDomainStorage.sol";
-import "../../interfaces/core/ITrustDomainRegistry.sol";
-import "./QuoteVerifier.sol";
+import {TrustDomainStorage, ECKey, QEReport, TDQuote} from "./TrustDomainStorage.sol";
+import {ITrustDomainRegistryExtended} from "../../interfaces/core/ITrustDomainRegistry.sol";
+import {QuoteVerifier} from "./QuoteVerifier.sol";
 
-import "@solidstate/contracts/access/ownable/OwnableInternal.sol";
+import {OwnableInternal} from "@solidstate/contracts/access/ownable/OwnableInternal.sol";
 import {DateTimeLib} from "solady/src/utils/DateTimeLib.sol";
 
 contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
@@ -18,6 +18,7 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     error PlatformCAAlreadyExists();
     error PCKAlreadyExists();
     error TDAlreadyExists();
+    error InvalidPublicKeyLength();
 
     function getRootKey() external view returns(ECKey memory) {
         return TrustDomainStorage.layout().rootCA;
@@ -27,9 +28,9 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         uint256 x,
         uint256 y,
         uint256 serial,
-        bytes memory notBefore,
-        bytes memory notAfter,
-        bytes memory extensions,
+        bytes calldata notBefore,
+        bytes calldata notAfter,
+        bytes calldata extensions,
         uint256 r,
         uint256 s
     ) external {
@@ -58,9 +59,9 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         uint256 x,
         uint256 y,
         uint256 serial,
-        bytes memory notBefore,
-        bytes memory notAfter,
-        bytes memory extensions,
+        bytes calldata notBefore,
+        bytes calldata notAfter,
+        bytes calldata extensions,
         uint256 authority,
         uint256 r,
         uint256 s
@@ -79,7 +80,7 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         QuoteVerifier.ensurePCKIsValid(x, y, serial, notBefore, notAfter, extensions, authority, r, s);
 
         layout.processorPCKs[authority][serial] = ECKey(x, y, notBeforeTimestamp, notAfterTimestamp);
-        layout.pckCounterByPlatformCA[authority]++;
+        ++layout.pckCounterByPlatformCA[authority];
 
         emit PCKAdded(authority, serial);
     }
@@ -89,7 +90,7 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     }
 
     function addQE(
-        QEReport memory qeReport,
+        QEReport calldata qeReport,
         uint256 platformSerial,
         uint256 pckSerial,
         uint256 r,
@@ -102,9 +103,9 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         qeId = layout.qeReportsCounter;
         layout.qeAuthorities[qeId] = TrustDomainStorage.QEAuthority(platformSerial, pckSerial);
         layout.qeReports[qeId] = qeReport;
-        layout.qeReportsCounter++;
-        layout.qeCounterByProcessorPCK[platformSerial][pckSerial]++;
-        layout.cpuSvnQECounter[qeReport.CPUSVN]++;
+        ++layout.qeReportsCounter;
+        ++layout.qeCounterByProcessorPCK[platformSerial][pckSerial];
+        ++layout.cpuSvnQECounter[qeReport.CPUSVN];
 
         emit QEReportAdded(qeId);
 
@@ -112,8 +113,8 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     }
 
     function addTD(
-        TDQuote memory tdQuote,
-        uint qeId,
+        TDQuote calldata tdQuote,
+        uint256 qeId,
         uint256 x,
         uint256 y,
         bytes32 authenticationData,
@@ -148,8 +149,8 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         layout.tdToQe[tdId] = qeId;
         layout.tdSignerAddress[tdId] = tdAddress;
         layout.tdValidityEnd[tdId] = minValidity;
-        layout.tdCounterByQE[qeId]++;
-        layout.teeTcbSvnTDCounter[tdQuote.TEE_TCB_SVN]++;
+        ++layout.tdCounterByQE[qeId];
+        ++layout.teeTcbSvnTDCounter[tdQuote.TEE_TCB_SVN];
 
         emit TDReportAdded(tdId);
 
@@ -158,6 +159,7 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
 
     function isTDValid(uint256 tdId) external view returns (bool) {
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
+        // solhint-disable-next-line gas-strict-inequalities
         return layout.tdQuotes[tdId].REPORT_DATA1 != 0 && block.timestamp <= layout.tdValidityEnd[tdId];
     }
 
@@ -198,7 +200,7 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
             revert PCKRevocation_QEExist();
         }
         delete layout.processorPCKs[platformSerial][pckSerial];
-        layout.pckCounterByPlatformCA[platformSerial]--;
+        --layout.pckCounterByPlatformCA[platformSerial];
 
         emit PCKRevoked(platformSerial, pckSerial);
     }
@@ -209,8 +211,8 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
             revert QERevocation_TDExist();
         }
         TrustDomainStorage.QEAuthority memory authority = layout.qeAuthorities[qeId];
-        layout.cpuSvnQECounter[layout.qeReports[qeId].CPUSVN]--;
-        layout.qeCounterByProcessorPCK[authority.platformSerial][authority.pckSerial]--;
+        --layout.cpuSvnQECounter[layout.qeReports[qeId].CPUSVN];
+        --layout.qeCounterByProcessorPCK[authority.platformSerial][authority.pckSerial];
         delete layout.qeReports[qeId];
         delete layout.qeAuthorities[qeId];
 
@@ -219,8 +221,8 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
 
     function revokeTD(uint256 tdId) external onlyOwner {
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
-        layout.teeTcbSvnTDCounter[layout.tdQuotes[tdId].TEE_TCB_SVN]--;
-        layout.tdCounterByQE[layout.tdToQe[tdId]]--;
+        --layout.teeTcbSvnTDCounter[layout.tdQuotes[tdId].TEE_TCB_SVN];
+        --layout.tdCounterByQE[layout.tdToQe[tdId]];
         delete layout.tdQuotes[tdId];
         delete layout.tdSignerAddress[tdId];
         delete layout.tdToQe[tdId];
@@ -284,7 +286,10 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     }
 
     function _convertPublicKeyToAddress(bytes memory publicKey) private pure returns (address) {
-        require(publicKey.length == 64, "Invalid public key length");
+        if (publicKey.length != 64) {
+            revert InvalidPublicKeyLength();
+        }
+
         bytes32 hash = keccak256(publicKey);
         return address(uint160(uint256(hash)));
     }

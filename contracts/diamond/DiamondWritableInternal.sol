@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
-import { AddressUtils } from '@solidstate/contracts/utils/AddressUtils.sol';
-import { DiamondBaseStorage } from '@solidstate/contracts/proxy/diamond/base/DiamondBaseStorage.sol';
-import { IDiamondWritableInternal } from '@solidstate/contracts/proxy/diamond/writable/IDiamondWritableInternal.sol';
+import { AddressUtils } from "@solidstate/contracts/utils/AddressUtils.sol";
+import { DiamondBaseStorage } from "@solidstate/contracts/proxy/diamond/base/DiamondBaseStorage.sol";
+import { IDiamondWritableInternal } from "@solidstate/contracts/proxy/diamond/writable/IDiamondWritableInternal.sol";
 
 // The only change compare to the solidstate implementation
 // is allowing adding diamond's functions as facet out of constructor
@@ -46,7 +46,7 @@ abstract contract DiamondWritableInternal is IDiamondWritableInternal {
 
         // process each facet cut struct according to its action
         // selector count and slug are passed in and read back out to avoid redundant storage access
-            for (uint256 i; i < facetCuts.length; i++) {
+            for (uint256 i; i < facetCuts.length; ++i) {
                 FacetCut memory facetCut = facetCuts[i];
                 FacetCutAction action = facetCut.action;
 
@@ -171,7 +171,7 @@ abstract contract DiamondWritableInternal is IDiamondWritableInternal {
             if (facetCut.target != address(0))
                 revert DiamondWritable__RemoveTargetNotZeroAddress();
 
-            for (uint256 i; i < facetCut.selectors.length; i++) {
+            for (uint256 i; i < facetCut.selectors.length; ++i) {
                 // selectorCount is used to derive the index of the last selector, so decrement it before each loop
                 selectorCount--;
 

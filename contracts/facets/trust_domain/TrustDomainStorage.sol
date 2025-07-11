@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "../../interfaces/core/ITrustDomainRegistry.sol";
+import {ECKey, QEReport, TDQuote} from "../../interfaces/core/ITrustDomainRegistry.sol";
 
 library TrustDomainStorage {
     struct QEAuthority {
@@ -29,6 +29,7 @@ library TrustDomainStorage {
         mapping(bytes16 => uint256) cpuSvnQECounter;
     }
 
+    // solhint-disable-next-line gas-small-strings
     bytes32 internal constant STORAGE_SLOT = keccak256("quex.contracts.storage.TrustDomain");
 
     function layout() internal pure returns (Layout storage l) {

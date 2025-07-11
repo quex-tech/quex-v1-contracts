@@ -15,7 +15,7 @@ contract ConstantMaxResponseBlocksFacet is IConstantMaxResponseBlocksFacet, Acce
         return ConstantMaxResponseBlocksStorage.layout().maxResponseBlocks;
     }
 
-    function setMaxResponseBlocks(uint256 maxResponseBlocks) external onlyRole(QuexRoles.Manager) {
+    function setMaxResponseBlocks(uint256 maxResponseBlocks) external onlyRole(QuexRoles.MANAGER) {
         ConstantMaxResponseBlocksStorage.layout().maxResponseBlocks = maxResponseBlocks;
     }
 }

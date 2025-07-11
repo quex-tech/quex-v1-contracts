@@ -2,8 +2,8 @@
 pragma solidity 0.8.22;
 
 interface IP256Verifier {
-    function ecdsa_verify(
-        bytes32 message_hash,
+    function ecdsaVerify(
+        bytes32 messageHash,
         uint256 r,
         uint256 s,
         uint256[2] memory pubKey

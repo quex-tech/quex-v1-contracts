@@ -199,7 +199,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         return QuexActionStorage.layout().quexFulfillingGasCost;
     }
 
-    function setQuexGas(uint256 quexGas) external onlyRole(QuexRoles.Manager) {
+    function setQuexGas(uint256 quexGas) external onlyRole(QuexRoles.MANAGER) {
         QuexActionStorage.layout().quexFulfillingGasCost = quexGas;
     }
 
@@ -217,7 +217,7 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         return (timeSkewLayout.timeSkewPast, timeSkewLayout.timeSkewFuture);
     }
 
-    function setTimeSkew(uint256 pastSkewInSeconds, uint256 futureSkewInSeconds) external onlyRole(QuexRoles.Manager) {
+    function setTimeSkew(uint256 pastSkewInSeconds, uint256 futureSkewInSeconds) external onlyRole(QuexRoles.MANAGER) {
         QuexActionStorage.TimeSkewLayout storage timeSkewLayout = QuexActionStorage.timeSkewLayout();
         timeSkewLayout.timeSkewPast = pastSkewInSeconds;
         timeSkewLayout.timeSkewFuture = futureSkewInSeconds;

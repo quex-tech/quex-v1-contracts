@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.22;
 
+// solhint-disable-next-line no-unused-import
 import {IERC2535DiamondCut} from "@solidstate/contracts/interfaces/IERC2535DiamondCut.sol";
 import {OwnableInternal} from "@solidstate/contracts/access/ownable/OwnableInternal.sol";
 import {IDiamondWritable} from "@solidstate/contracts/proxy/diamond/writable/IDiamondWritable.sol";

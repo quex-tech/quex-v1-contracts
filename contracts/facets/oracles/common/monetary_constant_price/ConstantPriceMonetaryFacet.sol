@@ -15,7 +15,7 @@ contract ConstantPriceMonetaryFacet is IConstantPriceMonetaryFacet, AccessContro
         return ConstantPriceMonetaryStorage.layout().actionFee;
     }
 
-    function setActionFee(uint256 fee) external onlyRole(QuexRoles.Manager) {
+    function setActionFee(uint256 fee) external onlyRole(QuexRoles.MANAGER) {
         ConstantPriceMonetaryStorage.layout().actionFee = fee;
     }
 }

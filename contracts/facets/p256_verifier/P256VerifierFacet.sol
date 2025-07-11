@@ -2,7 +2,7 @@
 // Force a specific Solidity version for reproducibility.
 pragma solidity 0.8.22;
 
-import "../../interfaces/core/IP256Verifier.sol";
+import {IP256Verifier} from "../../interfaces/core/IP256Verifier.sol";
 
 /**
  * This contract verifies P256 (secp256r1) signatures. It matches the exact
@@ -39,8 +39,8 @@ contract P256VerifierFacet is IP256Verifier {
     /**
      * @dev ECDSA verification given signature and public key.
      */
-    function ecdsa_verify(
-        bytes32 message_hash,
+    function ecdsaVerify(
+        bytes32 messageHash,
         uint256 r,
         uint256 s,
         uint256[2] memory pubKey
@@ -56,7 +56,7 @@ contract P256VerifierFacet is IP256Verifier {
 
         uint256 sInv = nModInv(s);
 
-        uint256 scalar_u = mulmod(uint256(message_hash), sInv, n); // (h * s^-1) in scalar field
+        uint256 scalar_u = mulmod(uint256(messageHash), sInv, n); // (h * s^-1) in scalar field
         uint256 scalar_v = mulmod(r, sInv, n); // (r * s^-1) in scalar field
 
         uint256 r_x = ecZZ_mulmuladd(
