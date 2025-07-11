@@ -13,13 +13,13 @@ import {IP256Verifier} from "../../interfaces/core/IP256Verifier.sol";
 contract P256VerifierFacet is IP256Verifier {
     // Parameters for the sec256r1 (P256) elliptic curve
     // Curve prime field modulus
-    uint256 private constant p =
+    uint256 private constant P =
         0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF;
     // Short weierstrass first coefficient
-    uint256 private constant a = // The assumption a == -3 (mod p) is used throughout the codebase
+    uint256 private constant A = // The assumption a == -3 (mod p) is used throughout the codebase
         0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFC;
     // Short weierstrass second coefficient
-    uint256 private constant b =
+    uint256 private constant B =
         0x5AC635D8AA3A93E7B3EBBD55769886BC651D06B0CC53B0F63BCE3C3E27D2604B;
     // Generating point affine coordinates
     uint256 private constant GX =
@@ -27,13 +27,13 @@ contract P256VerifierFacet is IP256Verifier {
     uint256 private constant GY =
         0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5;
     // Curve order (number of points)
-    uint256 private constant n =
+    uint256 private constant N =
         0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC632551;
     // -2 mod p constant, used to speed up inversion and doubling (avoid negation)
-    uint256 private constant minus_2modp =
+    uint256 private constant MINUS_2MODP =
         0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFD;
     // -2 mod n constant, used to speed up inversion
-    uint256 private constant minus_2modn =
+    uint256 private constant MINUS_2MODN =
         0xFFFFFFFF00000000FFFFFFFFFFFFFFFFBCE6FAADA7179E84F3B9CAC2FC63254F;
 
     /**
@@ -46,7 +46,7 @@ contract P256VerifierFacet is IP256Verifier {
         uint256[2] memory pubKey
     ) external view returns (bool) {
         // Check r and s are in the scalar field
-        if (r == 0 || r >= n || s == 0 || s >= n) {
+        if (r == 0 || r >= N || s == 0 || s >= N) {
             return false;
         }
 
@@ -56,8 +56,8 @@ contract P256VerifierFacet is IP256Verifier {
 
         uint256 sInv = nModInv(s);
 
-        uint256 scalarU = mulmod(uint256(messageHash), sInv, n); // (h * s^-1) in scalar field
-        uint256 scalarV = mulmod(r, sInv, n); // (r * s^-1) in scalar field
+        uint256 scalarU = mulmod(uint256(messageHash), sInv, N); // (h * s^-1) in scalar field
+        uint256 scalarV = mulmod(r, sInv, N); // (r * s^-1) in scalar field
 
         uint256 rX = ecZZMulmuladd(
             pubKey[0],
@@ -65,7 +65,7 @@ contract P256VerifierFacet is IP256Verifier {
             scalarU,
             scalarV
         );
-        return rX % n == r;
+        return rX % N == r;
     }
 
     /**
@@ -76,7 +76,7 @@ contract P256VerifierFacet is IP256Verifier {
         uint256 x,
         uint256 y
     ) internal pure returns (bool) {
-        if (x >= p || y >= p || (x == 0 && y == 0)) {
+        if (x >= P || y >= P || (x == 0 && y == 0)) {
             return false;
         }
 
@@ -87,9 +87,9 @@ contract P256VerifierFacet is IP256Verifier {
         uint256 x,
         uint256 y
     ) internal pure returns (bool) {
-        uint256 lhs = mulmod(y, y, p); // y^2
-        uint256 rhs = addmod(mulmod(mulmod(x, x, p), x, p), mulmod(a, x, p), p); // x^3 + a x
-        rhs = addmod(rhs, b, p); // x^3 + a*x + b
+        uint256 lhs = mulmod(y, y, P); // y^2
+        uint256 rhs = addmod(mulmod(mulmod(x, x, P), x, P), mulmod(A, x, P), P); // x^3 + a x
+        rhs = addmod(rhs, B, P); // x^3 + a*x + b
 
         return lhs == rhs;
     }
@@ -159,7 +159,7 @@ contract P256VerifierFacet is IP256Verifier {
         }
 
         uint256 zzInv = pModInv(zz); // If zz = 0, zzInv = 0.
-        x = mulmod(x, zzInv, p); // X/zz
+        x = mulmod(x, zzInv, P); // X/zz
     }
 
     /**
@@ -249,25 +249,25 @@ contract P256VerifierFacet is IP256Verifier {
             return (x2, y2, 1, 1);
         }
 
-        uint256 compR = addmod(mulmod(y2, zzz1, p), p - y1, p); // R = S2 - y1 = y2*zzz1 - y1
-        uint256 compP = addmod(mulmod(x2, zz1, p), p - x1, p); // P = U2 - x1 = x2*zz1 - x1
+        uint256 compR = addmod(mulmod(y2, zzz1, P), P - y1, P); // R = S2 - y1 = y2*zzz1 - y1
+        uint256 compP = addmod(mulmod(x2, zz1, P), P - x1, P); // P = U2 - x1 = x2*zz1 - x1
 
         if (compP != 0) { // X1 != X2
             // invariant(x1 != x2);
-            uint256 compPP = mulmod(compP, compP, p); // PP = P^2
-            uint256 compPPP = mulmod(compPP, compP, p); // PPP = P*PP
-            zz3 = mulmod(zz1, compPP, p); //// ZZ3 = ZZ1*PP
-            zzz3 = mulmod(zzz1, compPPP, p); //// ZZZ3 = ZZZ1*PPP
-            uint256 compQ = mulmod(x1, compPP, p); // Q = X1*PP
+            uint256 compPP = mulmod(compP, compP, P); // PP = P^2
+            uint256 compPPP = mulmod(compPP, compP, P); // PPP = P*PP
+            zz3 = mulmod(zz1, compPP, P); //// ZZ3 = ZZ1*PP
+            zzz3 = mulmod(zzz1, compPPP, P); //// ZZZ3 = ZZZ1*PPP
+            uint256 compQ = mulmod(x1, compPP, P); // Q = X1*PP
             x3 = addmod(
-                addmod(mulmod(compR, compR, p), p - compPPP, p), // (R^2) + (-PPP)
-                mulmod(minus_2modp, compQ, p), // (-2)*(Q)
-                p
+                addmod(mulmod(compR, compR, P), P - compPPP, P), // (R^2) + (-PPP)
+                mulmod(MINUS_2MODP, compQ, P), // (-2)*(Q)
+                P
             ); // R^2 - PPP - 2*Q
             y3 = addmod(
-                mulmod(addmod(compQ, p - x3, p), compR, p), //(Q+(-x3))*R
-                mulmod(p - y1, compPPP, p), // (-y1)*PPP
-                p
+                mulmod(addmod(compQ, P - x3, P), compR, P), //(Q+(-x3))*R
+                mulmod(P - y1, compPPP, P), // (-y1)*PPP
+                P
             ); // R*(Q-x3) - y1*PPP
         } else if (compR == 0) { // X1 == X2 and Y1 == Y2
             // invariant(x1 == x2 && y1 == y2);
@@ -291,16 +291,16 @@ contract P256VerifierFacet is IP256Verifier {
         uint256 y1, uint256 zz1, uint256 zzz1) internal pure returns (uint256 x3, uint256 y3, uint256 zz3, uint256 zzz3) {
         if (ecZZIsInf(zz1, zzz1)) return ecZZPointAtInf();
     
-        uint256 compU = mulmod(2, y1, p); // U = 2*Y1
-        uint256 compV = mulmod(compU, compU, p); // V = U^2
-        uint256 compW = mulmod(compU, compV, p); // W = U*V
-        uint256 compS = mulmod(x1, compV, p); // S = X1*V
-        uint256 compM = addmod(mulmod(3, mulmod(x1, x1, p), p), mulmod(a, mulmod(zz1, zz1, p), p), p); //M = 3*(X1)^2 + a*(zz1)^2
+        uint256 compU = mulmod(2, y1, P); // U = 2*Y1
+        uint256 compV = mulmod(compU, compU, P); // V = U^2
+        uint256 compW = mulmod(compU, compV, P); // W = U*V
+        uint256 compS = mulmod(x1, compV, P); // S = X1*V
+        uint256 compM = addmod(mulmod(3, mulmod(x1, x1, P), P), mulmod(A, mulmod(zz1, zz1, P), P), P); //M = 3*(X1)^2 + a*(zz1)^2
         
-        x3 = addmod(mulmod(compM, compM, p), mulmod(minus_2modp, compS, p), p); // M^2 + (-2)*S
-        y3 = addmod(mulmod(compM, addmod(compS, p - x3, p), p), mulmod(p - compW, y1, p), p); // M*(S+(-X3)) + (-W)*Y1
-        zz3 = mulmod(compV, zz1, p); // V*ZZ1
-        zzz3 = mulmod(compW, zzz1, p); // W*ZZZ1
+        x3 = addmod(mulmod(compM, compM, P), mulmod(MINUS_2MODP, compS, P), P); // M^2 + (-2)*S
+        y3 = addmod(mulmod(compM, addmod(compS, P - x3, P), P), mulmod(P - compW, y1, P), P); // M*(S+(-X3)) + (-W)*Y1
+        zz3 = mulmod(compV, zz1, P); // V*ZZ1
+        zzz3 = mulmod(compW, zzz1, P); // W*ZZZ1
     }
 
     /**
@@ -312,14 +312,14 @@ contract P256VerifierFacet is IP256Verifier {
         uint256 y1) internal pure returns (uint256 x3, uint256 y3, uint256 zz3, uint256 zzz3) {
         if (ecAffIsInf(x1, y1)) return ecZZPointAtInf();
 
-        uint256 compU = mulmod(2, y1, p); // U = 2*Y1
-        zz3 = mulmod(compU, compU, p); // V = U^2 = zz3
-        zzz3 = mulmod(compU, zz3, p); // W = U*V = zzz3
-        uint256 compS = mulmod(x1, zz3, p); // S = X1*V
-        uint256 compM = addmod(mulmod(3, mulmod(x1, x1, p), p), a, p); // M = 3*(X1)^2 + a
+        uint256 compU = mulmod(2, y1, P); // U = 2*Y1
+        zz3 = mulmod(compU, compU, P); // V = U^2 = zz3
+        zzz3 = mulmod(compU, zz3, P); // W = U*V = zzz3
+        uint256 compS = mulmod(x1, zz3, P); // S = X1*V
+        uint256 compM = addmod(mulmod(3, mulmod(x1, x1, P), P), A, P); // M = 3*(X1)^2 + a
         
-        x3 = addmod(mulmod(compM, compM, p), mulmod(minus_2modp, compS, p), p); // M^2 + (-2)*S
-        y3 = addmod(mulmod(compM, addmod(compS, p - x3, p), p), mulmod(p - zzz3, y1, p), p); // M*(S+(-X3)) + (-W)*Y1
+        x3 = addmod(mulmod(compM, compM, P), mulmod(MINUS_2MODP, compS, P), P); // M^2 + (-2)*S
+        y3 = addmod(mulmod(compM, addmod(compS, P - x3, P), P), mulmod(P - zzz3, y1, P), P); // M*(S+(-X3)) + (-W)*Y1
     }
 
     /**
@@ -339,14 +339,14 @@ contract P256VerifierFacet is IP256Verifier {
         }
 
         uint256 zzzInv = pModInv(zzz); // 1 / zzz
-        uint256 zInv = mulmod(zz, zzzInv, p); // 1 / z
-        uint256 zzInv = mulmod(zInv, zInv, p); // 1 / zz
+        uint256 zInv = mulmod(zz, zzzInv, P); // 1 / z
+        uint256 zzInv = mulmod(zInv, zInv, P); // 1 / zz
 
         // invariant(mulmod(FCL_pModInv(zInv), FCL_pModInv(zInv), p) == zz)
         // invariant(mulmod(mulmod(FCL_pModInv(zInv), FCL_pModInv(zInv), p), FCL_pModInv(zInv), p) == zzz)
 
-        x1 = mulmod(x, zzInv, p); // X / zz
-        y1 = mulmod(y, zzzInv, p); // y = Y / zzz
+        x1 = mulmod(x, zzInv, P); // X / zz
+        y1 = mulmod(y, zzzInv, P); // y = Y / zzz
     }
 
     /**
@@ -367,14 +367,14 @@ contract P256VerifierFacet is IP256Verifier {
      * @dev u^-1 mod n
      */
     function nModInv(uint256 u) internal view returns (uint256) {
-        return modInv(u, n, minus_2modn);
+        return modInv(u, N, MINUS_2MODN);
     }
 
     /**
      * @dev u^-1 mod p
      */
     function pModInv(uint256 u) internal view returns (uint256) {
-        return modInv(u, p, minus_2modp);
+        return modInv(u, P, MINUS_2MODP);
     }
 
     /**
