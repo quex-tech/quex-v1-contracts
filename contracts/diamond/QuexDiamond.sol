@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import {IOwnable, Ownable, OwnableInternal} from "@solidstate/contracts/access/ownable/Ownable.sol";
-import {ISafeOwnable, SafeOwnable} from "@solidstate/contracts/access/ownable/SafeOwnable.sol";
+import {Ownable, OwnableInternal} from "@solidstate/contracts/access/ownable/Ownable.sol";
+import {SafeOwnable} from "@solidstate/contracts/access/ownable/SafeOwnable.sol";
 import {IERC2535DiamondCut} from "@solidstate/contracts/interfaces/IERC2535DiamondCut.sol";
 import {IERC2535DiamondLoupe} from "@solidstate/contracts/interfaces/IERC2535DiamondLoupe.sol";
 import {DiamondBase} from "@solidstate/contracts/proxy/diamond/base/DiamondBase.sol";
@@ -13,7 +13,6 @@ import {DiamondWritable} from "./DiamondWritable.sol";
 
 import {AccessControl} from "@solidstate/contracts/access/access_control/AccessControl.sol";
 import {Initializable} from "@solidstate/contracts/security/initializable/Initializable.sol";
-import {ReentrancyGuard} from "@solidstate/contracts/security/reentrancy_guard/ReentrancyGuard.sol";
 import {QuexRoles} from "../QuexRoles.sol";
 
 contract QuexDiamond is
