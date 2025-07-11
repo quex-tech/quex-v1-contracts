@@ -56,16 +56,16 @@ contract P256VerifierFacet is IP256Verifier {
 
         uint256 sInv = nModInv(s);
 
-        uint256 scalar_u = mulmod(uint256(messageHash), sInv, n); // (h * s^-1) in scalar field
-        uint256 scalar_v = mulmod(r, sInv, n); // (r * s^-1) in scalar field
+        uint256 scalarU = mulmod(uint256(messageHash), sInv, n); // (h * s^-1) in scalar field
+        uint256 scalarV = mulmod(r, sInv, n); // (r * s^-1) in scalar field
 
-        uint256 r_x = ecZZ_mulmuladd(
+        uint256 rX = ecZZ_mulmuladd(
             pubKey[0],
             pubKey[1],
-            scalar_u,
-            scalar_v
+            scalarU,
+            scalarV
         );
-        return r_x % n == r;
+        return rX % n == r;
     }
 
     /**
@@ -87,11 +87,11 @@ contract P256VerifierFacet is IP256Verifier {
         uint256 x,
         uint256 y
     ) internal pure returns (bool) {
-        uint256 LHS = mulmod(y, y, p); // y^2
-        uint256 RHS = addmod(mulmod(mulmod(x, x, p), x, p), mulmod(a, x, p), p); // x^3 + a x
-        RHS = addmod(RHS, b, p); // x^3 + a*x + b
+        uint256 lhs = mulmod(y, y, p); // y^2
+        uint256 rhs = addmod(mulmod(mulmod(x, x, p), x, p), mulmod(a, x, p), p); // x^3 + a x
+        rhs = addmod(rhs, b, p); // x^3 + a*x + b
 
-        return LHS == RHS;
+        return lhs == rhs;
     }
 
     /**
@@ -100,28 +100,28 @@ contract P256VerifierFacet is IP256Verifier {
      * Strauss-Shamir is described well in https://stackoverflow.com/a/50994362
      */
     function ecZZ_mulmuladd(
-        uint256 QX,
-        uint256 QY, // affine rep for input point Q
-        uint256 scalar_u,
-        uint256 scalar_v
-    ) internal view returns (uint256 X) {
+        uint256 qX,
+        uint256 qY, // affine rep for input point Q
+        uint256 scalarU,
+        uint256 scalarV
+    ) internal view returns (uint256 x) {
         uint256 zz = 1;
         uint256 zzz = 1;
-        uint256 Y;
-        uint256 HX;
-        uint256 HY;
+        uint256 y;
+        uint256 hX;
+        uint256 hY;
 
-        if (scalar_u == 0 && scalar_v == 0) return 0;
+        if (scalarU == 0 && scalarV == 0) return 0;
 
         // H = g + Q
-        (HX, HY) = ecAff_add(GX, GY, QX, QY);
+        (hX, hY) = ecAff_add(GX, GY, qX, qY);
 
         int256 index = 255;
         uint256 bitpair;
 
         // Find the first bit index that's active in either scalar_u or scalar_v.
         while(index >= 0) {
-            bitpair = compute_bitpair(uint256(index), scalar_u, scalar_v);
+            bitpair = compute_bitpair(uint256(index), scalarU, scalarV);
             index--;
             if (bitpair != 0) break;
         }
@@ -130,36 +130,36 @@ contract P256VerifierFacet is IP256Verifier {
         // invariant(bitpair != 0); // bitpair == 0 is only possible if u and v are 0.
         
         if (bitpair == 1) {
-            (X, Y) = (GX, GY);
+            (x, y) = (GX, GY);
         } else if (bitpair == 2) {
-            (X, Y) = (QX, QY);
+            (x, y) = (qX, qY);
         } else if (bitpair == 3) {
-            (X, Y) = (HX, HY);
+            (x, y) = (hX, hY);
         }
 
-        uint256 TX;
-        uint256 TY;
+        uint256 tX;
+        uint256 tY;
         while(index >= 0) {
-            (X, Y, zz, zzz) = ecZZ_double_zz(X, Y, zz, zzz);
+            (tX, tY, zz, zzz) = ecZZ_double_zz(tX, tY, zz, zzz);
 
-            bitpair = compute_bitpair(uint256(index), scalar_u, scalar_v);
+            bitpair = compute_bitpair(uint256(index), scalarU, scalarV);
             index--;
 
             if (bitpair == 0) {
                 continue;
             } else if (bitpair == 1) {
-                (TX, TY) = (GX, GY);
+                (tX, tY) = (GX, GY);
             } else if (bitpair == 2) {
-                (TX, TY) = (QX, QY);
+                (tX, tY) = (qX, qY);
             } else {
-                (TX, TY) = (HX, HY);
+                (tX, tY) = (hX, hY);
             }
 
-            (X, Y, zz, zzz) = ecZZ_dadd_affine(X, Y, zz, zzz, TX, TY);
+            (tX, tY, zz, zzz) = ecZZ_dadd_affine(tX, tY, zz, zzz, tX, tY);
         }
 
         uint256 zzInv = pModInv(zz); // If zz = 0, zzInv = 0.
-        X = mulmod(X, zzInv, p); // X/zz
+        x = mulmod(x, zzInv, p); // X/zz
     }
 
     /**
@@ -172,8 +172,8 @@ contract P256VerifierFacet is IP256Verifier {
      * - compute_bitpair(0, 1, 0) == 1
      * - compute_bitpair(0, 0, 1) == 2
      */
-    function compute_bitpair(uint256 index, uint256 scalar_u, uint256 scalar_v) internal pure returns (uint256 ret) {
-        ret = (((scalar_v >> index) & 1) << 1) + ((scalar_u >> index) & 1);
+    function compute_bitpair(uint256 index, uint256 scalarU, uint256 scalarV) internal pure returns (uint256 ret) {
+        ret = (((scalarV >> index) & 1) << 1) + ((scalarU >> index) & 1);
     }
 
     /**
@@ -249,27 +249,27 @@ contract P256VerifierFacet is IP256Verifier {
             return (x2, y2, 1, 1);
         }
 
-        uint256 comp_R = addmod(mulmod(y2, zzz1, p), p - y1, p); // R = S2 - y1 = y2*zzz1 - y1
-        uint256 comp_P = addmod(mulmod(x2, zz1, p), p - x1, p); // P = U2 - x1 = x2*zz1 - x1
+        uint256 compR = addmod(mulmod(y2, zzz1, p), p - y1, p); // R = S2 - y1 = y2*zzz1 - y1
+        uint256 compP = addmod(mulmod(x2, zz1, p), p - x1, p); // P = U2 - x1 = x2*zz1 - x1
 
         if (comp_P != 0) { // X1 != X2
             // invariant(x1 != x2);
-            uint256 comp_PP = mulmod(comp_P, comp_P, p); // PP = P^2
-            uint256 comp_PPP = mulmod(comp_PP, comp_P, p); // PPP = P*PP
-            zz3 = mulmod(zz1, comp_PP, p); //// ZZ3 = ZZ1*PP
-            zzz3 = mulmod(zzz1, comp_PPP, p); //// ZZZ3 = ZZZ1*PPP
-            uint256 comp_Q = mulmod(x1, comp_PP, p); // Q = X1*PP
+            uint256 compPP = mulmod(compP, compP, p); // PP = P^2
+            uint256 compPPP = mulmod(compPP, compP, p); // PPP = P*PP
+            zz3 = mulmod(zz1, compPP, p); //// ZZ3 = ZZ1*PP
+            zzz3 = mulmod(zzz1, compPPP, p); //// ZZZ3 = ZZZ1*PPP
+            uint256 compQ = mulmod(x1, compPP, p); // Q = X1*PP
             x3 = addmod(
-                addmod(mulmod(comp_R, comp_R, p), p - comp_PPP, p), // (R^2) + (-PPP)
-                mulmod(minus_2modp, comp_Q, p), // (-2)*(Q)
+                addmod(mulmod(compR, compR, p), p - compPPP, p), // (R^2) + (-PPP)
+                mulmod(minus_2modp, compQ, p), // (-2)*(Q)
                 p
             ); // R^2 - PPP - 2*Q
             y3 = addmod(
-                mulmod(addmod(comp_Q, p - x3, p), comp_R, p), //(Q+(-x3))*R
-                mulmod(p - y1, comp_PPP, p), // (-y1)*PPP
+                mulmod(addmod(compQ, p - x3, p), compR, p), //(Q+(-x3))*R
+                mulmod(p - y1, compPPP, p), // (-y1)*PPP
                 p
             ); // R*(Q-x3) - y1*PPP
-        } else if (comp_R == 0) { // X1 == X2 and Y1 == Y2
+        } else if (compR == 0) { // X1 == X2 and Y1 == Y2
             // invariant(x1 == x2 && y1 == y2);
 
             // Must be affine because (X2, Y2) is affine.
@@ -291,16 +291,16 @@ contract P256VerifierFacet is IP256Verifier {
         uint256 y1, uint256 zz1, uint256 zzz1) internal pure returns (uint256 x3, uint256 y3, uint256 zz3, uint256 zzz3) {
         if (ecZZ_IsInf(zz1, zzz1)) return ecZZ_PointAtInf();
     
-        uint256 comp_U = mulmod(2, y1, p); // U = 2*Y1
-        uint256 comp_V = mulmod(comp_U, comp_U, p); // V = U^2
-        uint256 comp_W = mulmod(comp_U, comp_V, p); // W = U*V
-        uint256 comp_S = mulmod(x1, comp_V, p); // S = X1*V
-        uint256 comp_M = addmod(mulmod(3, mulmod(x1, x1, p), p), mulmod(a, mulmod(zz1, zz1, p), p), p); //M = 3*(X1)^2 + a*(zz1)^2
+        uint256 compU = mulmod(2, y1, p); // U = 2*Y1
+        uint256 compV = mulmod(compU, compU, p); // V = U^2
+        uint256 compW = mulmod(compU, compV, p); // W = U*V
+        uint256 compS = mulmod(x1, compV, p); // S = X1*V
+        uint256 compM = addmod(mulmod(3, mulmod(x1, x1, p), p), mulmod(a, mulmod(zz1, zz1, p), p), p); //M = 3*(X1)^2 + a*(zz1)^2
         
-        x3 = addmod(mulmod(comp_M, comp_M, p), mulmod(minus_2modp, comp_S, p), p); // M^2 + (-2)*S
-        y3 = addmod(mulmod(comp_M, addmod(comp_S, p - x3, p), p), mulmod(p - comp_W, y1, p), p); // M*(S+(-X3)) + (-W)*Y1
-        zz3 = mulmod(comp_V, zz1, p); // V*ZZ1
-        zzz3 = mulmod(comp_W, zzz1, p); // W*ZZZ1
+        x3 = addmod(mulmod(compM, compM, p), mulmod(minus_2modp, compS, p), p); // M^2 + (-2)*S
+        y3 = addmod(mulmod(compM, addmod(compS, p - x3, p), p), mulmod(p - compW, y1, p), p); // M*(S+(-X3)) + (-W)*Y1
+        zz3 = mulmod(compV, zz1, p); // V*ZZ1
+        zzz3 = mulmod(compW, zzz1, p); // W*ZZZ1
     }
 
     /**
@@ -312,14 +312,14 @@ contract P256VerifierFacet is IP256Verifier {
         uint256 y1) internal pure returns (uint256 x3, uint256 y3, uint256 zz3, uint256 zzz3) {
         if (ecAff_IsInf(x1, y1)) return ecZZ_PointAtInf();
 
-        uint256 comp_U = mulmod(2, y1, p); // U = 2*Y1
-        zz3 = mulmod(comp_U, comp_U, p); // V = U^2 = zz3
-        zzz3 = mulmod(comp_U, zz3, p); // W = U*V = zzz3
-        uint256 comp_S = mulmod(x1, zz3, p); // S = X1*V
-        uint256 comp_M = addmod(mulmod(3, mulmod(x1, x1, p), p), a, p); // M = 3*(X1)^2 + a
+        uint256 compU = mulmod(2, y1, p); // U = 2*Y1
+        zz3 = mulmod(compU, compU, p); // V = U^2 = zz3
+        zzz3 = mulmod(compU, zz3, p); // W = U*V = zzz3
+        uint256 compS = mulmod(x1, zz3, p); // S = X1*V
+        uint256 compM = addmod(mulmod(3, mulmod(x1, x1, p), p), a, p); // M = 3*(X1)^2 + a
         
-        x3 = addmod(mulmod(comp_M, comp_M, p), mulmod(minus_2modp, comp_S, p), p); // M^2 + (-2)*S
-        y3 = addmod(mulmod(comp_M, addmod(comp_S, p - x3, p), p), mulmod(p - zzz3, y1, p), p); // M*(S+(-X3)) + (-W)*Y1
+        x3 = addmod(mulmod(compM, compM, p), mulmod(minus_2modp, compS, p), p); // M^2 + (-2)*S
+        y3 = addmod(mulmod(compM, addmod(compS, p - x3, p), p), mulmod(p - zzz3, y1, p), p); // M*(S+(-X3)) + (-W)*Y1
     }
 
     /**
@@ -383,14 +383,14 @@ contract P256VerifierFacet is IP256Verifier {
      * Assume f != 0. If u is 0, then u^-1 mod f is undefined mathematically, 
      * but this function returns 0.
      */
-    function modInv(uint256 u, uint256 f, uint256 minus_2modf) internal view returns (uint256 result) {
+    function modInv(uint256 u, uint256 f, uint256 minus2modf) internal view returns (uint256 result) {
         // invariant(f != 0);
         // invariant(f prime);
 
         // This seems like a relatively standard way to use this precompile:
         // https://github.com/OpenZeppelin/openzeppelin-contracts/pull/3298/files#diff-489d4519a087ca2c75be3315b673587abeca3b302f807643e97efa7de8cb35a5R427
 
-        (bool success, bytes memory ret) = (address(0x05).staticcall(abi.encode(32, 32, 32, u, minus_2modf, f)));
+        (bool success, bytes memory ret) = (address(0x05).staticcall(abi.encode(32, 32, 32, u, minus2modf, f)));
         assert(success); // precompile should never fail on regular EVM environments
         result = abi.decode(ret, (uint256));
     }

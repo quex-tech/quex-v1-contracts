@@ -255,8 +255,8 @@ library QuoteVerifier {
         bytes memory i2 = _encodeLengthDER(
             PBASE_LEN + i17.length + i5.length + extensions.length + serial.length + notBefore.length + notAfter.length
         );
-        bytes memory part_sum = bytes.concat(PI1, i2, PI3, i5, serial, PI7, notBefore, PI11, notAfter);
-        return sha256(bytes.concat(part_sum, PI13, bytes32(x), bytes32(y), PI16, i17, extensions));
+        bytes memory partSum = bytes.concat(PI1, i2, PI3, i5, serial, PI7, notBefore, PI11, notAfter);
+        return sha256(bytes.concat(partSum, PI13, bytes32(x), bytes32(y), PI16, i17, extensions));
     }
 
     function _encodeLengthDER(uint256 n) internal pure returns (bytes memory) {
