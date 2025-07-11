@@ -29,7 +29,6 @@ library TrustDomainStorage {
         mapping(bytes16 => uint256) cpuSvnQECounter;
     }
 
-    // solhint-disable-next-line gas-small-strings
     bytes32 internal constant STORAGE_SLOT = keccak256("quex.contracts.storage.TrustDomain");
 
     function layout() internal pure returns (Layout storage l) {
