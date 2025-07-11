@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "../../../interfaces/oracles/IRequestOraclePool.sol";
+import {HTTPRequest, HTTPPrivatePatch} from "../../../interfaces/oracles/IRequestOraclePool.sol";
 
 library RequestOracleStorage {
     struct RequestActionInternal {

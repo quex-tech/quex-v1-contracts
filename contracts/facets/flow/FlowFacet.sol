@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "../../interfaces/core/IFlowRegistry.sol";
-import "./FlowStorage.sol";
+import {IFlowRegistry, Flow} from "../../interfaces/core/IFlowRegistry.sol";
+import {FlowStorage} from "./FlowStorage.sol";
 
 contract FlowFacet is IFlowRegistry {
     function createFlow(Flow calldata flow) external returns (uint256 flowId) {

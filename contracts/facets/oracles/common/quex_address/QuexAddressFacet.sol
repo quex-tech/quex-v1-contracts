@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "../../../../QuexRoles.sol";
-import "./QuexAddressStorage.sol";
+import {QuexRoles} from "../../../../QuexRoles.sol";
+import {QuexAddressStorage} from "./QuexAddressStorage.sol";
 import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 
 interface IQuexAddressFacet {

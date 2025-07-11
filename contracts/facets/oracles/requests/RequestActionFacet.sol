@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "../../../interfaces/core/IFlowRegistry.sol";
-import "../../../interfaces/core/IQuexActionRegistry.sol";
-import "../../../interfaces/oracles/IRequestOraclePool.sol";
-import "../common/quex_address/IQuexAddressRegistry.sol";
-import "./RequestOracleStorage.sol";
+import {IRequestOraclePool, HTTPRequest, HTTPPrivatePatch, RequestAction} from "../../../interfaces/oracles/IRequestOraclePool.sol";
+import {RequestOracleStorage} from "./RequestOracleStorage.sol";
 
 contract RequestActionFacet is IRequestOraclePool {
     function addRequest(HTTPRequest memory request) public returns (bytes32 requestId) {

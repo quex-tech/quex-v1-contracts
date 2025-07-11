@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "../../QuexRoles.sol";
-import "../../interfaces/core/IFlowRegistry.sol";
-import "../../interfaces/core/IOraclePool.sol";
-import "../../interfaces/core/IQuexMonetary.sol";
-import "../../interfaces/core/IDepositManager.sol";
-import "./IQuexActionFacet.sol";
-import "./QuexActionStorage.sol";
+import {QuexRoles} from "../../QuexRoles.sol";
+import {IFlowRegistry, Flow} from "../../interfaces/core/IFlowRegistry.sol";
+import {IOraclePool} from "../../interfaces/core/IOraclePool.sol";
+import {IQuexMonetary} from "../../interfaces/core/IQuexMonetary.sol";
+import {IQuexActionFacet} from "./IQuexActionFacet.sol";
+import {QuexActionStorage} from "./QuexActionStorage.sol";
+import {OracleMessage, ETHSignature, Request, IdType} from "../../interfaces/core/IQuexActionRegistry.sol";
 
 import {DepositManagerFacet} from "../monetary/DepositManagerFacet.sol";
 import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";

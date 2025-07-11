@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "../../../../QuexRoles.sol";
-import "./TrustDomainPolicyStorage.sol";
+import {QuexRoles} from "../../../../QuexRoles.sol";
+import {TrustDomainPolicyStorage} from "./TrustDomainPolicyStorage.sol";
 import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 
 interface ITrustDomainPolicyFacet {
