@@ -46,7 +46,8 @@ abstract contract DiamondWritableInternal is IDiamondWritableInternal {
 
         // process each facet cut struct according to its action
         // selector count and slug are passed in and read back out to avoid redundant storage access
-            for (uint256 i; i < facetCuts.length; ++i) {
+            uint256 facetCutsLength = facetCuts.length;
+            for (uint256 i; i < facetCutsLength; ++i) {
                 FacetCut memory facetCut = facetCuts[i];
                 FacetCutAction action = facetCut.action;
 
@@ -116,7 +117,8 @@ abstract contract DiamondWritableInternal is IDiamondWritableInternal {
                 revert DiamondWritable__SelectorIsImmutable();
             }
 
-            for (uint256 i; i < facetCut.selectors.length; ++i) {
+            uint256 selectorsLength = facetCut.selectors.length;
+            for (uint256 i; i < selectorsLength; ++i) {
                 bytes4 selector = facetCut.selectors[i];
 
                 if (l.selectorInfo[selector] != bytes32(0))
@@ -171,7 +173,8 @@ abstract contract DiamondWritableInternal is IDiamondWritableInternal {
             if (facetCut.target != address(0))
                 revert DiamondWritable__RemoveTargetNotZeroAddress();
 
-            for (uint256 i; i < facetCut.selectors.length; ++i) {
+            uint256 selectorsLength = facetCut.selectors.length;
+            for (uint256 i; i < selectorsLength; ++i) {
                 // selectorCount is used to derive the index of the last selector, so decrement it before each loop
                 --selectorCount;
 
@@ -250,7 +253,8 @@ abstract contract DiamondWritableInternal is IDiamondWritableInternal {
             if (!facetCut.target.isContract())
                 revert DiamondWritable__TargetHasNoCode();
 
-            for (uint256 i; i < facetCut.selectors.length; ++i) {
+            uint256 selectorsLength = facetCut.selectors.length;
+            for (uint256 i; i < selectorsLength; ++i) {
                 bytes4 selector = facetCut.selectors[i];
                 bytes32 selectorInfo = l.selectorInfo[selector];
                 address oldFacetAddress = address(bytes20(selectorInfo));
