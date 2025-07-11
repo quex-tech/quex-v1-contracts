@@ -12,6 +12,7 @@
         "import-path-check": "off",
         "use-natspec": "off",
         "gas-indexed-events": "off",
-        "function-max-lines": "off"
+        "function-max-lines": "off",
+        "gas-strict-inequalities": "off"
     }
 }

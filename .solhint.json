@@ -12,6 +12,7 @@
         "use-natspec": "off",
         "gas-indexed-events": "off",
         "function-max-lines": "off",
-        "gas-small-strings": "off"
+        "gas-small-strings": "off",
+        "gas-strict-inequalities": "off"
     }
 }
