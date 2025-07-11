@@ -13,7 +13,7 @@ interface IQuexAddressFacet {
     function getQuexAddress() external view returns (address);
 }
 
-contract QuexAddressFacet is AccessControlInternal {
+contract QuexAddressFacet is IQuexAddressFacet, AccessControlInternal {
     function setQuexAddress(address quexAddress) external onlyRole(QuexRoles.MANAGER) {
         if (quexAddress == address(0)) {
             revert QuexAddress_ZeroAddress();
