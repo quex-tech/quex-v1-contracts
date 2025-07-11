@@ -76,7 +76,7 @@ contract RequestActionFacet is IRequestOraclePool {
         return actionId;
     }
 
-    function addAction(RequestAction memory requestAction) external returns (uint256 actionId) {
+    function addAction(RequestAction calldata requestAction) external returns (uint256 actionId) {
         RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
 
         bytes32 requestId = addRequest(requestAction.request);

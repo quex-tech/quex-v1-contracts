@@ -43,7 +43,7 @@ contract P256VerifierFacet is IP256Verifier {
         bytes32 messageHash,
         uint256 r,
         uint256 s,
-        uint256[2] memory pubKey
+        uint256[2] calldata pubKey
     ) external view returns (bool) {
         // Check r and s are in the scalar field
         if (r == 0 || r >= N || s == 0 || s >= N) {

@@ -29,8 +29,8 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
     event RequestCancelled(uint256 requestId, uint256 flowId, address owner);
 
     function pushData(
-        OracleMessage memory message,
-        ETHSignature memory signature,
+        OracleMessage calldata message,
+        ETHSignature calldata signature,
         uint256 flowId,
         uint256 tdId
     ) external payable nonReentrant {
@@ -119,8 +119,8 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
     }
 
     function fulfillRequest(
-        OracleMessage memory message,
-        ETHSignature memory signature,
+        OracleMessage calldata message,
+        ETHSignature calldata signature,
         uint256 requestId,
         uint256 tdId
     ) external nonReentrant {
