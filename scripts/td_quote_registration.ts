@@ -1,12 +1,9 @@
-import env, { ignition } from "hardhat";
-import { QuexNetworkConfig, quexConfig } from "./quex_config";
-import { ITrustDomainRegistryExtended, ITrustDomainRegistryExtended__factory } from "../typechain";
+import env from "hardhat";
+import { ITrustDomainRegistryExtended } from "../typechain";
 import { QEReportStruct, TDQuoteStruct } from "../typechain/contracts/facets/trust_domain/TrustDomainFacet";
 import { ethers, BytesLike, EventLog } from "ethers";
 import * as asn1js from "asn1js";
-import QuexCoreCompleteDeployAndConfigurationModule from "../ignition/modules/core/QuexCoreCompleteDeployAndConfigurationModule";
-
-
+import { getQuexCoreAddress } from "./common";
 
 interface AddQEArgs {
     qeReport: QEReportStruct;
@@ -37,9 +34,9 @@ interface CertificateData {
     s: bigint;
 }
 
-async function run(quexNetworkConfig: QuexNetworkConfig, quoteData: any) {
-    const { quexCoreDiamond } = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule, { strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2" });
-    const trustDomainRegistry = ITrustDomainRegistryExtended__factory.connect(await quexCoreDiamond.getAddress(), quexCoreDiamond.runner);
+async function run(quoteData: any) {
+    const quexCoreAddress = await getQuexCoreAddress();
+    const trustDomainRegistry = await env.ethers.getContractAt("ITrustDomainRegistryExtended", quexCoreAddress);
     const { platformCA, processorPck } = parseCertificates(quoteData.quote_signature_data.qe_certification_data.certification_data.qe_certification_data.certification_data);
     const addQEArgs = parseQE(quoteData, platformCA, processorPck);
     const addTDArgs = parseTdQuote(quoteData);
@@ -380,8 +377,8 @@ if (require.main === module) {
     });
     process.stdin.on('end', async () => {
         if (env.network.name === 'localhost') {
-            await network.provider.send("evm_setNextBlockTimestamp", [Math.floor(Date.now() / 1000)]);
-            await network.provider.send("evm_mine");
+            await env.network.provider.send("evm_setNextBlockTimestamp", [Math.floor(Date.now() / 1000)]);
+            await env.network.provider.send("evm_mine");
 
             const blockNumber = await env.network.provider.send("eth_blockNumber", []);
             const block = await env.network.provider.send("eth_getBlockByNumber", [blockNumber, false]);
@@ -389,7 +386,7 @@ if (require.main === module) {
             console.log(`Current block timestamp: ${timestamp} (${new Date(timestamp * 1000).toISOString()})`);
         }
         const quoteData = JSON.parse(jsonData);
-        run(quexConfig[env.network.name], quoteData).catch(console.error);
+        run(quoteData).catch(console.error);
     });
 }
 

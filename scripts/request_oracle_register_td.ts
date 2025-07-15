@@ -1,12 +1,11 @@
-import env, { ethers, ignition } from "hardhat";
+import env, { ethers } from "hardhat";
 import { QuexNetworkConfig, quexConfig } from "./quex_config";
-import RequestOracleCompleteDeployAndConfigurationModule from "../ignition/modules/oracles/requests/RequestOracleDeployAndConfigurationModule";
-import { ITrustDomainPolicyFacet__factory } from "../typechain";
+import { getRequestOracleAddress } from "./common";
 
 const run = async (quexNetworkConfig: QuexNetworkConfig, tdId: bigint) => {
     console.log(`Adding TD ${tdId} to request oracle`);
-    const { requestsDiamond } = await ignition.deploy(RequestOracleCompleteDeployAndConfigurationModule, { strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2" });
-    const tdFacet = ITrustDomainPolicyFacet__factory.connect(await requestsDiamond.getAddress(), requestsDiamond.runner);
+    const requestOracleAddress = await getRequestOracleAddress();
+    const tdFacet = await ethers.getContractAt("ITrustDomainPolicyFacet", requestOracleAddress);
     const tx = await tdFacet
         .connect(await ethers.getSigner(<string>quexNetworkConfig.request.managerAddress))
         .addToPool(tdId);
