@@ -345,5 +345,33 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
             managerAddress: DEFAULT_MANAGER,
             maxResponseBlocks: 200n
         }
+    },
+    baseSepolia: {
+        core: {
+            quexFee: 30_000_000_000_000n, // 0.00003 ETH
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
+    },
+    baseMainnet: {
+        core: {
+            quexFee: 30_000_000_000_000n, // 0.00003 ETH
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
     }
 }

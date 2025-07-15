@@ -139,6 +139,16 @@ const config: HardhatUserConfig = {
       chainId: 181,
       url: `https://rpc.waterfall.network/`,
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    },
+    baseSepolia: {
+      chainId: 84532,
+      url: `https://sepolia.base.org`,
+      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    },
+    baseMainnet: {
+      chainId: 8453,
+      url: `https://mainnet.base.org`,
+      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     }
   },
   gasReporter: {
