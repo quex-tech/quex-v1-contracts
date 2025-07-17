@@ -373,5 +373,20 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
             managerAddress: DEFAULT_MANAGER,
             maxResponseBlocks: 200n
         }
+    },
+    kasplexTestnet: {
+        disableCreate2: true,
+        core: {
+            quexFee: 1_000_000_000_000_000_000n, // 1 KAS
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
     }
 }

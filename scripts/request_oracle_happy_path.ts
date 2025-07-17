@@ -66,6 +66,8 @@ async function run(quexNetworkConfig: QuexNetworkConfig) {
 
     const gasPrice = (await ethers.provider.getFeeData()).gasPrice;
     console.log(`Gas price: ${gasPrice} wei (${Number(gasPrice!) / 10 ** 9} gwei)`);
+    console.log(`Native fee: ${status[4]} wei (${Number(status[4]) / 10 ** 18} ETH)`);
+    console.log(`Gas fee: ${status[5]}`);
     const fund = status[4] + status[5] * gasPrice! * 3n - status[2]; // native fee + gas fee * 3 -  current subscription balance
     if (fund > 0n) { // fund is positive, so we need to deposit
         console.log(`Funding subscription ${subscriptionId} with ${fund} wei`);
@@ -85,9 +87,14 @@ async function run(quexNetworkConfig: QuexNetworkConfig) {
     const prevLastResponse = await testContract.getLastResponse();
     console.log(`prevLastResponse: ${prevLastResponse}`);
 
+    const lastRequestId = await testContract.getLastRequestId();
+    console.log(`lastRequestId: ${lastRequestId}`);
+
     try {
         const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-        const tx = await testContract.createRequest({gasLimit: 500_000});
+        console.log("Creating request");
+        const tx = await testContract.createRequest({gasLimit: 1_000_000, type: 0});
+        console.log(`Creating request tx ${tx.hash}. Waiting for tx receipt`);
         const txReceipt = await tx.wait();
         if (txReceipt?.status !== 1) {
             console.log("Creating request failed");

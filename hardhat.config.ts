@@ -149,7 +149,12 @@ const config: HardhatUserConfig = {
       chainId: 8453,
       url: `https://mainnet.base.org`,
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
-    }
+    },
+    kasplexTestnet: {
+      chainId: 167012,
+      url: `https://rpc.kasplextest.xyz`,
+      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    },
   },
   gasReporter: {
     enabled: true
