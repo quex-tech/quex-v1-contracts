@@ -73,7 +73,7 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
     arbitrumOne: {
         core: {
             quexFee: 30_000_000_000_000n, // 0.00003 ETH
-            quexFulfillingGasCost: 110_000n,
+            quexFulfillingGasCost: 500_000n,
             treasuryAddress: DEFAULT_TREASURY,
             managerAddress: DEFAULT_MANAGER
         },
