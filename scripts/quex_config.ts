@@ -379,7 +379,7 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
         core: {
             quexFee: 1_000_000_000_000_000_000n, // 1 KAS
             quexFulfillingGasCost: 110_000n,
-            treasuryAddress: DEFAULT_TREASURY,
+            treasuryAddress: "0x70beA06316c51097dF67496feaFb7F50758019b9", // Relayer address
             managerAddress: DEFAULT_MANAGER
         },
         request: {
