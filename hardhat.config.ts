@@ -16,6 +16,8 @@ const quexRedbellyMainnetPrivateKey = process.env.QUEX_REDBELLY_MAINNET_PRIVATE_
 
 const alchemyApiKey = process.env.ALCHEMY_API_KEY ?? "12345";
 
+const etherscanApiKey = process.env.ETHERSCAN_API_KEY ?? "12345";
+
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.22",
@@ -35,11 +37,11 @@ const config: HardhatUserConfig = {
     hardhat: {
       initialDate: "2024-11-05T00:00:00Z"
     },
-    redBellyTestnet: {
-      chainId: 153,
-      url: "https://governors.testnet.redbelly.network",
-      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
-    },
+    // redBellyTestnet: {
+    //   chainId: 153,
+    //   url: "https://governors.testnet.redbelly.network",
+    //   accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    // },
     arbitrumSepolia: {
       chainId: 421614,
       url: `https://arb-sepolia.g.alchemy.com/v2/${alchemyApiKey}`,
@@ -50,16 +52,16 @@ const config: HardhatUserConfig = {
       url: "https://arb1.arbitrum.io/rpc",
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     },
-    bscMainnet: {
-      chainId: 56,
-      url: "https://bsc-dataseed.bnbchain.org",
-      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
-    },
-    bscTestnet: {
-      chainId: 97,
-      url: "https://bsc-testnet-dataseed.bnbchain.org",
-      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
-    },
+    // bscMainnet: {
+    //   chainId: 56,
+    //   url: "https://bsc-dataseed.bnbchain.org",
+    //   accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    // },
+    // bscTestnet: {
+    //   chainId: 97,
+    //   url: "https://bsc-testnet-dataseed.bnbchain.org",
+    //   accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    // },
     xdcMainnet: {
       chainId: 50,
       url: "https://erpc.xinfin.network",
@@ -70,16 +72,16 @@ const config: HardhatUserConfig = {
       url: "https://rpc.apothem.network",
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     },
-    berachain: {
-      chainId: 80094,
-      url: "https://rpc.berachain.com/",
-      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
-    },
-    berachainBepolia: {
-      chainId: 80069,
-      url: "https://bepolia.rpc.berachain.com/",
-      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
-    },
+    // berachain: {
+    //   chainId: 80094,
+    //   url: "https://rpc.berachain.com/",
+    //   accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    // },
+    // berachainBepolia: {
+    //   chainId: 80069,
+    //   url: "https://bepolia.rpc.berachain.com/",
+    //   accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    // },
     ethereum: {
       chainId: 1,
       url: `https://eth-mainnet.g.alchemy.com/v2/${alchemyApiKey}`,
@@ -90,46 +92,46 @@ const config: HardhatUserConfig = {
       url: `https://eth-sepolia.g.alchemy.com/v2/${alchemyApiKey}`,
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     },
-    avalanche: {
-      chainId: 43114,
-      url: `https://api.avax.network/ext/bc/C/rpc`,
-      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
-    },
-    avalancheFuji: {
-      chainId: 43113,
-      url: `https://api.avax-test.network/ext/bc/C/rpc`,
-      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
-    },
-    celoMainnet: {
-      chainId: 42220,
-      url: `https://forno.celo.org`,
-      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
-    },
-    celoAlfajores: {
-      chainId: 44787,
-      url: `https://alfajores-forno.celo-testnet.org`,
-      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
-    },
-    redbellyTestnet: {
-      chainId: 153,
-      url: `https://governors.testnet.redbelly.network`,
-      accounts : [quexRedbellyTestnetPrivateKey]
-    },
-    redbellyMainnet: {
-      chainId: 151,
-      url: `https://governors.mainnet.redbelly.network`,
-      accounts : [quexRedbellyMainnetPrivateKey]
-    },
-    hederaTestnet: {
-      chainId: 296,
-      url: `https://testnet.hashio.io/api`,
-      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
-    },
-    hederaMainnet: {
-      chainId: 295,
-      url: `https://mainnet.hashio.io/api`,
-      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
-    },
+    // avalanche: {
+    //   chainId: 43114,
+    //   url: `https://api.avax.network/ext/bc/C/rpc`,
+    //   accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    // },
+    // avalancheFuji: {
+    //   chainId: 43113,
+    //   url: `https://api.avax-test.network/ext/bc/C/rpc`,
+    //   accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    // },
+    // celoMainnet: {
+    //   chainId: 42220,
+    //   url: `https://forno.celo.org`,
+    //   accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    // },
+    // celoAlfajores: {
+    //   chainId: 44787,
+    //   url: `https://alfajores-forno.celo-testnet.org`,
+    //   accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    // },
+    // redbellyTestnet: {
+    //   chainId: 153,
+    //   url: `https://governors.testnet.redbelly.network`,
+    //   accounts : [quexRedbellyTestnetPrivateKey]
+    // },
+    // redbellyMainnet: {
+    //   chainId: 151,
+    //   url: `https://governors.mainnet.redbelly.network`,
+    //   accounts : [quexRedbellyMainnetPrivateKey]
+    // },
+    // hederaTestnet: {
+    //   chainId: 296,
+    //   url: `https://testnet.hashio.io/api`,
+    //   accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    // },
+    // hederaMainnet: {
+    //   chainId: 295,
+    //   url: `https://mainnet.hashio.io/api`,
+    //   accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    // },
     waterfallTestnet9: {
       chainId: 1501869,
       url: `https://rpc.testnet9.waterfall.network/`,
@@ -155,6 +157,16 @@ const config: HardhatUserConfig = {
       url: `https://rpc.kasplextest.xyz`,
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     },
+    morphMainnet: {
+      chainId: 2818,
+      url: `https://rpc-quicknode.morphl2.io`,
+      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    },
+    morphHolesky: {
+      chainId: 2810,
+      url: `https://rpc-quicknode-holesky.morphl2.io`,
+      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    }
   },
   gasReporter: {
     enabled: true
@@ -165,6 +177,9 @@ const config: HardhatUserConfig = {
         salt: deploySalt
       }
     }
+  },
+  etherscan: {
+    apiKey: etherscanApiKey
   }
 };
 
