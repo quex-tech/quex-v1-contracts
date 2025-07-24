@@ -16,7 +16,7 @@ contract TreasuryFacetTest is Test {
     function setUp() public virtual {
         diamond = new QuexDiamond();
         diamond.init(address(this));
-        diamond.grantRole(QuexRoles.Manager, manager);
+        diamond.grantRole(QuexRoles.MANAGER, manager);
 
         TreasuryFacet facet = new TreasuryFacet();
         IERC2535DiamondCutInternal.FacetCut[] memory cuts = new IERC2535DiamondCutInternal.FacetCut[](1);

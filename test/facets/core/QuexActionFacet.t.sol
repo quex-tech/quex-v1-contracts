@@ -45,7 +45,7 @@ abstract contract QuexActionFacetTestBase is Test {
     function setUp() public virtual {
         diamond = new QuexDiamond();
         diamond.init(address(this));
-        diamond.grantRole(QuexRoles.Manager, manager.addr);
+        diamond.grantRole(QuexRoles.MANAGER, manager.addr);
         QuexActionFacet t = new QuexActionFacet();
         IERC2535DiamondCutInternal.FacetCut[] memory cuts = new IERC2535DiamondCutInternal.FacetCut[](1);
         bytes4[] memory selectors = new bytes4[](10);

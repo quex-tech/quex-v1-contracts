@@ -16,7 +16,7 @@ contract TrustDomainPolicyFacetTest is Test {
     function setUp() public virtual {
         diamond = new QuexDiamond();
         diamond.init(address(this));
-        diamond.grantRole(QuexRoles.Manager, manager);
+        diamond.grantRole(QuexRoles.MANAGER, manager);
 
         TrustDomainPolicyFacet facet = new TrustDomainPolicyFacet();
         IERC2535DiamondCutInternal.FacetCut[] memory cuts = new IERC2535DiamondCutInternal.FacetCut[](1);

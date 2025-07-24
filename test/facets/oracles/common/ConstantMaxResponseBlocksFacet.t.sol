@@ -16,7 +16,7 @@ contract ConstantMaxResponseBlocksFacetTest is Test {
     function setUp() public virtual {
         diamond = new QuexDiamond();
         diamond.init(address(this));
-        diamond.grantRole(QuexRoles.Manager, manager);
+        diamond.grantRole(QuexRoles.MANAGER, manager);
 
         ConstantMaxResponseBlocksFacet facet = new ConstantMaxResponseBlocksFacet();
         IERC2535DiamondCutInternal.FacetCut[] memory cuts = new IERC2535DiamondCutInternal.FacetCut[](1);

@@ -25,7 +25,7 @@ contract P256VerifierTest is Test {
         bytes memory input = abi.encodePacked(hash, r, s, x, y);
 
         uint gasBefore = gasleft();
-        bool result = verifier.ecdsa_verify(hash, r, s, [x, y]);
+        bool result = verifier.ecdsaVerify(hash, r, s, [x, y]);
         gasUsed = gasBefore - gasleft();
 
         return (result, gasUsed);
