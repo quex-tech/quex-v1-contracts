@@ -13,6 +13,8 @@
         "use-natspec": "off",
         "gas-indexed-events": "off",
         "function-max-lines": "off",
-        "gas-strict-inequalities": "off"
+        "gas-strict-inequalities": "off",
+        "no-console": "off",
+        "func-name-mixedcase": "off"
     }
 }
