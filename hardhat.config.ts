@@ -129,7 +129,7 @@ const config: HardhatUserConfig = {
         chainId: 51,
         urls: {
           apiURL: "https://rpc.apothem.network/api",
-          browserURL: "https://explorer.morphl2.io/"
+          browserURL: "https://testnet.xdcscan.com"
         }
       }
     ]
