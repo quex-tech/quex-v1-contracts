@@ -179,7 +179,25 @@ const config: HardhatUserConfig = {
     }
   },
   etherscan: {
-    apiKey: etherscanApiKey
+    apiKey: etherscanApiKey,
+    customChains: [
+      {
+        network: "xdcMainnet",
+        chainId: 50,
+        urls: {
+          apiURL: "https://erpc.xinfin.network/api",
+          browserURL: "https://xdcscan.com/"
+        }
+      },
+      {
+        network: "xdcApothem",
+        chainId: 51,
+        urls: {
+          apiURL: "https://rpc.apothem.network/api",
+          browserURL: "https://explorer.morphl2.io/"
+        }
+      }
+    ]
   }
 };
 
