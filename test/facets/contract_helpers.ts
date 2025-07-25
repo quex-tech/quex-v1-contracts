@@ -27,7 +27,7 @@ export namespace ContractHelpers {
                     target: await facet.getAddress(),
                     action: 0,
                     selectors: [
-                        facet.interface.getFunction("ecdsa_verify").selector,
+                        facet.interface.getFunction("ecdsaVerify").selector,
                     ]
                 }
             ];

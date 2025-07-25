@@ -13,7 +13,7 @@ const AddP256VerifierFacetToQuexCoreModule = buildModule("AddP256VerifierFacetTo
         target: facet,
         action: 0,
         selectors: [
-            facetInterface.getFunction("ecdsa_verify").selector
+            facetInterface.getFunction("ecdsaVerify").selector
         ]
     }];
 

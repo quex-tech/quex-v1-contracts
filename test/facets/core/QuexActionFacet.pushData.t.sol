@@ -181,7 +181,7 @@ contract QuexActionFacetPushData is QuexActionFacetTestDataBase {
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
         OracleMessage memory message =
-            OracleMessage(ACTION_ID, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
+            OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
         vm.expectCall(address(testObject), abi.encodeWithSelector(testObject.pushData.selector), 2);
@@ -189,7 +189,7 @@ contract QuexActionFacetPushData is QuexActionFacetTestDataBase {
         vm.expectEmit(true, false, false, true);
         emit QuexActionFacet.DataPushingFailed(flowId, address(this));
 
-        testObject.pushData{value: pushFee}(message, signature, FLOW_ID, td.tdId);
+        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
     }
 
     function test_RevertsIf_SignatureIsMalleable() public {

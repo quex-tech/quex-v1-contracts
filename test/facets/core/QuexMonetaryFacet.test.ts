@@ -90,7 +90,7 @@ describe("QuexMonetaryFacet", () => {
                 const zeroAddress = ethers.ZeroAddress;
 
                 await expect(testObject.connect(manager).setTreasury(zeroAddress))
-                    .to.be.revertedWith("Treasury cannot be zero address");
+                    .to.be.revertedWithCustomError(testObject, "Treasury_ZeroAddress");
             });
         });
     });

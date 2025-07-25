@@ -30,7 +30,7 @@ contract QuexDiamond is
 
         // register DiamondFallback
 
-        selectors[++selectorIndex] = IDiamondFallback.getFallbackAddress.selector;
+        selectors[selectorIndex] = IDiamondFallback.getFallbackAddress.selector;
         selectors[++selectorIndex] = IDiamondFallback.setFallbackAddress.selector;
 
         // register DiamondWritable

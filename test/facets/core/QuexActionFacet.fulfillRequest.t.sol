@@ -144,7 +144,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
             OracleMessage(localActionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory sig = _signOracleMessage(msg, tdLocal);
 
-        vm.expectRevert("Not enough gas left to safely execute callback");
+        vm.expectRevert(IQuexActionRegistry.Callback_NotEnoughGas.selector);
         testObject.fulfillRequest{gas: 5_000_100}(msg, sig, reqId, tdLocal.tdId);
     }
 

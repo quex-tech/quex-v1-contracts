@@ -53,7 +53,7 @@ contract QuexAddressFacetTest is Test {
 
     function test_setQuexAddress_RevertsIf_AddressIsZero() public {
         vm.prank(manager);
-        vm.expectRevert("Quex address cannot be 0");
+        vm.expectRevert(IQuexAddressFacet.QuexAddress_ZeroAddress.selector);
         testObject.setQuexAddress(address(0));
     }
 }
