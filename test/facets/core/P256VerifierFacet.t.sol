@@ -21,10 +21,10 @@ contract P256VerifierTest is Test {
         uint256 s,
         uint256 x,
         uint256 y
-    ) private returns (bool valid, uint gasUsed) {
+    ) private returns (bool valid, uint256 gasUsed) {
         bytes memory input = abi.encodePacked(hash, r, s, x, y);
 
-        uint gasBefore = gasleft();
+        uint256 gasBefore = gasleft();
         bool result = verifier.ecdsaVerify(hash, r, s, [x, y]);
         gasUsed = gasBefore - gasleft();
 
@@ -95,11 +95,11 @@ contract P256VerifierTest is Test {
         uint256 p = 0xFFFFFFFF00000001000000000000000000000000FFFFFFFFFFFFFFFFFFFFFFFF;
 
         bytes32 hash = bytes32(0);
-        (uint r, uint s, uint x, uint y) = (1, 1, 1, 1);
+        (uint256 r, uint256 s, uint256 x, uint256 y) = (1, 1, 1, 1);
 
         // In-bounds dummy key (1, 1)
         // Calls modexp, which takes gas.
-        (bool result, uint gasUsed) = evaluate(hash, r, s, x, y);
+        (bool result, uint256 gasUsed) = evaluate(hash, r, s, x, y);
         console2.log("gasUsed ", gasUsed);
         assertEq(result, false);
         assertGt(gasUsed, 2000);
