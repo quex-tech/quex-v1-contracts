@@ -8,7 +8,9 @@ import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegis
 import {IOraclePool} from "../../../contracts/interfaces/core/IOraclePool.sol";
 import {IQuexMonetary} from "../../../contracts/interfaces/core/IQuexMonetary.sol";
 import {ITrustDomainRegistry} from "../../../contracts/interfaces/core/ITrustDomainRegistry.sol";
-import {IdType, DataItem, OracleMessage, ETHSignature} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
+import {
+    IdType, DataItem, OracleMessage, ETHSignature
+} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
 import {IQuexActionFacet} from "../../../contracts/facets/actions/IQuexActionFacet.sol";
 import {QuexDiamond} from "../../../contracts/diamond/QuexDiamond.sol";
@@ -101,16 +103,10 @@ abstract contract QuexActionFacetTestBase is Test {
             abi.encode(Flow(0, 0, address(0), address(0), 0x00000000))
         );
 
-        vm.mockCall(
-            address(diamond),
-            abi.encodeWithSelector(IQuexMonetary.getQuexFee.selector),
-            abi.encode(QUEX_FEE)
-        );
+        vm.mockCall(address(diamond), abi.encodeWithSelector(IQuexMonetary.getQuexFee.selector), abi.encode(QUEX_FEE));
 
         vm.mockCall(
-            oraclePoolAddress,
-            abi.encodeWithSelector(IOraclePool.getActionFee.selector),
-            abi.encode(ORACLE_POOL_FEE)
+            oraclePoolAddress, abi.encodeWithSelector(IOraclePool.getActionFee.selector), abi.encode(ORACLE_POOL_FEE)
         );
 
         vm.label(oraclePoolAddress, "OraclePool");
@@ -147,7 +143,7 @@ contract QuexActionFacetTestDataBase is QuexActionFacetTestBase {
     address internal quexTreasury = address(300);
     address internal oraclePoolTreasury = address(400);
 
-    function setUp() public override virtual {
+    function setUp() public virtual override {
         QuexActionFacetTestBase.setUp();
 
         uint256 privateKey1 = 0x123abc;
@@ -173,17 +169,23 @@ contract QuexActionFacetTestDataBase is QuexActionFacetTestBase {
         );
         vm.mockCall(
             address(diamond),
-            abi.encodeWithSelector(ITrustDomainRegistry.getTDSignerAddress.selector, TD_validInQuex_notInOraclePool.tdId),
+            abi.encodeWithSelector(
+                ITrustDomainRegistry.getTDSignerAddress.selector, TD_validInQuex_notInOraclePool.tdId
+            ),
             abi.encode(TD_validInQuex_notInOraclePool.tdAddress)
         );
         vm.mockCall(
             address(diamond),
-            abi.encodeWithSelector(ITrustDomainRegistry.getTDSignerAddress.selector, TD_notValidInQuex_inOraclePool.tdId),
+            abi.encodeWithSelector(
+                ITrustDomainRegistry.getTDSignerAddress.selector, TD_notValidInQuex_inOraclePool.tdId
+            ),
             abi.encode(TD_notValidInQuex_inOraclePool.tdAddress)
         );
         vm.mockCall(
             address(diamond),
-            abi.encodeWithSelector(ITrustDomainRegistry.getTDSignerAddress.selector, TD_notValidInQuex_notInOraclePool.tdId),
+            abi.encodeWithSelector(
+                ITrustDomainRegistry.getTDSignerAddress.selector, TD_notValidInQuex_notInOraclePool.tdId
+            ),
             abi.encode(TD_notValidInQuex_notInOraclePool.tdAddress)
         );
 
@@ -199,9 +201,7 @@ contract QuexActionFacetTestDataBase is QuexActionFacetTestBase {
             abi.encode(true)
         );
         vm.mockCall(
-            address(diamond),
-            abi.encodeWithSelector(ITrustDomainRegistry.isTDValid.selector),
-            abi.encode(false)
+            address(diamond), abi.encodeWithSelector(ITrustDomainRegistry.isTDValid.selector), abi.encode(false)
         );
 
         // mock IOraclePool.isInPool
@@ -216,16 +216,12 @@ contract QuexActionFacetTestDataBase is QuexActionFacetTestBase {
             abi.encode(true)
         );
         vm.mockCall(
-            address(oraclePoolAddress),
-            abi.encodeWithSelector(IOraclePool.isInPool.selector),
-            abi.encode(false)
+            address(oraclePoolAddress), abi.encodeWithSelector(IOraclePool.isInPool.selector), abi.encode(false)
         );
 
         // mock quex treasury
         vm.mockCall(
-            address(diamond),
-            abi.encodeWithSelector(IQuexMonetary.getTreasury.selector),
-            abi.encode(quexTreasury)
+            address(diamond), abi.encodeWithSelector(IQuexMonetary.getTreasury.selector), abi.encode(quexTreasury)
         );
 
         // mock oracle pool treasury
@@ -236,10 +232,10 @@ contract QuexActionFacetTestDataBase is QuexActionFacetTestBase {
         );
     }
 
-    function _signOracleMessage(
-        OracleMessage memory oracleMessage,
-        TDTestData memory tdData
-    ) internal returns (ETHSignature memory ethSignature) {
+    function _signOracleMessage(OracleMessage memory oracleMessage, TDTestData memory tdData)
+        internal
+        returns (ETHSignature memory ethSignature)
+    {
         vm.startPrank(tdData.tdAddress);
         bytes32 messageHash = keccak256(abi.encode(oracleMessage)).toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(tdData.privateKey, messageHash);
@@ -248,11 +244,7 @@ contract QuexActionFacetTestDataBase is QuexActionFacetTestBase {
     }
 
     function _mockSuccessfulCallback(uint256 id, DataItem memory dataItem, IdType idType) internal {
-        vm.mockCall(
-            consumerAddress,
-            abi.encodeWithSelector(callbackSignature, id, dataItem, idType),
-            abi.encode()
-        );
+        vm.mockCall(consumerAddress, abi.encodeWithSelector(callbackSignature, id, dataItem, idType), abi.encode());
     }
 
     function _mockRevertedCallback(uint256 id, DataItem memory dataItem, IdType idType) internal {
@@ -266,5 +258,7 @@ contract QuexActionFacetTestDataBase is QuexActionFacetTestBase {
 
 contract NonPayable {
     // solhint-disable-next-line payable-fallback
-    fallback() external {revert();}
+    fallback() external {
+        revert();
+    }
 }

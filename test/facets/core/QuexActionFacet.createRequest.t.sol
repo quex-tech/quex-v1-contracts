@@ -7,7 +7,6 @@ import {QuexActionFacetTestBase} from "./QuexActionFacet.t.sol";
 import {console} from "forge-std/console.sol";
 
 contract QuexActionFacetCreateRequest is QuexActionFacetTestBase {
-
     function setUp() public override {
         QuexActionFacetTestBase.setUp();
     }

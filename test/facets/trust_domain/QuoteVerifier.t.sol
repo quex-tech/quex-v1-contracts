@@ -63,34 +63,33 @@ contract QuoteVerifierTest is Test {
         }
     }
 
-    function _setBit(bytes8 value, uint8 i) public pure returns (bytes8){
+    function _setBit(bytes8 value, uint8 i) public pure returns (bytes8) {
         uint8 n = i / 8;
         bytes memory b = abi.encodePacked(value);
         b[n] = b[n] | bytes1(uint8(1 << (i % 8)));
         return bytes8(b);
     }
 
-
     function _createTDQuote(bytes8 attributes) internal pure returns (TDQuote memory) {
         bytes memory zero = new bytes(0);
         return TDQuote({
-                TDATTRIBUTES: attributes,
-                TEE_TCB_SVN: bytes16(0),
-                MRSEAM: zero,
-                MRSIGNERSEAM: zero,
-                SEAMATTRIBUTES: bytes8(0),
-                XFAM: bytes8(0),
-                MRTD: zero,
-                MRCONFIGID: zero,
-                MROWNER: zero,
-                MROWNERCONFIG: zero,
-                RTMR0: zero,
-                RTMR1: zero,
-                RTMR2: zero,
-                RTMR3: zero,
-                REPORT_DATA1: bytes32(0),
-                REPORT_DATA2: bytes32(0),
-                USER_DATA: bytes20(0)
-            });
+            TDATTRIBUTES: attributes,
+            TEE_TCB_SVN: bytes16(0),
+            MRSEAM: zero,
+            MRSIGNERSEAM: zero,
+            SEAMATTRIBUTES: bytes8(0),
+            XFAM: bytes8(0),
+            MRTD: zero,
+            MRCONFIGID: zero,
+            MROWNER: zero,
+            MROWNERCONFIG: zero,
+            RTMR0: zero,
+            RTMR1: zero,
+            RTMR2: zero,
+            RTMR3: zero,
+            REPORT_DATA1: bytes32(0),
+            REPORT_DATA2: bytes32(0),
+            USER_DATA: bytes20(0)
+        });
     }
 }

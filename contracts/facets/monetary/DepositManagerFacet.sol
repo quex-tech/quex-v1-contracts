@@ -69,7 +69,6 @@ contract DepositManagerFacet is IDepositManager, ReentrancyGuard {
         }
     }
 
-
     function addConsumer(uint256 subscriptionId, address consumer) external override {
         DepositManagerStorage.Layout storage l = DepositManagerStorage.layout();
         if (msg.sender != l.subscriptions[subscriptionId].owner) {

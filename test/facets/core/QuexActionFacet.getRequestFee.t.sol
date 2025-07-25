@@ -7,7 +7,9 @@ import {IOraclePool} from "../../../contracts/interfaces/core/IOraclePool.sol";
 import {QuexActionFacetTestBase} from "./QuexActionFacet.t.sol";
 
 contract QuexActionFacetGetRequestFee is QuexActionFacetTestBase {
-    function testFuzz_ReturnsCorrectFee(uint256 quexFee, uint256 poolFee, uint256 quexGas, uint256 callbackGas) public {
+    function testFuzz_ReturnsCorrectFee(uint256 quexFee, uint256 poolFee, uint256 quexGas, uint256 callbackGas)
+        public
+    {
         vm.assume(quexFee < 100 ether);
         vm.assume(poolFee < 100 ether);
         vm.assume(quexGas < 1_000_000);
@@ -20,15 +22,11 @@ contract QuexActionFacetGetRequestFee is QuexActionFacetTestBase {
         vm.mockCall(address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, flowId), abi.encode(flow));
 
         vm.mockCall(
-            address(diamond),
-            abi.encodeWithSelector(IQuexMonetary.getQuexFee.selector, flowId),
-            abi.encode(quexFee)
+            address(diamond), abi.encodeWithSelector(IQuexMonetary.getQuexFee.selector, flowId), abi.encode(quexFee)
         );
 
         vm.mockCall(
-            oraclePoolAddress,
-            abi.encodeWithSelector(IOraclePool.getActionFee.selector, actionId),
-            abi.encode(poolFee)
+            oraclePoolAddress, abi.encodeWithSelector(IOraclePool.getActionFee.selector, actionId), abi.encode(poolFee)
         );
 
         vm.prank(manager.addr);

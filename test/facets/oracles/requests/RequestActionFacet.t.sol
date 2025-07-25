@@ -5,7 +5,16 @@ import {Test} from "forge-std/Test.sol";
 import {IERC2535DiamondCutInternal} from "@solidstate/contracts/interfaces/IERC2535DiamondCutInternal.sol";
 import {QuexDiamond} from "../../../../contracts/diamond/QuexDiamond.sol";
 import {RequestActionFacet} from "../../../../contracts/facets/oracles/requests/RequestActionFacet.sol";
-import {HTTPRequest, RequestHeader, RequestMethod, QueryParameter, RequestHeaderPatch, QueryParameterPatch, HTTPPrivatePatch, RequestAction} from "../../../../contracts/interfaces/oracles/IRequestOraclePool.sol";
+import {
+    HTTPRequest,
+    RequestHeader,
+    RequestMethod,
+    QueryParameter,
+    RequestHeaderPatch,
+    QueryParameterPatch,
+    HTTPPrivatePatch,
+    RequestAction
+} from "../../../../contracts/interfaces/oracles/IRequestOraclePool.sol";
 import {IQuexAddressRegistry} from "../../../../contracts/facets/oracles/common/quex_address/IQuexAddressRegistry.sol";
 import {IFlowRegistry} from "../../../../contracts/interfaces/core/IFlowRegistry.sol";
 import {IRequestOraclePool} from "../../../../contracts/interfaces/oracles/IRequestOraclePool.sol";
@@ -84,21 +93,15 @@ contract RequestActionFacetTest is Test {
         FuzzTestCase memory testCase,
         PatchFuzzTestCase memory patchTestCase
     ) public {
-        (RequestAction memory requestSpec, ) = _createRequestAction(testCase, patchTestCase, true);
+        (RequestAction memory requestSpec,) = _createRequestAction(testCase, patchTestCase, true);
         requestSpec.patch.tdAddress = address(0);
         vm.expectRevert();
         testObject.addPrivatePatch(requestSpec.patch);
     }
 
     function test_addRequest_RevertsIf_HostIsEmpty() public {
-        HTTPRequest memory request = HTTPRequest(
-            RequestMethod.Get,
-            "",
-            "",
-            new RequestHeader[](0),
-            new QueryParameter[](0),
-            ""
-        );
+        HTTPRequest memory request =
+            HTTPRequest(RequestMethod.Get, "", "", new RequestHeader[](0), new QueryParameter[](0), "");
         vm.expectRevert();
         testObject.addRequest(request);
     }
@@ -138,11 +141,11 @@ contract RequestActionFacetTest is Test {
     string[] private _randomKeys = ["key1", "key2", "key3", "key4", "key5", "key6", "key7", "key8", "key9", "key10"];
     string[] private _randomValues = ["val1", "val2", "val3", "val4", "val5", "val6", "val7", "val8", "val9", "val10"];
 
-    function _createRequestAction(
-        FuzzTestCase memory testCase,
-        PatchFuzzTestCase memory patchTestCase,
-        bool withPatch
-    ) private view returns (RequestAction memory requestAction, uint256 actionId) {
+    function _createRequestAction(FuzzTestCase memory testCase, PatchFuzzTestCase memory patchTestCase, bool withPatch)
+        private
+        view
+        returns (RequestAction memory requestAction, uint256 actionId)
+    {
         vm.assume(bytes(testCase.host).length > 0);
         vm.assume(bytes(testCase.filter).length > 0);
         vm.assume(bytes(testCase.schema).length > 0);
@@ -165,12 +168,7 @@ contract RequestActionFacetTest is Test {
         }
 
         HTTPRequest memory request = HTTPRequest(
-            RequestMethod(testCase.method),
-            testCase.host,
-            testCase.path,
-            headers,
-            paremeters,
-            testCase.body
+            RequestMethod(testCase.method), testCase.host, testCase.path, headers, paremeters, testCase.body
         );
 
         HTTPPrivatePatch memory patch = emptyPatch;
@@ -187,11 +185,7 @@ contract RequestActionFacetTest is Test {
             }
 
             patch = HTTPPrivatePatch(
-                patchTestCase.pathSuffix,
-                patchHeaders,
-                patchParameters,
-                patchTestCase.body,
-                patchTestCase.tdAddress
+                patchTestCase.pathSuffix, patchHeaders, patchParameters, patchTestCase.body, patchTestCase.tdAddress
             );
         }
 
@@ -200,9 +194,10 @@ contract RequestActionFacetTest is Test {
         return (requestAction, actionId);
     }
 
-    function _createRequestParts(
-        RequestAction memory requestSpec
-    ) private returns (bytes32 requestId, bytes32 patchId, bytes32 schemaId, bytes32 filterId) {
+    function _createRequestParts(RequestAction memory requestSpec)
+        private
+        returns (bytes32 requestId, bytes32 patchId, bytes32 schemaId, bytes32 filterId)
+    {
         requestId = testObject.addRequest(requestSpec.request);
         patchId = testObject.addPrivatePatch(requestSpec.patch);
         schemaId = testObject.addResponseSchema(requestSpec.responseSchema);

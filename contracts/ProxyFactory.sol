@@ -3,8 +3,7 @@ pragma solidity 0.8.22;
 
 import {MinimalProxyFactory} from "@solidstate/contracts/factory/MinimalProxyFactory.sol";
 
-contract ProxyFactory
-{
+contract ProxyFactory {
     event ProxyDeployed(address);
 
     function deployMinimalProxy(address target) external returns (address) {

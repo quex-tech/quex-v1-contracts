@@ -14,7 +14,7 @@ library QuoteVerifier {
     error QEReport_InvalidSignature();
     error TDReport_InvalidQuote();
     error TDReport_InvalidSignature();
-    error TDReport_UnsafeAttributes();   
+    error TDReport_UnsafeAttributes();
     error TDReport_InvalidTeeTcbSvn();
     error QEReport_InvalidCpuSvn();
     error IndexOutOfBounds();
@@ -107,7 +107,7 @@ library QuoteVerifier {
         }
 
         bytes32 qeReportData = sha256(bytes.concat(bytes32(x), bytes32(y), authenticationData));
-        if (layout.qeReports[qeId].REPORT_DATA1 != qeReportData) { 
+        if (layout.qeReports[qeId].REPORT_DATA1 != qeReportData) {
             revert TDReport_InvalidQuote();
         }
 
@@ -189,12 +189,10 @@ library QuoteVerifier {
         }
     }
 
-    function ensureTDAttributesSafe(
-        TDQuote memory tdQuote
-    ) internal pure {
+    function ensureTDAttributesSafe(TDQuote memory tdQuote) internal pure {
         // mask & value == 0: bits 0-27, 29, and 32-62 should be zero
         uint64 mask = 0xFFFFFF2FFFFFFF7F;
-        
+
         uint64 attributes = uint64(tdQuote.TDATTRIBUTES);
 
         if ((attributes & mask) != 0) {
@@ -202,13 +200,11 @@ library QuoteVerifier {
         }
     }
 
-    function _verifySignatureAllowMalleability(
-        bytes32 messageHash,
-        uint256 r,
-        uint256 s,
-        uint256 x,
-        uint256 y
-    ) internal view returns (bool) {
+    function _verifySignatureAllowMalleability(bytes32 messageHash, uint256 r, uint256 s, uint256 x, uint256 y)
+        internal
+        view
+        returns (bool)
+    {
         return IP256Verifier(address(this)).ecdsaVerify(messageHash, r, s, [x, y]);
     }
 
@@ -221,27 +217,11 @@ library QuoteVerifier {
     ) private pure returns (bytes32) {
         bytes memory i17 = _encodeLengthDER(extensions.length);
         bytes memory i5 = _encodeLengthDER(serial.length);
-        bytes memory i2 = _encodeLengthDER(
-            RBASE_LEN + i17.length + i5.length + extensions.length + serial.length + notBefore.length
+        bytes memory i2 =
+            _encodeLengthDER(RBASE_LEN + i17.length + i5.length + extensions.length + serial.length + notBefore.length);
+        return sha256(
+            bytes.concat(RI1, i2, RI3, i5, serial, RI7, notBefore, RI11, bytes32(x), bytes32(y), RI16, i17, extensions)
         );
-        return
-            sha256(
-                bytes.concat(
-                    RI1,
-                    i2,
-                    RI3,
-                    i5,
-                    serial,
-                    RI7,
-                    notBefore,
-                    RI11,
-                    bytes32(x),
-                    bytes32(y),
-                    RI16,
-                    i17,
-                    extensions
-                )
-            );
     }
 
     function _platformCertBodyHash(
@@ -307,9 +287,7 @@ library QuoteVerifier {
             let src := add(add(data, 0x20), startIndex)
             let dest := add(tail, 0x20)
 
-            for { let i := 0 } lt(i, length) { i := add(i, 0x20) } {
-                mstore(add(dest, i), mload(add(src, i)))
-            }
+            for { let i := 0 } lt(i, length) { i := add(i, 0x20) } { mstore(add(dest, i), mload(add(src, i))) }
 
             mstore(0x40, add(dest, and(add(length, 0x1f), not(0x1f))))
         }

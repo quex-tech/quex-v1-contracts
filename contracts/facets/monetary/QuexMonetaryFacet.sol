@@ -8,7 +8,7 @@ import {QuexMonetaryStorage} from "./QuexMonetaryStorage.sol";
 import {AccessControlInternal} from "@solidstate/contracts/access/access_control/AccessControlInternal.sol";
 
 contract QuexMonetaryFacet is IQuexMonetary, AccessControlInternal {
-    function getQuexFee(uint256 /* flowId */) external view returns (uint256) {
+    function getQuexFee(uint256 /* flowId */ ) external view returns (uint256) {
         return QuexMonetaryStorage.layout().constantQuexFee;
     }
 

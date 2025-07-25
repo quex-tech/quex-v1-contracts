@@ -2,7 +2,13 @@
 pragma solidity 0.8.22;
 
 import {QuexActionFacetTestDataBase} from "./QuexActionFacet.t.sol";
-import {Request, IdType, DataItem, OracleMessage, ETHSignature} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
+import {
+    Request,
+    IdType,
+    DataItem,
+    OracleMessage,
+    ETHSignature
+} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 
 contract QuexActionFacetGetRequest is QuexActionFacetTestDataBase {
     function test_ReturnsEmpty_IfUnknownRequest() public {

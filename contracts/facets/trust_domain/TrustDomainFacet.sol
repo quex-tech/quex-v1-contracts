@@ -20,7 +20,7 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     error TDAlreadyExists();
     error InvalidPublicKeyLength();
 
-    function getRootKey() external view returns(ECKey memory) {
+    function getRootKey() external view returns (ECKey memory) {
         return TrustDomainStorage.layout().rootCA;
     }
 
@@ -51,7 +51,7 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         emit PlatformCAAdded(serial);
     }
 
-    function getPlatformCAKey(uint256 serial) external view returns(ECKey memory) {
+    function getPlatformCAKey(uint256 serial) external view returns (ECKey memory) {
         return TrustDomainStorage.layout().platformCAs[serial];
     }
 
@@ -89,13 +89,10 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         return TrustDomainStorage.layout().processorPCKs[platformSerial][pckSerial];
     }
 
-    function addQE(
-        QEReport calldata qeReport,
-        uint256 platformSerial,
-        uint256 pckSerial,
-        uint256 r,
-        uint256 s
-    ) external returns (uint256 qeId) {
+    function addQE(QEReport calldata qeReport, uint256 platformSerial, uint256 pckSerial, uint256 r, uint256 s)
+        external
+        returns (uint256 qeId)
+    {
         QuoteVerifier.ensureQEReportIsValid(qeReport, platformSerial, pckSerial, r, s);
         TrustDomainStorage.Layout storage layout = TrustDomainStorage.layout();
 
@@ -260,7 +257,7 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
     function getPCKCounterByPlatformCA(uint256 platformSerial) external view returns (uint256) {
         return TrustDomainStorage.layout().pckCounterByPlatformCA[platformSerial];
     }
-    
+
     function getQECounterByProcessorPCK(uint256 platformSerial, uint256 pckSerial) external view returns (uint256) {
         return TrustDomainStorage.layout().qeCounterByProcessorPCK[platformSerial][pckSerial];
     }
@@ -325,7 +322,6 @@ contract TrustDomainFacet is ITrustDomainRegistryExtended, OwnableInternal {
         hrs += (uint8(x509Time[offset + 6]) - 48) * 10 + uint8(x509Time[offset + 7]) - 48;
         mins += (uint8(x509Time[offset + 8]) - 48) * 10 + uint8(x509Time[offset + 9]) - 48;
         secs += (uint8(x509Time[offset + 10]) - 48) * 10 + uint8(x509Time[offset + 11]) - 48;
-
 
         return DateTimeLib.dateTimeToTimestamp(yrs, mnths, dys, hrs, mins, secs);
     }

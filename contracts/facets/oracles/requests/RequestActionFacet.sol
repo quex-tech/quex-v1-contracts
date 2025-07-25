@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import {IRequestOraclePool, HTTPRequest, HTTPPrivatePatch, RequestAction} from "../../../interfaces/oracles/IRequestOraclePool.sol";
+import {
+    IRequestOraclePool,
+    HTTPRequest,
+    HTTPPrivatePatch,
+    RequestAction
+} from "../../../interfaces/oracles/IRequestOraclePool.sol";
 import {RequestOracleStorage} from "./RequestOracleStorage.sol";
 
 contract RequestActionFacet is IRequestOraclePool {
@@ -17,9 +22,7 @@ contract RequestActionFacet is IRequestOraclePool {
     }
 
     function addPrivatePatch(HTTPPrivatePatch memory privatePatch) public returns (bytes32 patchId) {
-        patchId = _isEmptyPatch(privatePatch)
-            ? bytes32(0)
-            : keccak256(abi.encode(privatePatch));
+        patchId = _isEmptyPatch(privatePatch) ? bytes32(0) : keccak256(abi.encode(privatePatch));
         if (patchId != 0) {
             if (privatePatch.tdAddress == address(0)) {
                 revert TDAddressRequired();
@@ -50,15 +53,13 @@ contract RequestActionFacet is IRequestOraclePool {
         return schemaId;
     }
 
-    function addActionByParts(
-        bytes32 requestId,
-        bytes32 patchId,
-        bytes32 schemaId,
-        bytes32 filterId
-    ) external returns (uint256 actionId) {
+    function addActionByParts(bytes32 requestId, bytes32 patchId, bytes32 schemaId, bytes32 filterId)
+        external
+        returns (uint256 actionId)
+    {
         RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
-        RequestOracleStorage.RequestActionInternal memory requestActionInternal = RequestOracleStorage
-            .RequestActionInternal(requestId, patchId, schemaId, filterId);
+        RequestOracleStorage.RequestActionInternal memory requestActionInternal =
+            RequestOracleStorage.RequestActionInternal(requestId, patchId, schemaId, filterId);
 
         RequestAction memory requestAction = _getRequestAction(requestActionInternal);
 
@@ -89,8 +90,8 @@ contract RequestActionFacet is IRequestOraclePool {
         bytes32 filterId = addJqFilter(requestAction.jqFilter);
         bytes32 schemaId = addResponseSchema(requestAction.responseSchema);
 
-        RequestOracleStorage.RequestActionInternal memory requestActionInternal = RequestOracleStorage
-            .RequestActionInternal(requestId, patchId, schemaId, filterId);
+        RequestOracleStorage.RequestActionInternal memory requestActionInternal =
+            RequestOracleStorage.RequestActionInternal(requestId, patchId, schemaId, filterId);
 
         actionId = _calculateActionId(requestAction);
         layout.requestActions[actionId] = requestActionInternal;
@@ -99,25 +100,25 @@ contract RequestActionFacet is IRequestOraclePool {
     }
 
     function getAction(uint256 actionId) external view returns (bytes memory action) {
-        RequestOracleStorage.RequestActionInternal memory requestActionInternal = RequestOracleStorage
-            .layout()
-            .requestActions[actionId];
+        RequestOracleStorage.RequestActionInternal memory requestActionInternal =
+            RequestOracleStorage.layout().requestActions[actionId];
 
         RequestAction memory requestAction = _getRequestAction(requestActionInternal);
         return abi.encode(requestAction);
     }
 
-    function _getRequestAction(
-        RequestOracleStorage.RequestActionInternal memory requestActionInternal
-    ) private view returns (RequestAction memory requestAction) {
+    function _getRequestAction(RequestOracleStorage.RequestActionInternal memory requestActionInternal)
+        private
+        view
+        returns (RequestAction memory requestAction)
+    {
         RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
-        return
-            RequestAction(
-                layout.requests[requestActionInternal.requestId],
-                layout.privatePatches[requestActionInternal.patchId],
-                layout.resultSchemas[requestActionInternal.schemaId],
-                layout.jqFilters[requestActionInternal.filterId]
-            );
+        return RequestAction(
+            layout.requests[requestActionInternal.requestId],
+            layout.privatePatches[requestActionInternal.patchId],
+            layout.resultSchemas[requestActionInternal.schemaId],
+            layout.jqFilters[requestActionInternal.filterId]
+        );
     }
 
     function _calculateActionId(RequestAction memory requestAction) private pure returns (uint256) {
@@ -125,10 +126,7 @@ contract RequestActionFacet is IRequestOraclePool {
     }
 
     function _isEmptyPatch(HTTPPrivatePatch memory patch) private pure returns (bool) {
-        return
-            patch.pathSuffix.length == 0 &&
-            patch.body.length == 0 &&
-            patch.headers.length == 0 &&
-            patch.parameters.length == 0;
+        return patch.pathSuffix.length == 0 && patch.body.length == 0 && patch.headers.length == 0
+            && patch.parameters.length == 0;
     }
 }

@@ -11,7 +11,7 @@ interface IConstantPriceMonetaryFacet {
 }
 
 contract ConstantPriceMonetaryFacet is IConstantPriceMonetaryFacet, AccessControlInternal {
-    function getActionFee(uint256 /* actionId */) external view returns (uint256) {
+    function getActionFee(uint256 /* actionId */ ) external view returns (uint256) {
         return ConstantPriceMonetaryStorage.layout().actionFee;
     }
 

@@ -24,9 +24,7 @@ contract QuexActionFacetCancelRequest is QuexActionFacetTestBase {
     function test_SuccessfullyCancelsRequest() public {
         // Mock max response blocks to allow cancellation
         vm.mockCall(
-            oraclePoolAddress,
-            abi.encodeWithSelector(IOraclePool.getMaxResponseBlocks.selector),
-            abi.encode(10)
+            oraclePoolAddress, abi.encodeWithSelector(IOraclePool.getMaxResponseBlocks.selector), abi.encode(10)
         );
 
         // Ensure request exists and funds are locked
@@ -38,8 +36,8 @@ contract QuexActionFacetCancelRequest is QuexActionFacetTestBase {
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
         uint256 requestPrice = quexFee + relayerPremium + oraclePoolFee;
 
-        uint256 lockedBefore = IDepositManager(address(testObject)).balance(subscriptionId) -
-            IDepositManager(address(testObject)).withdrawableBalance(subscriptionId);
+        uint256 lockedBefore = IDepositManager(address(testObject)).balance(subscriptionId)
+            - IDepositManager(address(testObject)).withdrawableBalance(subscriptionId);
         assertEq(lockedBefore, requestPrice, "Funds should be locked before cancellation");
 
         // Move blocks forward to allow cancellation
@@ -53,8 +51,8 @@ contract QuexActionFacetCancelRequest is QuexActionFacetTestBase {
         assertEq(postRequest.flowId, 0, "Request should be deleted after cancellation");
 
         // Ensure funds are unlocked
-        uint256 lockedAfter = IDepositManager(address(testObject)).balance(subscriptionId) -
-            IDepositManager(address(testObject)).withdrawableBalance(subscriptionId);
+        uint256 lockedAfter = IDepositManager(address(testObject)).balance(subscriptionId)
+            - IDepositManager(address(testObject)).withdrawableBalance(subscriptionId);
         assertEq(lockedAfter, 0, "Funds should be unlocked after cancellation");
     }
 
@@ -66,9 +64,7 @@ contract QuexActionFacetCancelRequest is QuexActionFacetTestBase {
     function test_RevertsIf_RequestTooFreshToCancel() public {
         // Mock max response blocks
         vm.mockCall(
-            oraclePoolAddress,
-            abi.encodeWithSelector(IOraclePool.getMaxResponseBlocks.selector),
-            abi.encode(10)
+            oraclePoolAddress, abi.encodeWithSelector(IOraclePool.getMaxResponseBlocks.selector), abi.encode(10)
         );
 
         // Try to cancel immediately
@@ -79,9 +75,7 @@ contract QuexActionFacetCancelRequest is QuexActionFacetTestBase {
     function test_RevertsIf_NotRequestOwner() public {
         // Mock max response blocks to allow cancellation
         vm.mockCall(
-            oraclePoolAddress,
-            abi.encodeWithSelector(IOraclePool.getMaxResponseBlocks.selector),
-            abi.encode(10)
+            oraclePoolAddress, abi.encodeWithSelector(IOraclePool.getMaxResponseBlocks.selector), abi.encode(10)
         );
 
         // Move blocks forward to allow cancellation
@@ -96,9 +90,7 @@ contract QuexActionFacetCancelRequest is QuexActionFacetTestBase {
     function test_EmitsRequestCancelledEvent() public {
         // Mock max response blocks to allow cancellation
         vm.mockCall(
-            oraclePoolAddress,
-            abi.encodeWithSelector(IOraclePool.getMaxResponseBlocks.selector),
-            abi.encode(10)
+            oraclePoolAddress, abi.encodeWithSelector(IOraclePool.getMaxResponseBlocks.selector), abi.encode(10)
         );
 
         // Move blocks forward to allow cancellation

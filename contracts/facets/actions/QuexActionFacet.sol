@@ -28,12 +28,11 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
     event RequestFulfillingFailed(uint256 requestId, uint256 flowId, address relayer);
     event RequestCancelled(uint256 requestId, uint256 flowId, address owner);
 
-    function pushData(
-        OracleMessage calldata message,
-        ETHSignature calldata signature,
-        uint256 flowId,
-        uint256 tdId
-    ) external payable nonReentrant {
+    function pushData(OracleMessage calldata message, ETHSignature calldata signature, uint256 flowId, uint256 tdId)
+        external
+        payable
+        nonReentrant
+    {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
         _ensureOracleMessageIsValid(message, signature, flow, tdId);
 
@@ -61,7 +60,11 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
     }
 
-    function composeRequest(uint256 flowId, uint256 subscriptionId) private view returns (QuexActionStorage.Request memory request) {
+    function composeRequest(uint256 flowId, uint256 subscriptionId)
+        private
+        view
+        returns (QuexActionStorage.Request memory request)
+    {
         Flow memory flow = IFlowRegistry(address(this)).getFlow(flowId);
 
         if (flow.pool == address(0)) {
@@ -78,18 +81,15 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         uint256 maxRelayerRefund = gasFee * maxGasPrice;
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
         QuexActionStorage.Request memory req = QuexActionStorage.Request(
-            flowId,
-            subscriptionId,
-            quexFee,
-            maxRelayerRefund,
-            oraclePoolFee,
-            block.number,
-            msg.sender
+            flowId, subscriptionId, quexFee, maxRelayerRefund, oraclePoolFee, block.number, msg.sender
         );
         return req;
     }
 
-    function reserveFunds(uint256 subscriptionId, QuexActionStorage.Request memory req) private returns (uint256 requestId) {
+    function reserveFunds(uint256 subscriptionId, QuexActionStorage.Request memory req)
+        private
+        returns (uint256 requestId)
+    {
         uint256 totalFee = req.quexFee + req.maxRelayerRefund + req.oraclePoolFee;
         DepositManagerFacet(address(this)).reserve(subscriptionId, totalFee);
     }
@@ -239,13 +239,17 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
 
         QuexActionStorage.TimeSkewLayout storage timeSkewLayout = QuexActionStorage.timeSkewLayout();
 
-        if (block.timestamp > message.dataItem.timestamp
-            && block.timestamp - message.dataItem.timestamp > timeSkewLayout.timeSkewPast) {
+        if (
+            block.timestamp > message.dataItem.timestamp
+                && block.timestamp - message.dataItem.timestamp > timeSkewLayout.timeSkewPast
+        ) {
             revert OracleMessage_OutdatedMessage();
         }
 
-        if (message.dataItem.timestamp > block.timestamp
-            && message.dataItem.timestamp - block.timestamp > timeSkewLayout.timeSkewFuture) {
+        if (
+            message.dataItem.timestamp > block.timestamp
+                && message.dataItem.timestamp - block.timestamp > timeSkewLayout.timeSkewFuture
+        ) {
             revert OracleMessage_TimestampFromFuture();
         }
 
@@ -263,18 +267,21 @@ contract QuexActionFacet is IQuexActionFacet, AccessControlInternal, ReentrancyG
         }
     }
 
-    function _isSignatureValid(
-        OracleMessage memory oracleMessage,
-        ETHSignature memory signature,
-        address tdAddress
-    ) private pure returns (bool) {
+    function _isSignatureValid(OracleMessage memory oracleMessage, ETHSignature memory signature, address tdAddress)
+        private
+        pure
+        returns (bool)
+    {
         bytes memory message = abi.encode(oracleMessage);
         bytes32 messageHash = keccak256(message);
         bytes32 ethSignedMessageHash = ECDSA.toEthSignedMessageHash(messageHash);
         return ECDSA.recover(ethSignedMessageHash, signature.v, signature.r, signature.s) == tdAddress;
     }
 
-    function _safeCallbackCall(address consumer, uint256 gasLimit, bytes memory payload) private returns (bool success) {
+    function _safeCallbackCall(address consumer, uint256 gasLimit, bytes memory payload)
+        private
+        returns (bool success)
+    {
         if (gasleft() < gasLimit + gasLimit / 63) {
             revert Callback_NotEnoughGas();
         }

@@ -2,7 +2,10 @@
 pragma solidity 0.8.22;
 
 import {QuexDiamond} from "../../../../contracts/diamond/QuexDiamond.sol";
-import {IConstantMaxResponseBlocksFacet, ConstantMaxResponseBlocksFacet} from "../../../../contracts/facets/oracles/common/constant_max_response_blocks/ConstantMaxResponseBlocksFacet.sol";
+import {
+    IConstantMaxResponseBlocksFacet,
+    ConstantMaxResponseBlocksFacet
+} from "../../../../contracts/facets/oracles/common/constant_max_response_blocks/ConstantMaxResponseBlocksFacet.sol";
 import {IERC2535DiamondCutInternal} from "@solidstate/contracts/interfaces/IERC2535DiamondCutInternal.sol";
 import {Test} from "forge-std/Test.sol";
 import {QuexRoles} from "../../../../contracts/QuexRoles.sol";

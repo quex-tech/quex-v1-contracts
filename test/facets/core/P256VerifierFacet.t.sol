@@ -14,14 +14,13 @@ contract P256VerifierTest is Test {
         verifier = new P256VerifierFacet();
     }
 
-    /** Checks a single test vector: signature rs, pubkey Q = (x,y). */
-    function evaluate(
-        bytes32 hash,
-        uint256 r,
-        uint256 s,
-        uint256 x,
-        uint256 y
-    ) private returns (bool valid, uint256 gasUsed) {
+    /**
+     * Checks a single test vector: signature rs, pubkey Q = (x,y).
+     */
+    function evaluate(bytes32 hash, uint256 r, uint256 s, uint256 x, uint256 y)
+        private
+        returns (bool valid, uint256 gasUsed)
+    {
         uint256 gasBefore = gasleft();
         bool result = verifier.ecdsaVerify(hash, r, s, [x, y]);
         gasUsed = gasBefore - gasleft();
@@ -72,17 +71,10 @@ contract P256VerifierTest is Test {
             bool expected = vector.readBool(".valid");
             string memory comment = vector.readString(".comment");
 
-            (bool result, ) = evaluate(hash, r, s, x, y);
+            (bool result,) = evaluate(hash, r, s, x, y);
 
             string memory err = string(
-                abi.encodePacked(
-                    "exp ",
-                    expected ? "1" : "0",
-                    ", we return ",
-                    result ? "1" : "0",
-                    ": ",
-                    comment
-                )
+                abi.encodePacked("exp ", expected ? "1" : "0", ", we return ", result ? "1" : "0", ": ", comment)
             );
             assertTrue(result == expected, err);
         }

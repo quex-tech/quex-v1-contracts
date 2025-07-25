@@ -5,7 +5,13 @@ import {console} from "forge-std/console.sol";
 import {IDepositManager} from "../../../contracts/interfaces/core/IDepositManager.sol";
 import {QuexActionFacetTestDataBase} from "./QuexActionFacet.t.sol";
 import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
-import {IdType, DataItem, OracleMessage, ETHSignature, IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
+import {
+    IdType,
+    DataItem,
+    OracleMessage,
+    ETHSignature,
+    IQuexActionRegistry
+} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
 import {IOraclePool} from "../../../contracts/interfaces/core/IOraclePool.sol";
 import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
@@ -18,7 +24,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     ETHSignature private signature;
     IDepositManager private depositManager;
 
-    function setUp() override public {
+    function setUp() public override {
         QuexActionFacetTestDataBase.setUp();
         requestPrice = _getMinimumRequestPrice(FLOW_ID);
         (requestId, td, message, signature) = _createRequest();
@@ -29,9 +35,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
 
         vm.expectCall(
-            consumerAddress,
-            abi.encodeWithSelector(callbackSignature, requestId, message.dataItem, IdType.RequestId),
-            1
+            consumerAddress, abi.encodeWithSelector(callbackSignature, requestId, message.dataItem, IdType.RequestId), 1
         );
 
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
@@ -41,15 +45,15 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
 
         IDepositManager depositManager = IDepositManager(address(testObject));
-        uint256 lockedBefore = depositManager.balance(subscriptionId) -
-                            depositManager.withdrawableBalance(subscriptionId);
+        uint256 lockedBefore =
+            depositManager.balance(subscriptionId) - depositManager.withdrawableBalance(subscriptionId);
         assertEq(lockedBefore, requestPrice, "Request price should be locked before fulfillment");
         uint256 initialBalance = quexTreasury.balance;
 
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
-        uint256 lockedAfter = depositManager.balance(subscriptionId) -
-                            depositManager.withdrawableBalance(subscriptionId);
+        uint256 lockedAfter =
+            depositManager.balance(subscriptionId) - depositManager.withdrawableBalance(subscriptionId);
         assertEq(lockedAfter, 0, "Locked balance should be zero after fulfillment");
         assertEq(quexTreasury.balance, initialBalance + QUEX_FEE);
     }
@@ -127,13 +131,17 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         // Set a small gas limit in the flow to trigger the internal check
         uint256 localFlowId = uint256(keccak256("test_RevertsIf_NotEnoughGasLeftForCallback_flowId"));
         uint256 localActionId = uint256(keccak256("test_RevertsIf_NotEnoughGasLeftForCallback_actionId"));
-        Flow memory flow = Flow(5_000_000, localActionId, oraclePoolAddress, address(this), this.callback_HeavyComputation.selector);
+        Flow memory flow =
+            Flow(5_000_000, localActionId, oraclePoolAddress, address(this), this.callback_HeavyComputation.selector);
         IDepositManager(address(diamond)).addConsumer(subscriptionId, flow.consumer);
-        vm.mockCall(address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, localFlowId), abi.encode(flow));
+        vm.mockCall(
+            address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, localFlowId), abi.encode(flow)
+        );
 
         uint256 reqId = testObject.createRequest(localFlowId, subscriptionId);
         TDTestData memory tdLocal = TD_validInQuex_inOraclePool;
-        OracleMessage memory msg = OracleMessage(localActionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
+        OracleMessage memory msg =
+            OracleMessage(localActionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory sig = _signOracleMessage(msg, tdLocal);
 
         vm.expectRevert("Not enough gas left to safely execute callback");
@@ -154,7 +162,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     function test_TransfersTokensToRelayer_EvenIf_CallbackIsFailed() public {
         _mockRevertedCallback(requestId, message.dataItem, IdType.RequestId);
 
-            (, uint256 gasFee) = testObject.getRequestFee(FLOW_ID);
+        (, uint256 gasFee) = testObject.getRequestFee(FLOW_ID);
 
         uint256 initialBalance = address(this).balance;
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
@@ -199,7 +207,8 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_RevertsIf_ActionIdsMismatched() public {
-        OracleMessage memory msgMismatched = OracleMessage(ACTION_ID + 1, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
+        OracleMessage memory msgMismatched =
+            OracleMessage(ACTION_ID + 1, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory sig = _signOracleMessage(msgMismatched, td);
 
         vm.expectRevert(IQuexActionRegistry.Action_MismatchIds.selector);
@@ -256,21 +265,21 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     function test_CallbackFailIf_CallbackReenter() public {
         uint256 flowIdLocal = uint256(keccak256("test_RevertsIf_CallbackReenter_flowId"));
         uint256 actionIdLocal = uint256(keccak256("test_RevertsIf_CallbackReenter_actionId"));
-        Flow memory flow = Flow(1000000, actionIdLocal, oraclePoolAddress, address(this), this.callback_Reenter.selector);
+        Flow memory flow =
+            Flow(1000000, actionIdLocal, oraclePoolAddress, address(this), this.callback_Reenter.selector);
         IDepositManager(address(diamond)).addConsumer(subscriptionId, flow.consumer);
 
-        vm.mockCall(address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, flowIdLocal), abi.encode(flow));
+        vm.mockCall(
+            address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, flowIdLocal), abi.encode(flow)
+        );
 
         uint256 requestIdLocal = testObject.createRequest(flowIdLocal, subscriptionId);
         TDTestData memory tdLocal = TD_validInQuex_inOraclePool;
-        OracleMessage memory messageLocal = OracleMessage(actionIdLocal, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
+        OracleMessage memory messageLocal =
+            OracleMessage(actionIdLocal, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signatureLocal = _signOracleMessage(messageLocal, tdLocal);
 
-        vm.expectCall(
-            address(testObject),
-            abi.encodeWithSelector(testObject.fulfillRequest.selector),
-            2
-        );
+        vm.expectCall(address(testObject), abi.encodeWithSelector(testObject.fulfillRequest.selector), 2);
 
         vm.expectEmit(true, false, false, true);
         emit QuexActionFacet.RequestFulfillingFailed(requestIdLocal, flowIdLocal, address(this));
@@ -286,11 +295,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         bytes32 malleableS = bytes32(n - uint256(signature.s));
 
         // Create a new signature with the malleable s value
-        ETHSignature memory malleableSignature = ETHSignature(
-            signature.r,
-            malleableS,
-            signature.v == 27 ? 28 : 27
-        );
+        ETHSignature memory malleableSignature = ETHSignature(signature.r, malleableS, signature.v == 27 ? 28 : 27);
 
         vm.expectRevert(ECDSA.ECDSA__InvalidS.selector);
         testObject.fulfillRequest(message, malleableSignature, requestId, td.tdId);
@@ -306,17 +311,23 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
 
     function _runRefundComparisonTest(uint256 gasLimit) private {
         // Setup a new flow with a heavy callback
-        uint256 localFlowId = uint256(keccak256(abi.encodePacked("test_RelayerRefundIsGreaterThanGasSpent_flowId", gasLimit)));
-        uint256 localActionId = uint256(keccak256(abi.encodePacked("test_RelayerRefundIsGreaterThanGasSpent_actionId", gasLimit)));
-        Flow memory heavyFlow = Flow(5_000_000, localActionId, oraclePoolAddress, address(this), this.callback_HeavyComputation.selector);
+        uint256 localFlowId =
+            uint256(keccak256(abi.encodePacked("test_RelayerRefundIsGreaterThanGasSpent_flowId", gasLimit)));
+        uint256 localActionId =
+            uint256(keccak256(abi.encodePacked("test_RelayerRefundIsGreaterThanGasSpent_actionId", gasLimit)));
+        Flow memory heavyFlow =
+            Flow(5_000_000, localActionId, oraclePoolAddress, address(this), this.callback_HeavyComputation.selector);
         IDepositManager(address(diamond)).addConsumer(subscriptionId, heavyFlow.consumer);
 
-        vm.mockCall(address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, localFlowId), abi.encode(heavyFlow));
+        vm.mockCall(
+            address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, localFlowId), abi.encode(heavyFlow)
+        );
 
         // Create request
         uint256 requestIdLocal = testObject.createRequest(localFlowId, subscriptionId);
         TDTestData memory tdLocal = TD_validInQuex_inOraclePool;
-        OracleMessage memory messageLocal = OracleMessage(localActionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
+        OracleMessage memory messageLocal =
+            OracleMessage(localActionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory signatureLocal = _signOracleMessage(messageLocal, tdLocal);
 
         uint256 balanceBefore = relayer.balance;
@@ -339,7 +350,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         assertGt(refund, spent, "Refund should exceed gas spent");
     }
 
-    function callback_HeavyComputation(uint256 /*requestId*/, DataItem memory dataItem, IdType /*idType*/) public {
+    function callback_HeavyComputation(uint256, /*requestId*/ DataItem memory dataItem, IdType /*idType*/ ) public {
         uint256 gasStart = gasleft();
         bytes32 hash = keccak256(abi.encode(dataItem.timestamp));
         for (uint256 i = 0; i < 2000; i++) {
@@ -350,7 +361,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         console.log("!! gasUsed:", gasUsed);
     }
 
-    function callback_Reenter(uint256 requestId, DataItem memory dataItem, IdType /* idType */) public {
+    function callback_Reenter(uint256 requestId, DataItem memory dataItem, IdType /* idType */ ) public {
         uint256 actionIdLocal = IFlowRegistry(address(testObject)).getFlow(FLOW_ID).actionId;
         TDTestData memory tdLocal = TD_validInQuex_inOraclePool;
 
@@ -367,11 +378,13 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
 
     receive() external payable {}
 
-    function _createRequest() private returns (uint256 requestId, TDTestData memory td, OracleMessage memory message, ETHSignature memory signature) {
+    function _createRequest()
+        private
+        returns (uint256 requestId, TDTestData memory td, OracleMessage memory message, ETHSignature memory signature)
+    {
         requestId = testObject.createRequest(FLOW_ID, subscriptionId);
         td = TD_validInQuex_inOraclePool;
         message = OracleMessage(ACTION_ID, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         signature = _signOracleMessage(message, td);
     }
-
 }

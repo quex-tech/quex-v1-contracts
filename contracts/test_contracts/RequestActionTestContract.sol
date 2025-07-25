@@ -41,27 +41,15 @@ contract RequestActionTestContract {
         QueryParameter[] memory parameters = new QueryParameter[](2);
         parameters[0] = QueryParameter("symbol", "BTCUSDT");
         parameters[1] = QueryParameter("limit", "5");
-        HTTPRequest memory request = HTTPRequest(
-            RequestMethod.Get,
-            "www.binance.com",
-            "/api/v3/depth",
-            new RequestHeader[](0),
-            parameters,
-            ""
-        );
+        HTTPRequest memory request =
+            HTTPRequest(RequestMethod.Get, "www.binance.com", "/api/v3/depth", new RequestHeader[](0), parameters, "");
         bytes32 requestId = requestOracle.addRequest(request);
         bytes32 patchId = bytes32(0);
         bytes32 schemaId = requestOracle.addResponseSchema("(uint256,(uint256,uint256)[5],(uint256,uint256)[5])");
-        bytes32 filterId = requestOracle.addJqFilter(
-            "[.lastUpdateId] + ([.bids, .asks] | map(map(map(tonumber*100000000|floor))))"
-        );
+        bytes32 filterId =
+            requestOracle.addJqFilter("[.lastUpdateId] + ([.bids, .asks] | map(map(map(tonumber*100000000|floor))))");
 
-        uint256 actionId = requestOracle.addActionByParts(
-            requestId,
-            patchId,
-            schemaId,
-            filterId
-        );
+        uint256 actionId = requestOracle.addActionByParts(requestId, patchId, schemaId, filterId);
 
         IFlowRegistry flowRegistry = IFlowRegistry(quexCoreAddress);
         Flow memory flow = Flow(1000000, actionId, oraclePoolAddress, address(this), this.fulfillRequest.selector);
@@ -105,7 +93,7 @@ contract RequestActionTestContract {
         depositManager.withdraw(subscriptionId, msg.sender);
     }
 
-    function fulfillRequest(uint256 requestId, DataItem memory dataItem, IdType /* idType */) external {
+    function fulfillRequest(uint256 requestId, DataItem memory dataItem, IdType /* idType */ ) external {
         require(msg.sender == quexCoreAddress);
         require(requestId == lastRequestId);
         lastResponse = abi.decode(dataItem.value, (OrderBook));
