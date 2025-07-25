@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.22;
 
-import "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {DepositManagerFacet} from "../../../contracts/facets/monetary/DepositManagerFacet.sol";
-import {DepositManagerStorage} from "../../../contracts/facets/monetary/DepositManagerStorage.sol";
 import {IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 
 contract DepositManagerFacetTest is Test {

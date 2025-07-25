@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "forge-std/Script.sol";
-import "forge-std/Test.sol";
-import "@solidstate/contracts/interfaces/IERC2535DiamondCutInternal.sol";
-import "@solidstate/contracts/cryptography/ECDSA.sol";
+import {Test} from "forge-std/Test.sol";
+import {IERC2535DiamondCutInternal} from "@solidstate/contracts/interfaces/IERC2535DiamondCutInternal.sol";
+import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
 import {QuexActionFacet} from "../../../../contracts/facets/actions/QuexActionFacet.sol";
 import {QuexDiamond} from "../../../../contracts/diamond/QuexDiamond.sol";
 import {RequestActionFacet} from "../../../../contracts/facets/oracles/requests/RequestActionFacet.sol";
+import {HTTPRequest, RequestHeader, RequestMethod, QueryParameter, RequestHeaderPatch, QueryParameterPatch, HTTPPrivatePatch, RequestAction} from "../../../../contracts/interfaces/oracles/IRequestOraclePool.sol";
 import {IQuexAddressRegistry} from "../../../../contracts/facets/oracles/common/quex_address/IQuexAddressRegistry.sol";
 import {Flow, IFlowRegistry} from "../../../../contracts/interfaces/core/IFlowRegistry.sol";
-import "../../../../contracts/interfaces/oracles/IRequestOraclePool.sol";
+import {IRequestOraclePool} from "../../../../contracts/interfaces/oracles/IRequestOraclePool.sol";
 
 contract RequestActionFacetTest is Test {
     QuexDiamond internal diamond;

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "../../../../contracts/diamond/QuexDiamond.sol";
-import "../../../../contracts/facets/oracles/common/td_policy_facet/TrustDomainPolicyFacet.sol";
-import "@solidstate/contracts/interfaces/IERC2535DiamondCutInternal.sol";
-import "forge-std/Script.sol";
-import "forge-std/Test.sol";
+import {QuexDiamond} from "../../../../contracts/diamond/QuexDiamond.sol";
+import {ITrustDomainPolicyFacet, TrustDomainPolicyFacet} from "../../../../contracts/facets/oracles/common/td_policy_facet/TrustDomainPolicyFacet.sol";
+import {IERC2535DiamondCutInternal} from "@solidstate/contracts/interfaces/IERC2535DiamondCutInternal.sol";
+import {Test} from "forge-std/Test.sol";
+import {QuexRoles} from "../../../../contracts/QuexRoles.sol";
 
 contract TrustDomainPolicyFacetTest is Test {
     QuexDiamond internal diamond;

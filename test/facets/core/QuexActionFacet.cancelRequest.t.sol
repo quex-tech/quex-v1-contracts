@@ -8,7 +8,7 @@ import {IDepositManager} from "../../../contracts/interfaces/core/IDepositManage
 import {QuexActionFacetTestBase} from "./QuexActionFacet.t.sol";
 import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
 import {IQuexMonetary} from "../../../contracts/interfaces/core/IQuexMonetary.sol";
-import "forge-std/console.sol";
+import {console} from "forge-std/console.sol";
 
 contract QuexActionFacet_cancelRequest is QuexActionFacetTestBase {
     uint256 internal requestId;

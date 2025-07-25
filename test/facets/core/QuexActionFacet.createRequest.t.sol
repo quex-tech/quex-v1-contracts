@@ -6,7 +6,7 @@ import {IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActio
 import {IOraclePool} from "../../../contracts/interfaces/core/IOraclePool.sol";
 import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
 import {QuexActionFacetTestBase} from "./QuexActionFacet.t.sol";
-import "forge-std/console.sol";
+import {console} from "forge-std/console.sol";
 
 contract QuexActionFacet_createRequest is QuexActionFacetTestBase {
 

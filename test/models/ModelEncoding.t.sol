@@ -2,8 +2,8 @@
 pragma solidity ^0.8.22;
 
 import {Test, console} from "forge-std/Test.sol";
-import "solady/src/utils/Base64.sol";
-import "forge-std/StdJson.sol";
+import {Base64} from "solady/src/utils/Base64.sol";
+import {stdJson} from "forge-std/StdJson.sol";
 import {DataItem, OracleMessage} from "../../contracts/interfaces/core/IQuexActionRegistry.sol";
 
 contract ModelEncodingTest is Test {

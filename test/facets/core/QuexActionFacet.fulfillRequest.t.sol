@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import "forge-std/console.sol";
+import {console} from "forge-std/console.sol";
 import {IDepositManager} from "../../../contracts/interfaces/core/IDepositManager.sol";
 import {QuexActionFacetTestDataBase} from "./QuexActionFacet.t.sol";
 import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
