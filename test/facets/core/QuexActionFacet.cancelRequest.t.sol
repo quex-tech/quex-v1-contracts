@@ -3,12 +3,10 @@ pragma solidity 0.8.22;
 
 import {IQuexActionRegistry, Request} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 import {IOraclePool} from "../../../contracts/interfaces/core/IOraclePool.sol";
-import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
 import {IDepositManager} from "../../../contracts/interfaces/core/IDepositManager.sol";
 import {QuexActionFacetTestBase} from "./QuexActionFacet.t.sol";
 import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
 import {IQuexMonetary} from "../../../contracts/interfaces/core/IQuexMonetary.sol";
-import {console} from "forge-std/console.sol";
 
 contract QuexActionFacetCancelRequest is QuexActionFacetTestBase {
     uint256 internal requestId;

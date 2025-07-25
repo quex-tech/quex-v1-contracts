@@ -3,8 +3,6 @@ pragma solidity 0.8.22;
 
 import {IDepositManager} from "../../../contracts/interfaces/core/IDepositManager.sol";
 import {IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
-import {IOraclePool} from "../../../contracts/interfaces/core/IOraclePool.sol";
-import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
 import {QuexActionFacetTestBase} from "./QuexActionFacet.t.sol";
 import {console} from "forge-std/console.sol";
 
@@ -15,15 +13,12 @@ contract QuexActionFacetCreateRequest is QuexActionFacetTestBase {
     }
 
     function test_EmitsRequestCreatedEvent() public {
-        uint256 requestPrice = _getMinimumRequestPrice();
-
         vm.expectEmit(true, false, false, true);
         emit IQuexActionRegistry.RequestCreated(1, flowId, oraclePoolAddress);
         testObject.createRequest(flowId, subscriptionId);
     }
 
     function test_CreatesRequestWithDifferentIds() public {
-        uint256 requestPrice = _getMinimumRequestPrice();
         uint256 requestId1 = testObject.createRequest(flowId, subscriptionId);
         uint256 requestId2 = testObject.createRequest(flowId, subscriptionId);
         assertNotEq(requestId1, requestId2);
@@ -37,15 +32,8 @@ contract QuexActionFacetCreateRequest is QuexActionFacetTestBase {
     }
 
     function test_RevertsIf_FlowNotFound() public {
-        uint256 requestPrice = _getMinimumRequestPrice();
-
         vm.expectRevert(IQuexActionRegistry.Flow_NotFound.selector);
         testObject.createRequest(unknownFlowId, subscriptionId);
-    }
-
-    function _getMinimumRequestPrice() private view returns (uint256) {
-        (uint256 nativeFee, uint256 gasFee) = testObject.getRequestFee(flowId);
-        return nativeFee + gasFee * tx.gasprice;
     }
 }
 

@@ -2,9 +2,7 @@
 pragma solidity 0.8.22;
 
 import {QuexActionFacetTestDataBase} from "./QuexActionFacet.t.sol";
-import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet.sol";
-import {Request, IdType, DataItem, OracleMessage, ETHSignature, IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
-import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
+import {Request, IdType, DataItem, OracleMessage, ETHSignature} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 
 contract QuexActionFacetGetRequest is QuexActionFacetTestDataBase {
     function test_ReturnsEmpty_IfUnknownRequest() public {
@@ -15,7 +13,6 @@ contract QuexActionFacetGetRequest is QuexActionFacetTestDataBase {
     }
 
     function test_ReturnsEmpty_IfRequestFulfilled() public {
-        uint256 requestPrice = _getMinimumRequestPrice(flowId);
         uint256 requestId = testObject.createRequest(flowId, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
         OracleMessage memory message = OracleMessage({
@@ -34,7 +31,6 @@ contract QuexActionFacetGetRequest is QuexActionFacetTestDataBase {
     }
 
     function test_ReturnsRequest() public {
-        uint256 requestPrice = _getMinimumRequestPrice(flowId);
         uint256 requestId = testObject.createRequest(flowId, subscriptionId);
 
         Request memory request = testObject.getRequest(requestId);

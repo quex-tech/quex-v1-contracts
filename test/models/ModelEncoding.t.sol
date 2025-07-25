@@ -16,7 +16,6 @@ contract ModelEncodingTest is Test {
 
         for (uint256 index = 0; index <= 0; ++index) {
             string memory vectorPath = string.concat(".vectors[", vm.toString(index), "]");
-            string memory actionPath = string.concat(vectorPath, ".msg.action_id");
 
             string memory actionIdBase64 = json.readString(string.concat(vectorPath, ".msg.action_id"));
             string memory dataValueBase64 = json.readString(string.concat(vectorPath, ".msg.data_item.value"));

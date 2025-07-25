@@ -261,7 +261,6 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
 
         vm.mockCall(address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, flowIdLocal), abi.encode(flow));
 
-        uint256 requestPriceLocal = _getMinimumRequestPrice(flowIdLocal);
         uint256 requestIdLocal = testObject.createRequest(flowIdLocal, subscriptionId);
         TDTestData memory tdLocal = TD_validInQuex_inOraclePool;
         OracleMessage memory messageLocal = OracleMessage(actionIdLocal, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
@@ -348,7 +347,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         }
         require(hash != bytes32(0)); // Prevent optimizer from removing loop
         uint256 gasUsed = gasStart - gasleft();
-
+        console.log("!! gasUsed:", gasUsed);
     }
 
     function callback_Reenter(uint256 requestId, DataItem memory dataItem, IdType /* idType */) public {
