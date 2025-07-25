@@ -265,5 +265,6 @@ contract QuexActionFacetTestDataBase is QuexActionFacetTestBase {
 }
 
 contract NonPayable {
+    // solhint-disable-next-line payable-fallback
     fallback() external {revert();}
 }

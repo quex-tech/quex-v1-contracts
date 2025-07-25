@@ -204,12 +204,12 @@ contract QuexActionFacetPushData is QuexActionFacetTestDataBase {
     }
 
     function callback_Reenter(uint256 flowId, DataItem memory dataItem, IdType /* idType */) public {
-        uint256 actionId = IFlowRegistry(address(testObject)).getFlow(FLOW_ID).actionId;
+        uint256 actionId = IFlowRegistry(address(testObject)).getFlow(flowId).actionId;
         TDTestData memory td = TD_validInQuex_inOraclePool;
 
         OracleMessage memory message = OracleMessage(actionId, dataItem, relayer);
         ETHSignature memory signature = _signOracleMessage(message, td);
 
-        testObject.pushData{value: pushFee}(message, signature, FLOW_ID, td.tdId);
+        testObject.pushData{value: pushFee}(message, signature, flowId, td.tdId);
     }
 }

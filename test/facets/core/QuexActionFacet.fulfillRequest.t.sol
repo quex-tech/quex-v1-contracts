@@ -361,7 +361,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function _getMinimumRequestPrice(uint256 flowId) private view returns (uint256) {
-        (uint256 nativeFee, uint256 gasFee) = testObject.getRequestFee(FLOW_ID);
+        (uint256 nativeFee, uint256 gasFee) = testObject.getRequestFee(flowId);
         return nativeFee + gasFee * tx.gasprice * GAS_PRICE_MULTIPLIER;
     }
 
