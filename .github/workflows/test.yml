@@ -46,3 +46,6 @@ jobs:
 
       - name: Run Hardhat TypeScript tests
         run: npx hardhat test
+
+      - name: Run linter
+        run: npm run lint:check
