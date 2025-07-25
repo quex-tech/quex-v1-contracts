@@ -135,9 +135,13 @@ contract QuexActionFacetTestDataBase is QuexActionFacetTestBase {
         uint256 tdId;
     }
 
+    // solhint-disable-next-line var-name-mixedcase
     TDTestData internal TD_validInQuex_inOraclePool;
+    // solhint-disable-next-line var-name-mixedcase
     TDTestData internal TD_validInQuex_notInOraclePool;
+    // solhint-disable-next-line var-name-mixedcase
     TDTestData internal TD_notValidInQuex_inOraclePool;
+    // solhint-disable-next-line var-name-mixedcase
     TDTestData internal TD_notValidInQuex_notInOraclePool;
 
     address internal quexTreasury = address(300);
