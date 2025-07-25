@@ -7,7 +7,7 @@ import {IQuexMonetary} from "../../../contracts/interfaces/core/IQuexMonetary.so
 import {IOraclePool} from "../../../contracts/interfaces/core/IOraclePool.sol";
 import {QuexActionFacetTestBase} from "./QuexActionFacet.t.sol";
 
-contract QuexActionFacet_getRequestFee is QuexActionFacetTestBase {
+contract QuexActionFacetGetRequestFee is QuexActionFacetTestBase {
     function testFuzz_ReturnsCorrectFee(uint256 quexFee, uint256 poolFee, uint256 quexGas, uint256 callbackGas) public {
         vm.assume(quexFee < 100 ether);
         vm.assume(poolFee < 100 ether);

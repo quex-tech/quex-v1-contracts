@@ -6,7 +6,8 @@ import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet
 import {IdType, DataItem, OracleMessage, ETHSignature, IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
 import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
-contract QuexActionFacet_pushData is QuexActionFacetTestDataBase {
+
+contract QuexActionFacetPushData is QuexActionFacetTestDataBase {
     uint256 internal pushFee = quexFee;
 
     function test_CallsCallbackFunctionOnce() public {

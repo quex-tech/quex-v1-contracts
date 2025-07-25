@@ -10,7 +10,7 @@ import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet
 import {IQuexMonetary} from "../../../contracts/interfaces/core/IQuexMonetary.sol";
 import {console} from "forge-std/console.sol";
 
-contract QuexActionFacet_cancelRequest is QuexActionFacetTestBase {
+contract QuexActionFacetCancelRequest is QuexActionFacetTestBase {
     uint256 internal requestId;
     uint256 internal requestPrice;
     address internal requestOwner;

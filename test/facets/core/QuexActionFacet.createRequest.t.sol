@@ -8,7 +8,7 @@ import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegis
 import {QuexActionFacetTestBase} from "./QuexActionFacet.t.sol";
 import {console} from "forge-std/console.sol";
 
-contract QuexActionFacet_createRequest is QuexActionFacetTestBase {
+contract QuexActionFacetCreateRequest is QuexActionFacetTestBase {
 
     function setUp() public override {
         QuexActionFacetTestBase.setUp();

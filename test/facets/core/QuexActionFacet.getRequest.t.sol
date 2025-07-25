@@ -6,7 +6,7 @@ import {QuexActionFacet} from "../../../contracts/facets/actions/QuexActionFacet
 import {Request, IdType, DataItem, OracleMessage, ETHSignature, IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegistry.sol";
 
-contract QuexActionFacet_getRequest is QuexActionFacetTestDataBase {
+contract QuexActionFacetGetRequest is QuexActionFacetTestDataBase {
     function test_ReturnsEmpty_IfUnknownRequest() public {
         Request memory request = testObject.getRequest(123456);
         vm.assertEq(request.requestId, 0);

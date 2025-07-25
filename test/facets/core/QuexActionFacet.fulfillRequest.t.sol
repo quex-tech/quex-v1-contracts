@@ -10,7 +10,7 @@ import {Flow, IFlowRegistry} from "../../../contracts/interfaces/core/IFlowRegis
 import {IOraclePool} from "../../../contracts/interfaces/core/IOraclePool.sol";
 import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
 
-contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
+contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     uint256 private requestPrice;
     uint256 private requestId;
     TDTestData private td;
