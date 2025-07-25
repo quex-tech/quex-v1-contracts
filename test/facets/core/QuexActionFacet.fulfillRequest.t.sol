@@ -11,12 +11,12 @@ import {IOraclePool} from "../../../contracts/interfaces/core/IOraclePool.sol";
 import {ECDSA} from "@solidstate/contracts/cryptography/ECDSA.sol";
 
 contract QuexActionFacet_fulfillRequest is QuexActionFacetTestDataBase {
-    uint256 requestPrice;
-    uint256 requestId;
-    TDTestData td;
-    OracleMessage message;
-    ETHSignature signature;
-    IDepositManager depositManager;
+    uint256 private requestPrice;
+    uint256 private requestId;
+    TDTestData private td;
+    OracleMessage private message;
+    ETHSignature private signature;
+    IDepositManager private depositManager;
 
     function setUp() override public {
         QuexActionFacetTestDataBase.setUp();

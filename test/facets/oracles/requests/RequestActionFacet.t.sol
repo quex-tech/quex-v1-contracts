@@ -17,8 +17,8 @@ contract RequestActionFacetTest is Test {
     IRequestOraclePool internal testObject;
 
     address internal quexCoreAddress = vm.createWallet("quexCore").addr;
-    uint256 patchTDId = 100;
-    uint256 createdFlowId = 12345;
+    uint256 private patchTDId = 100;
+    uint256 private createdFlowId = 12345;
 
     function setUp() public virtual {
         diamond = new QuexDiamond();

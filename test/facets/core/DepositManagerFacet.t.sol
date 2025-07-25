@@ -6,11 +6,11 @@ import {DepositManagerFacet} from "../../../contracts/facets/monetary/DepositMan
 import {IQuexActionRegistry} from "../../../contracts/interfaces/core/IQuexActionRegistry.sol";
 
 contract DepositManagerFacetTest is Test {
-    DepositManagerFacet facet;
-    uint256 subscriptionId;
-    address owner = address(0x1);
-    address user = address(0x2);
-    address receiver = address(0x3);
+    DepositManagerFacet private facet;
+    uint256 private subscriptionId;
+    address private owner = address(0x1);
+    address private user = address(0x2);
+    address private receiver = address(0x3);
 
     function setUp() public {
         facet = new DepositManagerFacet();
