@@ -14,13 +14,13 @@ contract QuexActionFacetCreateRequest is QuexActionFacetTestBase {
 
     function test_EmitsRequestCreatedEvent() public {
         vm.expectEmit(true, false, false, true);
-        emit IQuexActionRegistry.RequestCreated(1, flowId, oraclePoolAddress);
-        testObject.createRequest(flowId, subscriptionId);
+        emit IQuexActionRegistry.RequestCreated(1, FLOW_ID, oraclePoolAddress);
+        testObject.createRequest(FLOW_ID, subscriptionId);
     }
 
     function test_CreatesRequestWithDifferentIds() public {
-        uint256 requestId1 = testObject.createRequest(flowId, subscriptionId);
-        uint256 requestId2 = testObject.createRequest(flowId, subscriptionId);
+        uint256 requestId1 = testObject.createRequest(FLOW_ID, subscriptionId);
+        uint256 requestId2 = testObject.createRequest(FLOW_ID, subscriptionId);
         assertNotEq(requestId1, requestId2);
     }
 
@@ -28,12 +28,12 @@ contract QuexActionFacetCreateRequest is QuexActionFacetTestBase {
         uint256 zeroSubscriptionId = IDepositManager(address(diamond)).createSubscription();
         IDepositManager(address(diamond)).addConsumer(zeroSubscriptionId, address(this));
         vm.expectRevert(IQuexActionRegistry.Subscription_InsufficientValue.selector);
-        testObject.createRequest(flowId, zeroSubscriptionId);
+        testObject.createRequest(FLOW_ID, zeroSubscriptionId);
     }
 
     function test_RevertsIf_FlowNotFound() public {
         vm.expectRevert(IQuexActionRegistry.Flow_NotFound.selector);
-        testObject.createRequest(unknownFlowId, subscriptionId);
+        testObject.createRequest(UNKNOWN_FLOW_ID, subscriptionId);
     }
 }
 

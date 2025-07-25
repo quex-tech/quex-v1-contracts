@@ -20,7 +20,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
 
     function setUp() override public {
         QuexActionFacetTestDataBase.setUp();
-        requestPrice = _getMinimumRequestPrice(flowId);
+        requestPrice = _getMinimumRequestPrice(FLOW_ID);
         (requestId, td, message, signature) = _createRequest();
         depositManager = IDepositManager(address(diamond));
     }
@@ -51,7 +51,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         uint256 lockedAfter = depositManager.balance(subscriptionId) -
                             depositManager.withdrawableBalance(subscriptionId);
         assertEq(lockedAfter, 0, "Locked balance should be zero after fulfillment");
-        assertEq(quexTreasury.balance, initialBalance + quexFee);
+        assertEq(quexTreasury.balance, initialBalance + QUEX_FEE);
     }
 
     function test_TransfersTokensToQuex_EvenIf_CallbackIsFailed() public {
@@ -60,7 +60,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         uint256 initialBalance = quexTreasury.balance;
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
-        assertEq(quexTreasury.balance, initialBalance + quexFee);
+        assertEq(quexTreasury.balance, initialBalance + QUEX_FEE);
     }
 
     function test_TransfersTokensToOraclePool() public {
@@ -69,7 +69,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         uint256 initialBalance = oraclePoolTreasury.balance;
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
-        assertEq(oraclePoolTreasury.balance, initialBalance + oraclePoolFee);
+        assertEq(oraclePoolTreasury.balance, initialBalance + ORACLE_POOL_FEE);
     }
 
     function test_TransfersTokensToOraclePool_EvenIf_CallbackIsFailed() public {
@@ -78,7 +78,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         uint256 initialBalance = oraclePoolTreasury.balance;
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
-        assertEq(oraclePoolTreasury.balance, initialBalance + oraclePoolFee);
+        assertEq(oraclePoolTreasury.balance, initialBalance + ORACLE_POOL_FEE);
     }
 
     function test_FallbackToQuexTreasury_If_OraclePoolTransferFails() public {
@@ -92,7 +92,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         );
         assertEq(IOraclePool(flow.pool).getTreasury(), nonPayableAddress);
 
-        (, uint256 gasFee) = testObject.getRequestFee(flowId);
+        (, uint256 gasFee) = testObject.getRequestFee(FLOW_ID);
         uint256 expectedRelayerReward = gasFee * tx.gasprice * GAS_PRICE_MULTIPLIER;
 
         uint256 relayerInitialBalance = address(this).balance;
@@ -101,14 +101,14 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
 
         assertEq(address(this).balance, relayerInitialBalance + expectedRelayerReward);
-        assertEq(quexTreasury.balance, treasuryInitialBalance + oraclePoolFee + quexFee);
+        assertEq(quexTreasury.balance, treasuryInitialBalance + ORACLE_POOL_FEE + QUEX_FEE);
     }
 
     function test_FallbackToQuexTreasury_If_RelayerTransferFails() public {
         _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
 
         // Create non-payable relayer
-        OracleMessage memory msgWithRelayer = OracleMessage(actionId, message.dataItem, nonPayableAddress);
+        OracleMessage memory msgWithRelayer = OracleMessage(ACTION_ID, message.dataItem, nonPayableAddress);
         ETHSignature memory sig = _signOracleMessage(msgWithRelayer, td);
 
         uint256 treasuryInitialBalance = quexTreasury.balance;
@@ -116,9 +116,9 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         testObject.fulfillRequest(msgWithRelayer, sig, requestId, td.tdId);
 
         // gasFee is redirected to Quex treasury
-        (, uint256 gasFee) = testObject.getRequestFee(flowId);
+        (, uint256 gasFee) = testObject.getRequestFee(FLOW_ID);
         uint256 expectedFallback = gasFee * tx.gasprice * GAS_PRICE_MULTIPLIER;
-        assertEq(quexTreasury.balance, treasuryInitialBalance + expectedFallback + quexFee);
+        assertEq(quexTreasury.balance, treasuryInitialBalance + expectedFallback + QUEX_FEE);
     }
 
     function test_RevertsIf_NotEnoughGasLeftForCallback() public {
@@ -143,7 +143,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     function test_TransfersTokensToRelayer() public {
         _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
 
-        (, uint256 gasFee) = testObject.getRequestFee(flowId);
+        (, uint256 gasFee) = testObject.getRequestFee(FLOW_ID);
 
         uint256 initialBalance = address(this).balance;
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
@@ -154,7 +154,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     function test_TransfersTokensToRelayer_EvenIf_CallbackIsFailed() public {
         _mockRevertedCallback(requestId, message.dataItem, IdType.RequestId);
 
-        (, uint256 gasFee) = testObject.getRequestFee(flowId);
+            (, uint256 gasFee) = testObject.getRequestFee(FLOW_ID);
 
         uint256 initialBalance = address(this).balance;
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
@@ -164,7 +164,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
 
     function test_TransfersTokensToDifferentRelayer() public {
         address actualRelayer = address(0xBEEF);
-        OracleMessage memory msgWithRelayer = OracleMessage(actionId, message.dataItem, actualRelayer);
+        OracleMessage memory msgWithRelayer = OracleMessage(ACTION_ID, message.dataItem, actualRelayer);
         ETHSignature memory sig = _signOracleMessage(msgWithRelayer, td);
 
         _mockSuccessfulCallback(requestId, msgWithRelayer.dataItem, IdType.RequestId);
@@ -173,7 +173,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
 
         testObject.fulfillRequest(msgWithRelayer, sig, requestId, td.tdId);
 
-        uint256 expectedReward = requestPrice - quexFee - oraclePoolFee;
+        uint256 expectedReward = requestPrice - QUEX_FEE - ORACLE_POOL_FEE;
         assertEq(actualRelayer.balance, initialBalance + expectedReward);
     }
 
@@ -181,7 +181,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         _mockSuccessfulCallback(requestId, message.dataItem, IdType.RequestId);
 
         vm.expectEmit(true, false, false, true);
-        emit QuexActionFacet.RequestFulfilled(requestId, flowId, address(this));
+        emit QuexActionFacet.RequestFulfilled(requestId, FLOW_ID, address(this));
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
     }
 
@@ -189,7 +189,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
         _mockRevertedCallback(requestId, message.dataItem, IdType.RequestId);
 
         vm.expectEmit(true, false, false, true);
-        emit QuexActionFacet.RequestFulfillingFailed(requestId, flowId, address(this));
+        emit QuexActionFacet.RequestFulfillingFailed(requestId, FLOW_ID, address(this));
         testObject.fulfillRequest(message, signature, requestId, td.tdId);
     }
 
@@ -199,7 +199,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_RevertsIf_ActionIdsMismatched() public {
-        OracleMessage memory msgMismatched = OracleMessage(actionId + 1, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
+        OracleMessage memory msgMismatched = OracleMessage(ACTION_ID + 1, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory sig = _signOracleMessage(msgMismatched, td);
 
         vm.expectRevert(IQuexActionRegistry.Action_MismatchIds.selector);
@@ -207,9 +207,9 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_RevertsIf_TrustDomainIsNotValid() public {
-        uint256 reqId = testObject.createRequest(flowId, subscriptionId);
+        uint256 reqId = testObject.createRequest(FLOW_ID, subscriptionId);
         TDTestData memory tdNotValid = TD_notValidInQuex_inOraclePool;
-        OracleMessage memory msg = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
+        OracleMessage memory msg = OracleMessage(ACTION_ID, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory sig = _signOracleMessage(msg, tdNotValid);
 
         vm.expectRevert(IQuexActionRegistry.TrustDomain_NotValid.selector);
@@ -217,9 +217,9 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_RevertsIf_TrustDomainIsNotInOraclePool() public {
-        uint256 reqId = testObject.createRequest(flowId, subscriptionId);
+        uint256 reqId = testObject.createRequest(FLOW_ID, subscriptionId);
         TDTestData memory tdNotInOraclePool = TD_validInQuex_notInOraclePool;
-        OracleMessage memory msg = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
+        OracleMessage memory msg = OracleMessage(ACTION_ID, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         ETHSignature memory sig = _signOracleMessage(msg, tdNotInOraclePool);
 
         vm.expectRevert(IQuexActionRegistry.TrustDomain_IsNotAllowedInOraclePool.selector);
@@ -236,8 +236,8 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
 
     function test_RevertsIf_MessageIsOutdated() public {
         vm.warp(100000000); // set block's timestamp
-        uint256 timestamp = vm.getBlockTimestamp() - pastTimeSkew - 1;
-        OracleMessage memory msg = OracleMessage(actionId, DataItem(timestamp, 0, abi.encode(1)), relayer);
+        uint256 timestamp = vm.getBlockTimestamp() - PAST_TIME_SKEW - 1;
+        OracleMessage memory msg = OracleMessage(ACTION_ID, DataItem(timestamp, 0, abi.encode(1)), relayer);
         ETHSignature memory sig = _signOracleMessage(msg, td);
 
         vm.expectRevert(IQuexActionRegistry.OracleMessage_OutdatedMessage.selector);
@@ -245,8 +245,8 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function test_RevertsIf_MessageFromFuture() public {
-        uint256 timestamp = vm.getBlockTimestamp() + futureTimeSkew + 1;
-        OracleMessage memory msg = OracleMessage(actionId, DataItem(timestamp, 0, abi.encode(1)), relayer);
+        uint256 timestamp = vm.getBlockTimestamp() + FUTURE_TIME_SKEW + 1;
+        OracleMessage memory msg = OracleMessage(ACTION_ID, DataItem(timestamp, 0, abi.encode(1)), relayer);
         ETHSignature memory sig = _signOracleMessage(msg, td);
 
         vm.expectRevert(IQuexActionRegistry.OracleMessage_TimestampFromFuture.selector);
@@ -351,7 +351,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function callback_Reenter(uint256 requestId, DataItem memory dataItem, IdType /* idType */) public {
-        uint256 actionIdLocal = IFlowRegistry(address(testObject)).getFlow(flowId).actionId;
+        uint256 actionIdLocal = IFlowRegistry(address(testObject)).getFlow(FLOW_ID).actionId;
         TDTestData memory tdLocal = TD_validInQuex_inOraclePool;
 
         OracleMessage memory messageLocal = OracleMessage(actionIdLocal, dataItem, relayer);
@@ -361,16 +361,16 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     }
 
     function _getMinimumRequestPrice(uint256 flowId) private view returns (uint256) {
-        (uint256 nativeFee, uint256 gasFee) = testObject.getRequestFee(flowId);
+        (uint256 nativeFee, uint256 gasFee) = testObject.getRequestFee(FLOW_ID);
         return nativeFee + gasFee * tx.gasprice * GAS_PRICE_MULTIPLIER;
     }
 
     receive() external payable {}
 
     function _createRequest() private returns (uint256 requestId, TDTestData memory td, OracleMessage memory message, ETHSignature memory signature) {
-        requestId = testObject.createRequest(flowId, subscriptionId);
+        requestId = testObject.createRequest(FLOW_ID, subscriptionId);
         td = TD_validInQuex_inOraclePool;
-        message = OracleMessage(actionId, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
+        message = OracleMessage(ACTION_ID, DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)), relayer);
         signature = _signOracleMessage(message, td);
     }
 

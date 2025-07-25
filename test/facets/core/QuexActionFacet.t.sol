@@ -24,22 +24,22 @@ abstract contract QuexActionFacetTestBase is Test {
     address internal consumerAddress = address(200);
     Vm.Wallet internal manager = vm.createWallet("manager");
     bytes4 internal callbackSignature = 0x12345678;
-    uint256 internal constant actionId = 15;
-    uint256 internal constant flowId = 111;
+    uint256 internal constant ACTION_ID = 15;
+    uint256 internal constant FLOW_ID = 111;
     uint256 internal constant GAS_PRICE_MULTIPLIER = 2;
     uint256 internal subscriptionId;
     address internal subscriptionOwner = address(0xA11CE);
     address internal relayer;
     address internal nonPayableAddress;
-    Flow internal flow = Flow(100, actionId, oraclePoolAddress, consumerAddress, callbackSignature);
+    Flow internal flow = Flow(100, ACTION_ID, oraclePoolAddress, consumerAddress, callbackSignature);
 
-    uint256 internal constant unknownFlowId = 2;
+    uint256 internal constant UNKNOWN_FLOW_ID = 2;
 
-    uint256 internal constant quexFee = 100;
-    uint256 internal constant oraclePoolFee = 150;
+    uint256 internal constant QUEX_FEE = 100;
+    uint256 internal constant ORACLE_POOL_FEE = 150;
 
-    uint256 internal constant pastTimeSkew = 30 * 60;
-    uint256 internal constant futureTimeSkew = 30;
+    uint256 internal constant PAST_TIME_SKEW = 30 * 60;
+    uint256 internal constant FUTURE_TIME_SKEW = 30;
 
     function setUp() public virtual {
         diamond = new QuexDiamond();
@@ -93,24 +93,24 @@ abstract contract QuexActionFacetTestBase is Test {
         testObject = IQuexActionFacet(address(diamond));
 
         vm.txGasPrice(1000);
-        vm.mockCall(address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, flowId), abi.encode(flow));
+        vm.mockCall(address(diamond), abi.encodeWithSelector(IFlowRegistry.getFlow.selector, FLOW_ID), abi.encode(flow));
 
         vm.mockCall(
             address(diamond),
-            abi.encodeWithSelector(IFlowRegistry.getFlow.selector, unknownFlowId),
+            abi.encodeWithSelector(IFlowRegistry.getFlow.selector, UNKNOWN_FLOW_ID),
             abi.encode(Flow(0, 0, address(0), address(0), 0x00000000))
         );
 
         vm.mockCall(
             address(diamond),
             abi.encodeWithSelector(IQuexMonetary.getQuexFee.selector),
-            abi.encode(quexFee)
+            abi.encode(QUEX_FEE)
         );
 
         vm.mockCall(
             oraclePoolAddress,
             abi.encodeWithSelector(IOraclePool.getActionFee.selector),
-            abi.encode(oraclePoolFee)
+            abi.encode(ORACLE_POOL_FEE)
         );
 
         vm.label(oraclePoolAddress, "OraclePool");

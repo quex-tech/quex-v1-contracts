@@ -18,7 +18,7 @@ contract QuexActionFacetCancelRequest is QuexActionFacetTestBase {
         requestOwner = address(this);
 
         // Create a request that we can cancel
-        requestId = testObject.createRequest(flowId, subscriptionId);
+        requestId = testObject.createRequest(FLOW_ID, subscriptionId);
     }
 
     function test_SuccessfullyCancelsRequest() public {
@@ -31,9 +31,9 @@ contract QuexActionFacetCancelRequest is QuexActionFacetTestBase {
 
         // Ensure request exists and funds are locked
         Request memory preRequest = testObject.getRequest(requestId);
-        assertEq(preRequest.flowId, flowId, "Request should exist before cancellation");
+        assertEq(preRequest.flowId, FLOW_ID, "Request should exist before cancellation");
 
-        uint256 quexFee = IQuexMonetary(address(testObject)).getQuexFee(flowId);
+        uint256 quexFee = IQuexMonetary(address(testObject)).getQuexFee(FLOW_ID);
         uint256 relayerPremium = (flow.gasLimit + testObject.getQuexGas()) * tx.gasprice * GAS_PRICE_MULTIPLIER;
         uint256 oraclePoolFee = IOraclePool(flow.pool).getActionFee(flow.actionId);
         uint256 requestPrice = quexFee + relayerPremium + oraclePoolFee;
@@ -106,14 +106,9 @@ contract QuexActionFacetCancelRequest is QuexActionFacetTestBase {
 
         // Expect the RequestCancelled event
         vm.expectEmit(true, true, true, true);
-        emit QuexActionFacet.RequestCancelled(requestId, flowId, requestOwner);
+        emit QuexActionFacet.RequestCancelled(requestId, FLOW_ID, requestOwner);
 
         // Cancel the request
         testObject.cancelRequest(requestId);
-    }
-
-    function _getMinimumRequestPrice() private view returns (uint256) {
-        (uint256 nativeFee, uint256 gasFee) = testObject.getRequestFee(flowId);
-        return nativeFee + gasFee * tx.gasprice;
     }
 }

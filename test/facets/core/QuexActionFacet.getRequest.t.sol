@@ -13,10 +13,10 @@ contract QuexActionFacetGetRequest is QuexActionFacetTestDataBase {
     }
 
     function test_ReturnsEmpty_IfRequestFulfilled() public {
-        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
+        uint256 requestId = testObject.createRequest(FLOW_ID, subscriptionId);
         TDTestData memory td = TD_validInQuex_inOraclePool;
         OracleMessage memory message = OracleMessage({
-            actionId: actionId,
+            actionId: ACTION_ID,
             dataItem: DataItem(vm.getBlockTimestamp(), 0, abi.encode(1)),
             relayer: relayer
         });
@@ -31,16 +31,11 @@ contract QuexActionFacetGetRequest is QuexActionFacetTestDataBase {
     }
 
     function test_ReturnsRequest() public {
-        uint256 requestId = testObject.createRequest(flowId, subscriptionId);
+        uint256 requestId = testObject.createRequest(FLOW_ID, subscriptionId);
 
         Request memory request = testObject.getRequest(requestId);
         vm.assertEq(request.requestId, requestId);
-        vm.assertEq(request.flowId, flowId);
+        vm.assertEq(request.flowId, FLOW_ID);
         vm.assertEq(request.oraclePool, oraclePoolAddress);
-    }
-
-    function _getMinimumRequestPrice(uint256 flowId) private view returns (uint256) {
-        (uint256 nativeFee, uint256 gasFee) = testObject.getRequestFee(flowId);
-        return nativeFee + gasFee * tx.gasprice;
     }
 }
