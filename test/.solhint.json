@@ -17,6 +17,7 @@
         "no-console": "off",
         "func-name-mixedcase": "off",
         "gas-custom-errors": "off",
-        "reason-string": "off"
+        "reason-string": "off",
+        "gas-small-strings": "off"
     }
 }

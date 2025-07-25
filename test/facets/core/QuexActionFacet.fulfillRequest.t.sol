@@ -353,7 +353,7 @@ contract QuexActionFacetFulfillRequest is QuexActionFacetTestDataBase {
     function callback_HeavyComputation(uint256, /*requestId*/ DataItem memory dataItem, IdType /*idType*/ ) public {
         uint256 gasStart = gasleft();
         bytes32 hash = keccak256(abi.encode(dataItem.timestamp));
-        for (uint256 i = 0; i < 2000; i++) {
+        for (uint256 i = 0; i < 2000; ++i) {
             hash = keccak256(abi.encode(hash, i));
         }
         require(hash != bytes32(0)); // Prevent optimizer from removing loop

@@ -25,7 +25,7 @@ contract QuoteVerifierTest is Test {
     /// forge-config: default.allow_internal_expect_revert = true
     function test_ensureTDAttributesSafe_InvalidBits0to27() public {
         // Test each bit from 0 to 27
-        for (uint8 i = 0; i <= 27; i++) {
+        for (uint8 i = 0; i <= 27; ++i) {
             bytes8 invalidAttributes = bytes8(0);
             invalidAttributes = _setBit(invalidAttributes, i);
             console.logBytes8(invalidAttributes);
@@ -52,7 +52,7 @@ contract QuoteVerifierTest is Test {
     /// forge-config: default.allow_internal_expect_revert = true
     function test_ensureTDAttributesSafe_InvalidBits32to62() public {
         // Test each bit from 32 to 62
-        for (uint8 i = 32; i <= 62; i++) {
+        for (uint8 i = 32; i <= 62; ++i) {
             bytes8 invalidAttributes = bytes8(0);
             invalidAttributes = _setBit(invalidAttributes, i);
 
