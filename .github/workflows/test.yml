@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: true
 
-    name: Foundry project
+    name: Build and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
 
-    name: Linter
+    name: Linter checks
     runs-on: ubuntu-latest
 
     steps:
