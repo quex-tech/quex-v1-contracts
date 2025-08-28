@@ -101,6 +101,11 @@ const config: HardhatUserConfig = {
       chainId: 2810,
       url: `https://rpc-quicknode-holesky.morphl2.io`,
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    },
+    "0gTestnet": {
+      chainId: 16601,
+      url: `https://evmrpc-testnet.0g.ai`,
+      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     }
   },
   gasReporter: {
