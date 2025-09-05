@@ -119,7 +119,12 @@ const config: HardhatUserConfig = {
         maxFeePerGas: 3000000000000n,
       },
       gasPrice: 3000000000000,
-    }
+    },
+    "0gMainnet": {
+      chainId: 16661,
+      url: `http://evmrpc.0g.ai/`,
+      accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
+    },
   },
   gasReporter: {
     enabled: true

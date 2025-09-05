@@ -449,5 +449,20 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
             managerAddress: DEFAULT_MANAGER,
             maxResponseBlocks: 200n
         }
+    },
+    "0gMainnet": {
+        disableCreate2: true,
+        core: {
+            quexFee: 3_000_000_000_000_000n, // 0.003 OG
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
     }
 }
