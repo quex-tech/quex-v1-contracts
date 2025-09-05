@@ -18,6 +18,8 @@ export interface QuexCoreNetworkConfig {
     quexFulfillingGasCost: bigint;
     treasuryAddress: AddressLike;
     managerAddress: AddressLike;
+    pastTimeSkew?: bigint;
+    futureTimeSkew?: bigint;
 }
 
 export interface RequestOracleConfig {
@@ -424,6 +426,22 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
             quexFulfillingGasCost: 110_000n,
             treasuryAddress: DEFAULT_TREASURY,
             managerAddress: DEFAULT_MANAGER
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
+    },
+    igraCaravelTestnet: {
+        disableCreate2: true,
+        core: {
+            quexFee: 1_000_000_000_000_000_000n, // 1 KAS
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: "0x70beA06316c51097dF67496feaFb7F50758019b9", // Relayer address
+            managerAddress: DEFAULT_MANAGER,
+            pastTimeSkew: 60n * 60n, // 1 hour
         },
         request: {
             actionFee: 0n,

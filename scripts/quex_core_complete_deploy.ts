@@ -19,8 +19,8 @@ import {ethers} from "hardhat";
 import env from "hardhat";
 import {quexConfig, QuexNetworkConfig, QuexCoreNetworkConfig, supportedSvns, SupportedSvns} from "./quex_config";
 
-const pastTimeSkew = 15n * 60n; // 15 min
-const futureTimeSkew = 30n; // 30 sec
+const defaultPastTimeSkew = 15n * 60n; // 15 min
+const defaultFutureTimeSkew = 30n; // 30 sec
 
 export async function run(quexNetworkConfig: QuexNetworkConfig) {
     const {quexCoreDiamond} = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule, {strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2"});
@@ -91,6 +91,8 @@ async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkCo
     console.log(`Quex gas: ${quexGas}`);
 
     let timeSkew = await quexActions.getTimeSkew();
+    const pastTimeSkew = config.pastTimeSkew ?? defaultPastTimeSkew;
+    const futureTimeSkew = config.futureTimeSkew ?? defaultFutureTimeSkew;
     if (timeSkew[0] != pastTimeSkew || timeSkew[1] != futureTimeSkew) {
         const tx = await quexActions
             .connect(await ethers.getSigner(<string>config.managerAddress))
