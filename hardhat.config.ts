@@ -125,6 +125,16 @@ const config: HardhatUserConfig = {
       url: `http://evmrpc.0g.ai/`,
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     },
+    redbellyTestnet: {
+      chainId: 153,
+      url: `https://governors.testnet.redbelly.network`,
+      accounts : [quexRedbellyTestnetPrivateKey]
+    },
+    redbellyMainnet: {
+      chainId: 151,
+      url: `https://governors.mainnet.redbelly.network`,
+      accounts : [quexRedbellyMainnetPrivateKey]
+    },
   },
   gasReporter: {
     enabled: true
