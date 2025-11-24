@@ -18,12 +18,17 @@ contract RequestActionFacet is IRequestOraclePool {
     }
 
     function addPrivatePatch(HTTPPrivatePatch memory privatePatch) public returns (bytes32 patchId) {
+        RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
         patchId = _isEmptyPatch(privatePatch)
             ? bytes32(0)
             : keccak256(abi.encode(privatePatch));
         if (patchId != 0) {
             require(privatePatch.tdAddress != address(0));
-            RequestOracleStorage.layout().privatePatches[patchId] = privatePatch;
+            if (layout.privatePatchOwners[patchId] == address(0)) {
+                layout.privatePatches[patchId] = privatePatch;
+                layout.privatePatchOwners[patchId] = msg.sender;
+                layout.privatePatchConsumers[patchId][msg.sender] = 1;
+            }
         }
         emit PrivatePatchAdded(patchId);
         return patchId;
@@ -63,6 +68,9 @@ contract RequestActionFacet is IRequestOraclePool {
         if (patchId != 0 && requestAction.patch.tdAddress == address(0)) {
             revert PrivatePatchNotFound();
         }
+        if (patchId != 0 && layout.privatePatchConsumers[patchId][msg.sender] == 0) {
+            revert PrivatePatchNotAuthorized();
+        }
         if (bytes(requestAction.responseSchema).length == 0) {
             revert ResponseSchemaNotFound();
         }
@@ -79,8 +87,13 @@ contract RequestActionFacet is IRequestOraclePool {
     function addAction(RequestAction memory requestAction) external returns (uint256 actionId) {
         RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
 
-        bytes32 requestId = addRequest(requestAction.request);
         bytes32 patchId = addPrivatePatch(requestAction.patch);
+
+        if (patchId != 0 && layout.privatePatchConsumers[patchId][msg.sender] == 0) {
+            revert PrivatePatchNotAuthorized();
+        }
+
+        bytes32 requestId = addRequest(requestAction.request);
         bytes32 filterId = addJqFilter(requestAction.jqFilter);
         bytes32 schemaId = addResponseSchema(requestAction.responseSchema);
 
@@ -100,6 +113,27 @@ contract RequestActionFacet is IRequestOraclePool {
 
         RequestAction memory requestAction = _getRequestAction(requestActionInternal);
         return abi.encode(requestAction);
+    }
+
+    function addPrivatePatchConsumer(bytes32 patchId, address consumer) external override {
+        RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
+        if (layout.privatePatchOwners[patchId] != msg.sender) {
+            revert PrivatePatchConsumerWrongCaller();
+        }
+        layout.privatePatchConsumers[patchId][consumer] = 1;
+    }
+
+    function removePrivatePatchConsumer(bytes32 patchId, address consumer) external override {
+        RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
+        if (layout.privatePatchOwners[patchId] != msg.sender) {
+            revert PrivatePatchConsumerWrongCaller();
+        }
+        layout.privatePatchConsumers[patchId][consumer] = 0;
+    }
+
+    function hasAccessToPrivatePatch(bytes32 patchId, address consumer) external view returns (bool) {
+        RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
+        return layout.privatePatchConsumers[patchId][consumer] == 1;
     }
 
     function _getRequestAction(

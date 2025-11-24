@@ -25,7 +25,7 @@ contract RequestActionFacetTest is Test {
         diamond.init(address(this));
         RequestActionFacet facet = new RequestActionFacet();
         IERC2535DiamondCutInternal.FacetCut[] memory cuts = new IERC2535DiamondCutInternal.FacetCut[](1);
-        bytes4[] memory selectors = new bytes4[](7);
+        bytes4[] memory selectors = new bytes4[](9);
 
         selectors[0] = RequestActionFacet.addAction.selector;
         selectors[1] = RequestActionFacet.addActionByParts.selector;
@@ -34,6 +34,8 @@ contract RequestActionFacetTest is Test {
         selectors[4] = RequestActionFacet.addRequest.selector;
         selectors[5] = RequestActionFacet.addResponseSchema.selector;
         selectors[6] = RequestActionFacet.getAction.selector;
+        selectors[7] = RequestActionFacet.addPrivatePatchConsumer.selector;
+        selectors[8] = RequestActionFacet.removePrivatePatchConsumer.selector;
 
         cuts[0] = IERC2535DiamondCutInternal.FacetCut({
             target: address(facet),
@@ -113,6 +115,109 @@ contract RequestActionFacetTest is Test {
     function test_addResponseSchema_RevertsIf_Empty() public {
         vm.expectRevert();
         testObject.addResponseSchema("");
+    }
+
+    function testFuzz_addActionByParts_RevertsIf_PrivatePatchNotAuthorized(
+        FuzzTestCase memory testCase,
+        PatchFuzzTestCase memory patchTestCase
+    ) public {
+        (RequestAction memory requestSpec, uint256 actionId) = _createRequestAction(testCase, patchTestCase, true);
+        (bytes32 requestId, bytes32 patchId, bytes32 schemaId, bytes32 filterId) = _createRequestParts(requestSpec);
+        vm.prank(address(0x123));
+        vm.expectRevert(abi.encodeWithSelector(IRequestOraclePool.PrivatePatchNotAuthorized.selector));
+        testObject.addActionByParts(requestId, patchId, schemaId, filterId);
+    }
+
+    function testFuzz_addAction_RevertsIf_PrivatePatchNotAuthorized(
+        FuzzTestCase memory testCase,
+        PatchFuzzTestCase memory patchTestCase
+    ) public {
+        (RequestAction memory requestSpec, uint256 actionId) = _createRequestAction(testCase, patchTestCase, true);
+        testObject.addPrivatePatch(requestSpec.patch);
+        vm.prank(address(0x123));
+        vm.expectRevert(abi.encodeWithSelector(IRequestOraclePool.PrivatePatchNotAuthorized.selector));
+        testObject.addAction(requestSpec);
+    }
+
+    function testFuzz_addActionByParts_createsActionIfPatchConsumerSet(
+        FuzzTestCase memory testCase,
+        PatchFuzzTestCase memory patchTestCase
+    ) public {
+        address consumer = address(0x123);
+        (RequestAction memory requestSpec, uint256 actionId) = _createRequestAction(testCase, patchTestCase, true);
+        (bytes32 requestId, bytes32 patchId, bytes32 schemaId, bytes32 filterId) = _createRequestParts(requestSpec);
+        testObject.addPrivatePatchConsumer(patchId, consumer);
+        vm.prank(consumer);
+        vm.expectEmit(true, false, false, true);
+        emit IRequestOraclePool.RequestActionAdded(actionId);
+        testObject.addActionByParts(requestId, patchId, schemaId, filterId);
+    }
+
+    function testFuzz_addAction_createsActionIfPatchConsumerSet(
+        FuzzTestCase memory testCase,
+        PatchFuzzTestCase memory patchTestCase
+    ) public {
+        address consumer = address(0x123);
+        (RequestAction memory requestSpec, uint256 actionId) = _createRequestAction(testCase, patchTestCase, true);
+        bytes32 patchId = testObject.addPrivatePatch(requestSpec.patch);
+        testObject.addPrivatePatchConsumer(patchId, consumer);
+        vm.prank(consumer);
+        vm.expectEmit(true, false, false, true);
+        emit IRequestOraclePool.RequestActionAdded(actionId);
+        testObject.addAction(requestSpec);
+    }
+
+    function testFuzz_addActionByParts_RevertsIf_ConsumerWasRemoved(
+        FuzzTestCase memory testCase,
+        PatchFuzzTestCase memory patchTestCase
+    ) public {
+        address consumer = address(0x123);
+        (RequestAction memory requestSpec, uint256 actionId) = _createRequestAction(testCase, patchTestCase, true);
+        (bytes32 requestId, bytes32 patchId, bytes32 schemaId, bytes32 filterId) = _createRequestParts(requestSpec);
+        testObject.addPrivatePatchConsumer(patchId, consumer);
+        testObject.removePrivatePatchConsumer(patchId, consumer);
+        vm.prank(consumer);
+        vm.expectRevert(abi.encodeWithSelector(IRequestOraclePool.PrivatePatchNotAuthorized.selector));
+        testObject.addActionByParts(requestId, patchId, schemaId, filterId);
+    }
+
+    function testFuzz_addActionByParts_Success_IfEmptyPatch(
+        FuzzTestCase memory testCase,
+        PatchFuzzTestCase memory patchTestCase
+    ) public {
+        (RequestAction memory requestSpec, uint256 actionId) = _createRequestAction(testCase, patchTestCase, false);
+        (bytes32 requestId, bytes32 patchId, bytes32 schemaId, bytes32 filterId) = _createRequestParts(requestSpec);
+        testObject.addActionByParts(requestId, patchId, schemaId, filterId);
+        vm.prank(address(0x123));
+        vm.expectEmit(true, false, false, true);
+        emit IRequestOraclePool.RequestActionAdded(actionId);
+        testObject.addActionByParts(requestId, patchId, schemaId, filterId);
+    }
+
+    function testFuzz_addAction_Success_IfEmptyPatch(
+        FuzzTestCase memory testCase,
+        PatchFuzzTestCase memory patchTestCase
+    ) public {
+        (RequestAction memory requestSpec, uint256 actionId) = _createRequestAction(testCase, patchTestCase, false);
+        testObject.addAction(requestSpec);
+        vm.prank(address(0x123));
+        vm.expectEmit(true, false, false, true);
+        emit IRequestOraclePool.RequestActionAdded(actionId);
+        testObject.addAction(requestSpec);
+    }
+
+    function testFuzz_addAction_RevertsIf_ConsumerWasRemoved(
+        FuzzTestCase memory testCase,
+        PatchFuzzTestCase memory patchTestCase
+    ) public {
+        address consumer = address(0x123);
+        (RequestAction memory requestSpec, uint256 actionId) = _createRequestAction(testCase, patchTestCase, true);
+        bytes32 patchId = testObject.addPrivatePatch(requestSpec.patch);
+        testObject.addPrivatePatchConsumer(patchId, consumer);
+        testObject.removePrivatePatchConsumer(patchId, consumer);
+        vm.prank(consumer);
+        vm.expectRevert(abi.encodeWithSelector(IRequestOraclePool.PrivatePatchNotAuthorized.selector));
+        testObject.addAction(requestSpec);
     }
 
     struct FuzzTestCase {

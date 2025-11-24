@@ -2,7 +2,7 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import DeployRequestOracleDiamondModule from "./DeployRequestOracleDiamondModule";
 import AddConstantPriceMonetaryFacetToRequestOracleModule from "./AddConstantPriceMonetaryFacetToRequestOracleModule";
 import AddQuexAddressFacetToRequestOracleModule from "./AddQuexAddressFacetToRequestOracleModule";
-import AddRequestActionFacetToRequestOracleModule from "./AddRequestActionFacetToRequestOracleModule";
+import AddRequestActionFacetV2ToRequestOracleModule from "./AddRequestActionFacetToRequestOracleModule";
 import AddTreasuryFacetToRequestOracleModule from "./AddTreasuryFacetToRequestOracleModule";
 import AddTrustDomainPolicyFacetToRequestOracleModule from "./AddTrustDomainPolicyFacetToRequestOracleModule";
 import AddConstantMaxResponseBlocksFacetToRequestOracleModule from "./AddConstantMaxResponseBlocksFacetToRequestOracleModule";
@@ -12,7 +12,7 @@ const RequestOracleDeployAndConfigurationModule = buildModule("RequestOracleDepl
 
     m.useModule(AddConstantPriceMonetaryFacetToRequestOracleModule);
     m.useModule(AddQuexAddressFacetToRequestOracleModule);
-    m.useModule(AddRequestActionFacetToRequestOracleModule);
+    m.useModule(AddRequestActionFacetV2ToRequestOracleModule);
     m.useModule(AddTreasuryFacetToRequestOracleModule);
     m.useModule(AddTrustDomainPolicyFacetToRequestOracleModule);
     m.useModule(AddConstantMaxResponseBlocksFacetToRequestOracleModule);

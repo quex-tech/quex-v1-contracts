@@ -2,11 +2,11 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import { ethers } from "ethers";
 import DeployRequestOracleDiamondModule from "./DeployRequestOracleDiamondModule";
 import { RequestActionFacet__factory } from "../../../../typechain";
-import DeployRequestActionFacetModule from "./DeployRequestActionFacetModule";
+import DeployRequestActionFacetV2Module from "./DeployRequestActionFacetModule";
 
-const AddRequestActionFacetToRequestOracleModule = buildModule("AddRequestActionFacetToRequestOracleModule", (m) => {
+const AddRequestActionFacetV2ToRequestOracleModule = buildModule("AddRequestActionFacetV2ToRequestOracleModule", (m) => {
     const requestsDiamond = m.useModule(DeployRequestOracleDiamondModule).requestsDiamond;
-    const facet = m.useModule(DeployRequestActionFacetModule).facet;
+    const facet = m.useModule(DeployRequestActionFacetV2Module).facet;
     const facetInterface = RequestActionFacet__factory.createInterface();
 
     const facetCuts = [
@@ -21,6 +21,9 @@ const AddRequestActionFacetToRequestOracleModule = buildModule("AddRequestAction
                 facetInterface.getFunction("addResponseSchema").selector,
                 facetInterface.getFunction("addJqFilter").selector,
                 facetInterface.getFunction("getAction").selector,
+                facetInterface.getFunction("addPrivatePatchConsumer").selector,
+                facetInterface.getFunction("removePrivatePatchConsumer").selector,
+                facetInterface.getFunction("hasAccessToPrivatePatch").selector,
             ]
         }
     ];
@@ -29,4 +32,4 @@ const AddRequestActionFacetToRequestOracleModule = buildModule("AddRequestAction
     return { requestsDiamond };
 });
 
-export default AddRequestActionFacetToRequestOracleModule;
+export default AddRequestActionFacetV2ToRequestOracleModule;

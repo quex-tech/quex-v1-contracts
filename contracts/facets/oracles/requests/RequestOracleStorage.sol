@@ -17,6 +17,8 @@ library RequestOracleStorage {
         mapping(bytes32 => string) jqFilters;
         mapping(bytes32 => string) resultSchemas;
         mapping(uint256 => RequestActionInternal) requestActions;
+        mapping(bytes32 => address) privatePatchOwners;
+        mapping(bytes32 => mapping(address => uint256)) privatePatchConsumers;
     }
 
     bytes32 internal constant STORAGE_SLOT = keccak256("quex.pools.request.v2");
