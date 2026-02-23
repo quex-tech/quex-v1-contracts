@@ -120,6 +120,17 @@ const config: HardhatUserConfig = {
       },
       gasPrice: 3000000000000,
     },
+    igraGalleonTestnet: {
+      chainId: 38836,
+      url: `https://galleon-testnet.igralabs.com:8545`,
+      accounts: [quexDeployerPrivateKey, quexManagerPrivateKey],
+      ignition: {
+        gasPrice: 3000000000000n,
+        maxPriorityFeePerGas: 3000000000000n,
+        maxFeePerGas: 3000000000000n,
+      },
+      gasPrice: 3000000000000,
+    },
     "0gMainnet": {
       chainId: 16661,
       url: `http://evmrpc.0g.ai/`,
