@@ -1,0 +1,10 @@
+{
+  "AddTrustDomainFacetToQuexCoreModule#TrustDomainFacetInitializer": "0x9DEB3695D06112dcC93D564886c463BE247355e6",
+  "DeployDepositManagerFacetModule#DepositManagerFacet": "0xeB78940aa96CB5b4fdF60E3eCc0e730de20eCe51",
+  "DeployFlowFacetModule#FlowFacet": "0xE59cb1B12F8F1C1a0B27B051803C82B138A91D5E",
+  "DeployP256VerifierFacetModule#P256VerifierFacet": "0x70b58050A60FD3E00586dCaC37498dBDd1173E38",
+  "DeployQuexActionFacetModule#QuexActionFacet": "0xC9c9E9BEc3A3064C88C2c01ab859d16d63F99d35",
+  "DeployQuexMonetaryFacetModule#QuexMonetaryFacet": "0x0FED49D38030b0bc89B9453Bb48c8Db452bba11C",
+  "DeployTrustDomainFacetModule#TrustDomainFacet": "0xe7828848f5e8d51a898A53Baf4521530f725169D",
+  "QuexDiamond#QuexDiamond": "0x97076a3c0A414E779f7BEC2Bd196D4FdaADFDB96"
+}

@@ -45,7 +45,10 @@ async function validate_interfaces(diamond: QuexDiamond) {
 
 async function configure_manager(diamond: QuexDiamond, config: RequestOracleConfig) {
     const managerRoleId = "0xc8935964ff9a146a753e867ea3890f562b75604c6d6883305d776151177a5a74";
-    await diamond.grantRole(managerRoleId, config.managerAddress);
+    const hasRole = await diamond.hasRole(managerRoleId, config.managerAddress);
+    if (!hasRole) {
+        await diamond.grantRole(managerRoleId, config.managerAddress);
+    }
 }
 
 async function set_config_values(diamond: QuexDiamond, config: RequestOracleConfig, quexCoreAddress: AddressLike) {

@@ -18,6 +18,8 @@ export interface QuexCoreNetworkConfig {
     quexFulfillingGasCost: bigint;
     treasuryAddress: AddressLike;
     managerAddress: AddressLike;
+    pastTimeSkew?: bigint;
+    futureTimeSkew?: bigint;
 }
 
 export interface RequestOracleConfig {
@@ -73,7 +75,7 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
     arbitrumOne: {
         core: {
             quexFee: 30_000_000_000_000n, // 0.00003 ETH
-            quexFulfillingGasCost: 110_000n,
+            quexFulfillingGasCost: 500_000n,
             treasuryAddress: DEFAULT_TREASURY,
             managerAddress: DEFAULT_MANAGER
         },
@@ -171,7 +173,7 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
     },
     ethereumSepolia: {
         core: {
-            quexFee: 30_000_000_000_000n, // 0.00003 ETH
+            quexFee: 300_000_000_000_000n, // 0.0003 ETH
             quexFulfillingGasCost: 110_000n,
             treasuryAddress: DEFAULT_TREASURY,
             managerAddress: DEFAULT_MANAGER
@@ -185,7 +187,7 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
     },
     ethereum: {
         core: {
-            quexFee: 30_000_000_000_000n, // 0.00003 ETH
+            quexFee: 300_000_000_000_000n, // 0.0003 ETH
             quexFulfillingGasCost: 110_000n,
             treasuryAddress: DEFAULT_TREASURY,
             managerAddress: DEFAULT_MANAGER
@@ -319,7 +321,139 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
     waterfallTestnet9: {
         disableCreate2: true,
         core: {
-            quexFee: 4000_000_000_000_000_000_000n, // 4000 WATER
+            quexFee: 300_000_000_000_000_000_000n, // 300 WATER
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: "0x70beA06316c51097dF67496feaFb7F50758019b9", // Relayer address
+            managerAddress: DEFAULT_MANAGER
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
+    },
+    waterfallMainnet: {
+        disableCreate2: true,
+        core: {
+            quexFee: 300_000_000_000_000_000_000n, // 300 WATER
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: "0x70beA06316c51097dF67496feaFb7F50758019b9", // Relayer address
+            managerAddress: DEFAULT_MANAGER
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
+    },
+    baseSepolia: {
+        core: {
+            quexFee: 30_000_000_000_000n, // 0.00003 ETH
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
+    },
+    baseMainnet: {
+        core: {
+            quexFee: 30_000_000_000_000n, // 0.00003 ETH
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
+    },
+    kasplexTestnet: {
+        disableCreate2: true,
+        core: {
+            quexFee: 1_000_000_000_000_000_000n, // 1 KAS
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: "0x70beA06316c51097dF67496feaFb7F50758019b9", // Relayer address
+            managerAddress: DEFAULT_MANAGER
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
+    },
+    morphMainnet: {
+        core: {
+            quexFee: 30_000_000_000_000n, // 0.00003 ETH
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
+    },
+    morphHolesky: {
+        core: {
+            quexFee: 30_000_000_000_000n, // 0.00003 ETH
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
+    },
+    "0gTestnet": {
+        disableCreate2: true,
+        core: {
+            quexFee: 3_000_000_000_000_000n, // 0.003 OG
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
+    },
+    igraCaravelTestnet: {
+        disableCreate2: true,
+        core: {
+            quexFee: 1_000_000_000_000_000_000n, // 1 KAS
+            quexFulfillingGasCost: 110_000n,
+            treasuryAddress: "0x70beA06316c51097dF67496feaFb7F50758019b9", // Relayer address
+            managerAddress: DEFAULT_MANAGER,
+            pastTimeSkew: 60n * 60n, // 1 hour
+        },
+        request: {
+            actionFee: 0n,
+            treasuryAddress: DEFAULT_TREASURY,
+            managerAddress: DEFAULT_MANAGER,
+            maxResponseBlocks: 200n
+        }
+    },
+    "0gMainnet": {
+        disableCreate2: true,
+        core: {
+            quexFee: 3_000_000_000_000_000n, // 0.003 OG
             quexFulfillingGasCost: 110_000n,
             treasuryAddress: DEFAULT_TREASURY,
             managerAddress: DEFAULT_MANAGER

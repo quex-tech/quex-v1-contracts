@@ -19,8 +19,8 @@ import {ethers} from "hardhat";
 import env from "hardhat";
 import {quexConfig, QuexNetworkConfig, QuexCoreNetworkConfig, supportedSvns, SupportedSvns} from "./quex_config";
 
-const pastTimeSkew = 15n * 60n; // 15 min
-const futureTimeSkew = 30n; // 30 sec
+const defaultPastTimeSkew = 15n * 60n; // 15 min
+const defaultFutureTimeSkew = 30n; // 30 sec
 
 export async function run(quexNetworkConfig: QuexNetworkConfig) {
     const {quexCoreDiamond} = await ignition.deploy(QuexCoreCompleteDeployAndConfigurationModule, {strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2"});
@@ -56,7 +56,10 @@ async function validate_interfaces(diamond: QuexDiamond) {
 
 async function configure_manager(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
     const manager = "0xc8935964ff9a146a753e867ea3890f562b75604c6d6883305d776151177a5a74";
-    await (await diamond.grantRole(manager, config.managerAddress)).wait();
+    const hasRole = await diamond.hasRole(manager, config.managerAddress);
+    if (!hasRole) {
+        await (await diamond.grantRole(manager, config.managerAddress)).wait();
+    }
 }
 
 async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
@@ -88,6 +91,8 @@ async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkCo
     console.log(`Quex gas: ${quexGas}`);
 
     let timeSkew = await quexActions.getTimeSkew();
+    const pastTimeSkew = config.pastTimeSkew ?? defaultPastTimeSkew;
+    const futureTimeSkew = config.futureTimeSkew ?? defaultFutureTimeSkew;
     if (timeSkew[0] != pastTimeSkew || timeSkew[1] != futureTimeSkew) {
         const tx = await quexActions
             .connect(await ethers.getSigner(<string>config.managerAddress))
@@ -100,15 +105,31 @@ async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkCo
 async function add_supported_svns(diamond: QuexDiamond, supportedSvns: SupportedSvns) {
     const tdRegistry = ITrustDomainRegistryExtended__factory.connect(await diamond.getAddress(), diamond.runner);
     for (const cpuSvn of supportedSvns.cpuSvnsToAdd) {
+        const isAllowed = await tdRegistry.isCpuSvnAllowed(cpuSvn);
+        if (isAllowed) {
+            continue;
+        }
         await (await tdRegistry.allowCpuSvn(cpuSvn)).wait();
     }
     for (const teeTcbSvn of supportedSvns.teeTcbSvnsToAdd) {
+        const isAllowed = await tdRegistry.isTeeTcbSvnAllowed(teeTcbSvn);
+        if (isAllowed) {
+            continue;
+        }
         await (await tdRegistry.allowTeeTcbSvn(teeTcbSvn)).wait();
     }
     for (const cpuSvn of supportedSvns.cpuSvnsToRemove) {
+        const isAllowed = await tdRegistry.isCpuSvnAllowed(cpuSvn);
+        if (!isAllowed) {
+            continue;
+        }
         await (await tdRegistry.revokeCpuSvn(cpuSvn)).wait();
     }
     for (const teeTcbSvn of supportedSvns.teeTcbSvnsToRemove) {
+        const isAllowed = await tdRegistry.isTeeTcbSvnAllowed(teeTcbSvn);
+        if (!isAllowed) {
+            continue;
+        }
         await (await tdRegistry.revokeTeeTcbSvn(teeTcbSvn)).wait();
     }
 }

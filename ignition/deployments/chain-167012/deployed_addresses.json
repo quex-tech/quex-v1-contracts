@@ -1,0 +1,19 @@
+{
+  "AddTrustDomainFacetToQuexCoreModule#TrustDomainFacetInitializer": "0x9b0b7F13f3c997B41069496D02B941DbcD8C892d",
+  "DeployDepositManagerFacetModule#DepositManagerFacet": "0xa99015F382f1806CF16004FEc24A0Fe2FE28B9a0",
+  "DeployFlowFacetModule#FlowFacet": "0x6BDcC6e46f3B830c15F77aEd643E36B9AA3a747B",
+  "DeployP256VerifierFacetModule#P256VerifierFacet": "0xea873ce7cEcc2455e0D243B2b9c56Cc848684619",
+  "DeployQuexActionFacetModule#QuexActionFacet": "0x0F4830f5AB9f668655EAcA77935426d0a9C847e7",
+  "DeployQuexMonetaryFacetModule#QuexMonetaryFacet": "0x736b6D540493E8973f65a59a2Dca64311818B606",
+  "DeployTrustDomainFacetModule#TrustDomainFacet": "0x29b25EC9760e7a4CDbb7539Ae671C585E4028618",
+  "QuexDiamond#QuexDiamond": "0x48f15775Bc2d83BA18485FE19D4BC6a7ad90293c",
+  "DeployConstantMaxResponseBlocksFacetModule#ConstantMaxResponseBlocksFacet": "0xD56ad990BF3399aB3ba68d609918D8e5151aB355",
+  "DeployConstantPriceMonetaryFacetModule#ConstantPriceMonetaryFacet": "0x652D40ef0D2Fd4208f820f9de366e7e7F8c3ef03",
+  "DeployQuexAddressFacetModule#QuexAddressFacet": "0x8afbB623b15822C07cb772F68e1C7900eA57e89F",
+  "DeployRequestActionFacetModule#RequestActionFacet": "0x895Bc824e02ad0CEa76a64EF0De053Ce2Bbfc23a",
+  "DeployTreasuryFacetModule#TreasuryFacet": "0xC3546441897D9c87B3808c9402Bcb0655F238541",
+  "DeployTrustDomainPolicyFacetModule#TrustDomainPolicyFacet": "0xC19C5bcF2734f0284B2909bC9f06805810E43fA4",
+  "ProxyFactory#ProxyFactory": "0xBCD30A3D663D65bc9Bd7215029bE09dE18B9e1F8",
+  "DeployRequestOracleDiamondModule#QuexDiamond": "0xE6b65c64c5Db1027b5DFC403A98B6b294c68C318",
+  "DeployRequestActionTestContractModule#RequestActionTestContract": "0x31eEa478Ef9236e176e4A4414c52C5268e617a55"
+}
