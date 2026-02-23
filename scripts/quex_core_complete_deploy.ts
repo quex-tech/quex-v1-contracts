@@ -55,6 +55,8 @@ async function validate_interfaces(diamond: QuexDiamond) {
 }
 
 async function configure_manager(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
+    const managerBalance = await ethers.provider.getBalance(<string>config.managerAddress);
+    console.log(`  Manager address: ${config.managerAddress} (balance: ${ethers.formatEther(managerBalance)} native)`);
     const manager = "0xc8935964ff9a146a753e867ea3890f562b75604c6d6883305d776151177a5a74";
     const hasRole = await diamond.hasRole(manager, config.managerAddress);
     if (!hasRole) {
@@ -65,41 +67,57 @@ async function configure_manager(diamond: QuexDiamond, config: QuexCoreNetworkCo
 async function set_config_values(diamond: QuexDiamond, config: QuexCoreNetworkConfig) {
     const quexMonetary = IQuexMonetaryFacet__factory.connect(await diamond.getAddress(), diamond.runner);
 
+    console.log("  Checking quexFee...");
     if ((await quexMonetary.getQuexFee(1)) != config.quexFee) {
-        await quexMonetary
+        console.log("  Setting quexFee...");
+        const tx = await quexMonetary
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setQuexFee(config.quexFee);
+        console.log("  Waiting for tx:", tx.hash);
+        await tx.wait();
     }
     const quexFee = await quexMonetary.getQuexFee(1)
-    console.log(`Quex fee: ${quexFee}`);
+    console.log(`  Quex fee: ${quexFee}`);
 
+    console.log("  Checking treasury...");
     if ((await quexMonetary.getTreasury()) != config.treasuryAddress) {
-        await quexMonetary
+        console.log("  Setting treasury...");
+        const tx = await quexMonetary
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setTreasury(config.treasuryAddress);
+        console.log("  Waiting for tx:", tx.hash);
+        await tx.wait();
     }
     const treasury = await quexMonetary.getTreasury();
-    console.log(`Quex treasury: ${treasury}`);
+    console.log(`  Quex treasury: ${treasury}`);
 
     const quexActions = IQuexActionFacet__factory.connect(await diamond.getAddress(), diamond.runner);
+    console.log("  Checking quexGas...");
     if (await quexActions.getQuexGas() != config.quexFulfillingGasCost) {
-        await quexActions
+        console.log("  Setting quexGas...");
+        const tx = await quexActions
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setQuexGas(config.quexFulfillingGasCost);
+        console.log("  Waiting for tx:", tx.hash);
+        await tx.wait();
     }
     const quexGas = await quexActions.getQuexGas();
-    console.log(`Quex gas: ${quexGas}`);
+    console.log(`  Quex gas: ${quexGas}`);
 
+    console.log("  Checking timeSkew...");
     let timeSkew = await quexActions.getTimeSkew();
     const pastTimeSkew = config.pastTimeSkew ?? defaultPastTimeSkew;
     const futureTimeSkew = config.futureTimeSkew ?? defaultFutureTimeSkew;
     if (timeSkew[0] != pastTimeSkew || timeSkew[1] != futureTimeSkew) {
+        console.log("  Setting timeSkew...");
         const tx = await quexActions
             .connect(await ethers.getSigner(<string>config.managerAddress))
             .setTimeSkew(pastTimeSkew, futureTimeSkew);
+        console.log("  Waiting for tx:", tx.hash);
+        await tx.wait();
     }
     timeSkew = await quexActions.getTimeSkew();
-    console.log(`Time skew: ${timeSkew}`);
+    console.log(`  Time skew: ${timeSkew}`);
 }
 
 async function add_supported_svns(diamond: QuexDiamond, supportedSvns: SupportedSvns) {
@@ -141,5 +159,6 @@ if (require.main === module) {
     console.log("Start Core deploy for network:", networkName);
     console.log(JSON.stringify(quexNetworkConfig, (_, v) => typeof v === "bigint" ? v.toString() : v, 2));
     console.log("Deployment salt:", hardhatConfig.ignition.strategyConfig.create2.salt);
+    ethers.getSigners().then(s => console.log("Deploying from:", s[0].address));
     run(quexNetworkConfig).catch(console.error);
 }
