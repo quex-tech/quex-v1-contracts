@@ -107,19 +107,6 @@ const config: HardhatUserConfig = {
       url: `https://evmrpc-testnet.0g.ai`,
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     },
-    igraCaravelTestnet: {
-      chainId: 19416,
-      url: `https://caravel.igralabs.com:8545`,
-      accounts: [quexDeployerPrivateKey, quexManagerPrivateKey],
-      ignition: {
-        // For legacy-fee chains, Ignition will use gasPrice
-        gasPrice: 3000000000000n,
-        // For EIP-1559 chains, Ignition will prefer these values
-        maxPriorityFeePerGas: 3000000000000n,
-        maxFeePerGas: 3000000000000n,
-      },
-      gasPrice: 3000000000000,
-    },
     igraGalleonTestnet: {
       chainId: 38836,
       url: `https://galleon-testnet.igralabs.com:8545`,
