@@ -441,7 +441,8 @@ export const quexConfig: { [key: string]: QuexNetworkConfig } = {
             quexFulfillingGasCost: 110_000n,
             treasuryAddress: "0x70beA06316c51097dF67496feaFb7F50758019b9", // Relayer address
             managerAddress: DEFAULT_MANAGER,
-            pastTimeSkew: 60n * 60n, // 1 hour
+            pastTimeSkew: 24n * 60n * 60n, // 24 hours — Igra uses synthetic timestamps (10s/block, drifts from real time)
+            futureTimeSkew: 24n * 60n * 60n, // 24 hours
         },
         request: {
             actionFee: 0n,
