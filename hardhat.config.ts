@@ -124,6 +124,17 @@ const config: HardhatUserConfig = {
       url: `http://evmrpc.0g.ai/`,
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     },
+    igraMainnet: {
+      chainId: 38833,
+      url: `https://rpc.igralabs.com:8545`,
+      accounts: [quexDeployerPrivateKey, quexManagerPrivateKey],
+      ignition: {
+        gasPrice: 1000000000000n,
+        maxPriorityFeePerGas: 1000000000000n,
+        maxFeePerGas: 1000000000000n,
+      },
+      gasPrice: 1000000000000,
+    },
     redbellyTestnet: {
       chainId: 153,
       url: `https://governors.testnet.redbelly.network`,
