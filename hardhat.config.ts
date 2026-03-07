@@ -124,6 +124,11 @@ const config: HardhatUserConfig = {
       url: `http://evmrpc.0g.ai/`,
       accounts : [quexDeployerPrivateKey, quexManagerPrivateKey]
     },
+    avalanche: {
+      chainId: 43114,
+      url: "https://api.avax.network/ext/bc/C/rpc",
+      accounts: [quexDeployerPrivateKey, quexManagerPrivateKey],
+    },
     igraMainnet: {
       chainId: 38833,
       url: `https://rpc.igralabs.com:8545`,
