@@ -162,7 +162,17 @@ const config: HardhatUserConfig = {
     }
   },
   etherscan: {
-    apiKey: etherscanApiKey,
+    apiKey: {
+      arbitrumSepolia: etherscanApiKey,
+      arbitrumOne: etherscanApiKey,
+      ethereum: etherscanApiKey,
+      ethereumSepolia: etherscanApiKey,
+      baseSepolia: etherscanApiKey,
+      baseMainnet: etherscanApiKey,
+      xdcMainnet: 'empty',
+      xdcApothem: 'empty',
+      avalanche: 'empty',
+    },
     customChains: [
       {
         network: "xdcMainnet",
@@ -178,6 +188,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://rpc.apothem.network/api",
           browserURL: "https://testnet.xdcscan.com"
+        }
+      },
+      {
+        network: "avalanche",
+        chainId: 43114,
+        urls: {
+          apiURL: "https://api.routescan.io/v2/network/mainnet/evm/43114/etherscan",
+          browserURL: "https://avalanche.routescan.io"
         }
       }
     ]
