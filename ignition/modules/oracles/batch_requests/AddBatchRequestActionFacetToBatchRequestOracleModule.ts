@@ -11,21 +11,22 @@ const AddBatchRequestActionFacetToBatchRequestOracleModule = buildModule(
         const facet = m.useModule(DeployBatchRequestActionFacetModule).facet;
         const facetInterface = BatchRequestActionFacet__factory.createInterface();
 
+        // Only the content-addressed part primitives are cut in from the inherited RequestActionFacet;
+        // the single-request addAction / addActionByParts / getAction are intentionally omitted so a
+        // batch pool cannot silently serve or resolve v1 actions.
         const facetCuts = [
             {
                 target: facet,
                 action: 0,
                 selectors: [
-                    facetInterface.getFunction("addAction").selector,
-                    facetInterface.getFunction("addActionByParts").selector,
                     facetInterface.getFunction("addRequest").selector,
                     facetInterface.getFunction("addPrivatePatch").selector,
                     facetInterface.getFunction("addResponseSchema").selector,
                     facetInterface.getFunction("addJqFilter").selector,
-                    facetInterface.getFunction("getAction").selector,
                     facetInterface.getFunction("addBatchAction").selector,
                     facetInterface.getFunction("addBatchActionByParts").selector,
                     facetInterface.getFunction("getBatchAction").selector,
+                    facetInterface.getFunction("maxBatchSize").selector,
                 ]
             }
         ];

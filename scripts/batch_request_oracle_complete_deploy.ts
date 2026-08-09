@@ -1,6 +1,7 @@
 import env, {ethers, ignition} from "hardhat";
 import {
     IBatchRequestOraclePool__factory,
+    IConstantMaxResponseBlocksFacet__factory,
     IConstantPriceMonetaryFacet__factory,
     IOraclePool__factory,
     IQuexAddressFacet__factory,
@@ -14,7 +15,11 @@ import BatchRequestOracleDeployAndConfigurationModule
     from "../ignition/modules/oracles/batch_requests/BatchRequestOracleDeployAndConfigurationModule";
 import {quexConfig, QuexNetworkConfig, RequestOracleConfig} from "./quex_config";
 import DeployQuexCoreDiamondModule from "../ignition/modules/core/DeployQuexCoreDiamondModule";
-import {assert} from "console";
+import assert from "node:assert/strict";
+
+// Part primitives reused from RequestActionFacet that the batch pool exposes. The single-request
+// addAction / addActionByParts / getAction are intentionally NOT cut, so they are not validated here.
+const REQUEST_PART_SELECTORS = ["addRequest", "addPrivatePatch", "addResponseSchema", "addJqFilter"] as const;
 
 async function run(quexNetworkConfig: QuexNetworkConfig) {
     console.log("Start batch request oracle deploy");
@@ -33,16 +38,31 @@ async function run(quexNetworkConfig: QuexNetworkConfig) {
 }
 
 async function validate_interfaces(diamond: QuexDiamond) {
-    function validate_function(func: FunctionFragment) {
-        if (selectors.includes(func.selector)) return;
-        console.error(`Function ${func.name} (selector ${func.selector}) is not registered in oracle`);
+    const missing: string[] = [];
+
+    function require_selector(name: string, selector: string) {
+        if (!selectors.includes(selector)) {
+            missing.push(name);
+        }
+    }
+
+    function require_function(func: FunctionFragment) {
+        require_selector(func.name, func.selector);
     }
 
     const selectors = (await diamond.facets.staticCall()).reduce((acc: string[], v) => acc.concat(v.selectors), []);
 
-    IOraclePool__factory.createInterface().forEachFunction((x) => validate_function(x));
-    IRequestOraclePool__factory.createInterface().forEachFunction((x) => validate_function(x));
-    IBatchRequestOraclePool__factory.createInterface().forEachFunction((x) => validate_function(x));
+    IOraclePool__factory.createInterface().forEachFunction((x) => require_function(x));
+    IBatchRequestOraclePool__factory.createInterface().forEachFunction((x) => require_function(x));
+
+    const requestInterface = IRequestOraclePool__factory.createInterface();
+    for (const name of REQUEST_PART_SELECTORS) {
+        require_selector(name, requestInterface.getFunction(name).selector);
+    }
+
+    if (missing.length > 0) {
+        throw new Error(`Batch oracle pool is missing selectors for: ${missing.join(", ")}`);
+    }
 }
 
 async function configure_manager(diamond: QuexDiamond, config: RequestOracleConfig) {
@@ -54,37 +74,45 @@ async function configure_manager(diamond: QuexDiamond, config: RequestOracleConf
 }
 
 async function set_config_values(diamond: QuexDiamond, config: RequestOracleConfig, quexCoreAddress: AddressLike) {
+    const manager = await ethers.getSigner(<string>config.managerAddress);
+
     const constantPriceMonetaryFacet = IConstantPriceMonetaryFacet__factory.connect(
         await diamond.getAddress(),
         diamond.runner
     );
     if ((await constantPriceMonetaryFacet.getActionFee(0)) != config.actionFee) {
-        await constantPriceMonetaryFacet
-            .connect(await ethers.getSigner(<string>config.managerAddress))
-            .setActionFee(config.actionFee);
+        await constantPriceMonetaryFacet.connect(manager).setActionFee(config.actionFee);
     }
-    assert((await constantPriceMonetaryFacet.getActionFee(0)) == config.actionFee);
+    assert.equal(await constantPriceMonetaryFacet.getActionFee(0), config.actionFee);
+
+    const maxResponseBlocksFacet = IConstantMaxResponseBlocksFacet__factory.connect(
+        await diamond.getAddress(),
+        diamond.runner
+    );
+    if ((await maxResponseBlocksFacet.getMaxResponseBlocks(0)) != config.maxResponseBlocks) {
+        await maxResponseBlocksFacet.connect(manager).setMaxResponseBlocks(config.maxResponseBlocks);
+    }
+    assert.equal(await maxResponseBlocksFacet.getMaxResponseBlocks(0), config.maxResponseBlocks);
 
     const treasuryFacet = ITreasuryFacet__factory.connect(await diamond.getAddress(), diamond.runner);
     if ((await treasuryFacet.getTreasury()) != config.treasuryAddress) {
-        await treasuryFacet
-            .connect(await ethers.getSigner(<string>config.managerAddress))
-            .setTreasury(config.treasuryAddress);
+        await treasuryFacet.connect(manager).setTreasury(config.treasuryAddress);
     }
-    assert((await treasuryFacet.getTreasury()) == config.treasuryAddress);
+    assert.equal(await treasuryFacet.getTreasury(), config.treasuryAddress);
 
     const quexAddressFacet = IQuexAddressFacet__factory.connect(await diamond.getAddress(), diamond.runner);
     if ((await quexAddressFacet.getQuexAddress()) != quexCoreAddress) {
-        await quexAddressFacet
-            .connect(await ethers.getSigner(<string>config.managerAddress))
-            .setQuexAddress(quexCoreAddress);
+        await quexAddressFacet.connect(manager).setQuexAddress(quexCoreAddress);
     }
-    assert((await quexAddressFacet.getQuexAddress()) == quexCoreAddress);
+    assert.equal(await quexAddressFacet.getQuexAddress(), quexCoreAddress);
 }
 
 if (require.main === module) {
     const quexNetworkConfig: QuexNetworkConfig = quexConfig[env.network.name];
-    run(quexNetworkConfig).catch(console.error);
+    run(quexNetworkConfig).catch((error) => {
+        console.error(error);
+        process.exitCode = 1;
+    });
 }
 
 export {run};
