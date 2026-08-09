@@ -38,7 +38,33 @@ contract BatchRequestActionFacet is RequestActionFacet, IBatchRequestOraclePool 
     }
 
     function getBatchAction(uint256 actionId) external view returns (bytes memory) {
-        revert("not implemented");
+        BatchRequestOracleStorage.BatchActionInternal memory batchActionInternal = BatchRequestOracleStorage
+            .layout()
+            .batchActions[actionId];
+
+        return abi.encode(_getBatchAction(batchActionInternal));
+    }
+
+    function _getBatchAction(
+        BatchRequestOracleStorage.BatchActionInternal memory batchActionInternal
+    ) private view returns (BatchRequestAction memory batchAction) {
+        RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
+        uint256 sourceCount = batchActionInternal.requestIds.length;
+
+        HTTPRequest[] memory requests = new HTTPRequest[](sourceCount);
+        HTTPPrivatePatch[] memory patches = new HTTPPrivatePatch[](sourceCount);
+        for (uint256 i = 0; i < sourceCount; ++i) {
+            requests[i] = layout.requests[batchActionInternal.requestIds[i]];
+            patches[i] = layout.privatePatches[batchActionInternal.patchIds[i]];
+        }
+
+        return
+            BatchRequestAction(
+                requests,
+                patches,
+                layout.resultSchemas[batchActionInternal.schemaId],
+                layout.jqFilters[batchActionInternal.filterId]
+            );
     }
 
     function _calculateBatchActionId(BatchRequestAction memory batchAction) private pure returns (uint256) {

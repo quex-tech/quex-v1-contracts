@@ -40,6 +40,14 @@ contract BatchRequestActionFacetTest is Test {
         testObject.addBatchAction(batchAction);
     }
 
+    function test_getBatchAction_returnsEncodedActionAfterAdd() public {
+        (BatchRequestAction memory batchAction, uint256 actionId) = _createTwoSourceBatchAction();
+
+        testObject.addBatchAction(batchAction);
+
+        assertEq(testObject.getBatchAction(actionId), abi.encode(batchAction));
+    }
+
     HTTPPrivatePatch private emptyPatch =
         HTTPPrivatePatch("", new RequestHeaderPatch[](0), new QueryParameterPatch[](0), "", address(0));
 
