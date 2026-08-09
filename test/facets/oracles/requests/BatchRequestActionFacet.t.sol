@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "@solidstate/contracts/interfaces/IERC2535DiamondCutInternal.sol";
 import {QuexDiamond} from "../../../../contracts/diamond/QuexDiamond.sol";
 import {BatchRequestActionFacet} from "../../../../contracts/facets/oracles/requests/BatchRequestActionFacet.sol";
+import {RequestActionFacet} from "../../../../contracts/facets/oracles/requests/RequestActionFacet.sol";
 import "../../../../contracts/interfaces/oracles/IBatchRequestOraclePool.sol";
 
 contract BatchRequestActionFacetTest is Test {
@@ -16,11 +17,15 @@ contract BatchRequestActionFacetTest is Test {
         diamond.init(address(this));
         BatchRequestActionFacet facet = new BatchRequestActionFacet();
         IERC2535DiamondCutInternal.FacetCut[] memory cuts = new IERC2535DiamondCutInternal.FacetCut[](1);
-        bytes4[] memory selectors = new bytes4[](3);
+        bytes4[] memory selectors = new bytes4[](7);
 
         selectors[0] = BatchRequestActionFacet.addBatchAction.selector;
         selectors[1] = BatchRequestActionFacet.addBatchActionByParts.selector;
         selectors[2] = BatchRequestActionFacet.getBatchAction.selector;
+        selectors[3] = RequestActionFacet.addRequest.selector;
+        selectors[4] = RequestActionFacet.addPrivatePatch.selector;
+        selectors[5] = RequestActionFacet.addResponseSchema.selector;
+        selectors[6] = RequestActionFacet.addJqFilter.selector;
 
         cuts[0] = IERC2535DiamondCutInternal.FacetCut({
             target: address(facet),
@@ -46,6 +51,17 @@ contract BatchRequestActionFacetTest is Test {
         testObject.addBatchAction(batchAction);
 
         assertEq(testObject.getBatchAction(actionId), abi.encode(batchAction));
+    }
+
+    function test_addBatchActionByParts_emitsBatchRequestActionAddedEvent() public {
+        (BatchRequestAction memory batchAction, uint256 actionId) = _createTwoSourceBatchAction();
+        (bytes32[] memory requestIds, bytes32[] memory patchIds, bytes32 schemaId, bytes32 filterId) = _createBatchParts(
+            batchAction
+        );
+
+        vm.expectEmit(true, false, false, true);
+        emit IBatchRequestOraclePool.BatchRequestActionAdded(actionId);
+        testObject.addBatchActionByParts(requestIds, patchIds, schemaId, filterId);
     }
 
     function test_addBatchAction_RevertsIf_EmptyBatch() public {
@@ -104,6 +120,22 @@ contract BatchRequestActionFacetTest is Test {
         batchAction = BatchRequestAction(requests, patches, "uint256", "map(.price) | add");
         actionId = uint256(keccak256(abi.encode(batchAction)));
         return (batchAction, actionId);
+    }
+
+    function _createBatchParts(
+        BatchRequestAction memory batchAction
+    ) private returns (bytes32[] memory requestIds, bytes32[] memory patchIds, bytes32 schemaId, bytes32 filterId) {
+        IRequestOraclePool parts = IRequestOraclePool(address(diamond));
+        uint256 sourceCount = batchAction.requests.length;
+        requestIds = new bytes32[](sourceCount);
+        patchIds = new bytes32[](sourceCount);
+        for (uint256 i = 0; i < sourceCount; ++i) {
+            requestIds[i] = parts.addRequest(batchAction.requests[i]);
+            patchIds[i] = parts.addPrivatePatch(batchAction.patches[i]);
+        }
+        schemaId = parts.addResponseSchema(batchAction.responseSchema);
+        filterId = parts.addJqFilter(batchAction.jqFilter);
+        return (requestIds, patchIds, schemaId, filterId);
     }
 
     function _createBatchAction(uint256 sourceCount) private view returns (BatchRequestAction memory batchAction) {
