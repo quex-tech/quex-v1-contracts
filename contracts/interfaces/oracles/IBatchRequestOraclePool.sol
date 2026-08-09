@@ -3,6 +3,8 @@ pragma solidity 0.8.22;
 
 import "./IRequestOraclePool.sol";
 
+uint256 constant MAX_BATCH_SIZE = 8;
+
 struct BatchRequestAction {
     HTTPRequest[] requests;
     HTTPPrivatePatch[] patches;
@@ -12,9 +14,9 @@ struct BatchRequestAction {
 
 interface IBatchRequestOraclePool {
     error BatchSizeOutOfRange();
-    error BatchLengthMismatch();
+    error PatchCountMismatch();
 
-    event BatchRequestActionAdded(uint256 actionId);
+    event BatchRequestActionAdded(uint256 indexed actionId);
 
     function addBatchAction(BatchRequestAction memory batchAction) external returns (uint256 actionId);
 
@@ -26,4 +28,6 @@ interface IBatchRequestOraclePool {
     ) external returns (uint256 actionId);
 
     function getBatchAction(uint256 actionId) external view returns (bytes memory);
+
+    function maxBatchSize() external pure returns (uint256);
 }

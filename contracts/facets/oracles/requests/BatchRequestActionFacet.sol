@@ -6,10 +6,18 @@ import "./BatchRequestOracleStorage.sol";
 import "./RequestActionFacet.sol";
 
 contract BatchRequestActionFacet is RequestActionFacet, IBatchRequestOraclePool {
-    uint256 internal constant MAX_BATCH_SIZE = 8;
+    // keccak256("quex.action.batchRequest.v1"): domain tag keeping batch action ids
+    // in a namespace disjoint from single-request action ids.
+    bytes32 private constant BATCH_ACTION_DOMAIN =
+        0x4968257a8b21d6e257aa6b1971196271874e7a3adcf04e8a66e5d0047185e744;
+
+    function maxBatchSize() external pure returns (uint256) {
+        return MAX_BATCH_SIZE;
+    }
 
     function addBatchAction(BatchRequestAction memory batchAction) external returns (uint256 actionId) {
         _validateBatchSize(batchAction.requests.length, batchAction.patches.length);
+
         uint256 sourceCount = batchAction.requests.length;
         bytes32[] memory requestIds = new bytes32[](sourceCount);
         bytes32[] memory patchIds = new bytes32[](sourceCount);
@@ -20,15 +28,9 @@ contract BatchRequestActionFacet is RequestActionFacet, IBatchRequestOraclePool 
         bytes32 filterId = addJqFilter(batchAction.jqFilter);
         bytes32 schemaId = addResponseSchema(batchAction.responseSchema);
 
-        actionId = _calculateBatchActionId(batchAction);
-        BatchRequestOracleStorage.layout().batchActions[actionId] = BatchRequestOracleStorage.BatchActionInternal(
-            requestIds,
-            patchIds,
-            schemaId,
-            filterId
-        );
-        emit BatchRequestActionAdded(actionId);
-        return actionId;
+        BatchRequestOracleStorage.BatchActionInternal memory internalAction = BatchRequestOracleStorage
+            .BatchActionInternal(requestIds, patchIds, schemaId, filterId);
+        return _storeBatchAction(internalAction, _getBatchAction(internalAction));
     }
 
     function addBatchActionByParts(
@@ -39,10 +41,9 @@ contract BatchRequestActionFacet is RequestActionFacet, IBatchRequestOraclePool 
     ) external returns (uint256 actionId) {
         _validateBatchSize(requestIds.length, patchIds.length);
 
-        BatchRequestOracleStorage.BatchActionInternal memory batchActionInternal = BatchRequestOracleStorage
+        BatchRequestOracleStorage.BatchActionInternal memory internalAction = BatchRequestOracleStorage
             .BatchActionInternal(requestIds, patchIds, schemaId, filterId);
-
-        BatchRequestAction memory batchAction = _getBatchAction(batchActionInternal);
+        BatchRequestAction memory batchAction = _getBatchAction(internalAction);
 
         for (uint256 i = 0; i < requestIds.length; ++i) {
             if (bytes(batchAction.requests[i].host).length == 0) {
@@ -59,44 +60,53 @@ contract BatchRequestActionFacet is RequestActionFacet, IBatchRequestOraclePool 
             revert JqFilterNotFound();
         }
 
+        return _storeBatchAction(internalAction, batchAction);
+    }
+
+    function getBatchAction(uint256 actionId) external view returns (bytes memory) {
+        return abi.encode(_getBatchAction(BatchRequestOracleStorage.layout().batchActions[actionId]));
+    }
+
+    // NOTE: getAction / addAction / addActionByParts are inherited from RequestActionFacet but are
+    // deliberately NOT cut into the batch pool diamond, so an IOraclePool.getAction call on a batch
+    // pool fails fast through the diamond fallback instead of returning a zeroed RequestAction.
+
+    function _storeBatchAction(
+        BatchRequestOracleStorage.BatchActionInternal memory internalAction,
+        BatchRequestAction memory batchAction
+    ) private returns (uint256 actionId) {
+        // Hash the reconstructed action so the committed id matches what getBatchAction serves,
+        // even when a content-empty patch drops its tdAddress during registration.
         actionId = _calculateBatchActionId(batchAction);
-        BatchRequestOracleStorage.layout().batchActions[actionId] = batchActionInternal;
+        BatchRequestOracleStorage.layout().batchActions[actionId] = internalAction;
         emit BatchRequestActionAdded(actionId);
         return actionId;
     }
 
-    function getBatchAction(uint256 actionId) external view returns (bytes memory) {
-        BatchRequestOracleStorage.BatchActionInternal memory batchActionInternal = BatchRequestOracleStorage
-            .layout()
-            .batchActions[actionId];
-
-        return abi.encode(_getBatchAction(batchActionInternal));
-    }
-
     function _getBatchAction(
-        BatchRequestOracleStorage.BatchActionInternal memory batchActionInternal
+        BatchRequestOracleStorage.BatchActionInternal memory internalAction
     ) private view returns (BatchRequestAction memory batchAction) {
         RequestOracleStorage.Layout storage layout = RequestOracleStorage.layout();
-        uint256 sourceCount = batchActionInternal.requestIds.length;
+        uint256 sourceCount = internalAction.requestIds.length;
 
         HTTPRequest[] memory requests = new HTTPRequest[](sourceCount);
         HTTPPrivatePatch[] memory patches = new HTTPPrivatePatch[](sourceCount);
         for (uint256 i = 0; i < sourceCount; ++i) {
-            requests[i] = layout.requests[batchActionInternal.requestIds[i]];
-            patches[i] = layout.privatePatches[batchActionInternal.patchIds[i]];
+            requests[i] = layout.requests[internalAction.requestIds[i]];
+            patches[i] = layout.privatePatches[internalAction.patchIds[i]];
         }
 
         return
             BatchRequestAction(
                 requests,
                 patches,
-                layout.resultSchemas[batchActionInternal.schemaId],
-                layout.jqFilters[batchActionInternal.filterId]
+                layout.resultSchemas[internalAction.schemaId],
+                layout.jqFilters[internalAction.filterId]
             );
     }
 
     function _calculateBatchActionId(BatchRequestAction memory batchAction) private pure returns (uint256) {
-        return uint256(keccak256(abi.encode(batchAction)));
+        return uint256(keccak256(abi.encode(BATCH_ACTION_DOMAIN, batchAction)));
     }
 
     function _validateBatchSize(uint256 requestCount, uint256 patchCount) private pure {
@@ -104,7 +114,7 @@ contract BatchRequestActionFacet is RequestActionFacet, IBatchRequestOraclePool 
             revert BatchSizeOutOfRange();
         }
         if (patchCount != requestCount) {
-            revert BatchLengthMismatch();
+            revert PatchCountMismatch();
         }
     }
 }

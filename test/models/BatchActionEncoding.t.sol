@@ -9,6 +9,10 @@ import "../../contracts/interfaces/oracles/IBatchRequestOraclePool.sol";
 contract BatchActionEncodingTest is Test {
     using stdJson for string;
 
+    // keccak256("quex.action.batchRequest.v1"), mirrors BatchRequestActionFacet.BATCH_ACTION_DOMAIN.
+    bytes32 private constant BATCH_ACTION_DOMAIN =
+        0x4968257a8b21d6e257aa6b1971196271874e7a3adcf04e8a66e5d0047185e744;
+
     function test_batchActionEncoding() public view {
         string memory path = "test/testdata/test-vectors/batch_action_test_vectors.json";
         string memory json = vm.readFile(path);
@@ -20,7 +24,11 @@ contract BatchActionEncodingTest is Test {
         assertEq(encoded, expectedEncoded, "Encoded bytes do not match expected test vector");
 
         bytes32 expectedActionId = json.readBytes32(".vectors[0].action_id");
-        assertEq(keccak256(encoded), expectedActionId, "Action id does not match expected test vector");
+        assertEq(
+            keccak256(abi.encode(BATCH_ACTION_DOMAIN, batchAction)),
+            expectedActionId,
+            "Action id does not match expected test vector"
+        );
     }
 
     function _canonicalVectorAction() private pure returns (BatchRequestAction memory batchAction) {
