@@ -64,6 +64,42 @@ contract BatchRequestActionFacetTest is Test {
         testObject.addBatchActionByParts(requestIds, patchIds, schemaId, filterId);
     }
 
+    function test_addBatchActionByParts_RevertsIf_RequestMissing() public {
+        (BatchRequestAction memory batchAction, ) = _createTwoSourceBatchAction();
+        (bytes32[] memory requestIds, bytes32[] memory patchIds, bytes32 schemaId, bytes32 filterId) = _createBatchParts(
+            batchAction
+        );
+        requestIds[1] = keccak256("unknown request");
+
+        vm.expectRevert(IRequestOraclePool.RequestNotFound.selector);
+        testObject.addBatchActionByParts(requestIds, patchIds, schemaId, filterId);
+    }
+
+    function test_addBatchActionByParts_RevertsIf_PatchMissing() public {
+        (BatchRequestAction memory batchAction, ) = _createTwoSourceBatchAction();
+        (bytes32[] memory requestIds, bytes32[] memory patchIds, bytes32 schemaId, bytes32 filterId) = _createBatchParts(
+            batchAction
+        );
+        patchIds[0] = keccak256("unknown patch");
+
+        vm.expectRevert(IRequestOraclePool.PrivatePatchNotFound.selector);
+        testObject.addBatchActionByParts(requestIds, patchIds, schemaId, filterId);
+    }
+
+    function testFuzz_addBatchAction_roundTripsForAnyBatchSize(uint256 sourceCount, string memory filter) public {
+        sourceCount = bound(sourceCount, 1, 8);
+        vm.assume(bytes(filter).length > 0);
+        BatchRequestAction memory batchAction = _createBatchAction(sourceCount);
+        batchAction.jqFilter = filter;
+        uint256 actionId = uint256(keccak256(abi.encode(batchAction)));
+
+        vm.expectEmit(true, false, false, true);
+        emit IBatchRequestOraclePool.BatchRequestActionAdded(actionId);
+        testObject.addBatchAction(batchAction);
+
+        assertEq(testObject.getBatchAction(actionId), abi.encode(batchAction));
+    }
+
     function test_addBatchAction_RevertsIf_EmptyBatch() public {
         BatchRequestAction memory batchAction = _createBatchAction(0);
 
