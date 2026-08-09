@@ -1,0 +1,47 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.22;
+
+import "../../../interfaces/oracles/IBatchRequestOraclePool.sol";
+import "./BatchRequestOracleStorage.sol";
+import "./RequestActionFacet.sol";
+
+contract BatchRequestActionFacet is RequestActionFacet, IBatchRequestOraclePool {
+    function addBatchAction(BatchRequestAction memory batchAction) external returns (uint256 actionId) {
+        uint256 sourceCount = batchAction.requests.length;
+        bytes32[] memory requestIds = new bytes32[](sourceCount);
+        bytes32[] memory patchIds = new bytes32[](sourceCount);
+        for (uint256 i = 0; i < sourceCount; ++i) {
+            requestIds[i] = addRequest(batchAction.requests[i]);
+            patchIds[i] = addPrivatePatch(batchAction.patches[i]);
+        }
+        bytes32 filterId = addJqFilter(batchAction.jqFilter);
+        bytes32 schemaId = addResponseSchema(batchAction.responseSchema);
+
+        actionId = _calculateBatchActionId(batchAction);
+        BatchRequestOracleStorage.layout().batchActions[actionId] = BatchRequestOracleStorage.BatchActionInternal(
+            requestIds,
+            patchIds,
+            schemaId,
+            filterId
+        );
+        emit BatchRequestActionAdded(actionId);
+        return actionId;
+    }
+
+    function addBatchActionByParts(
+        bytes32[] memory requestIds,
+        bytes32[] memory patchIds,
+        bytes32 schemaId,
+        bytes32 filterId
+    ) external returns (uint256 actionId) {
+        revert("not implemented");
+    }
+
+    function getBatchAction(uint256 actionId) external view returns (bytes memory) {
+        revert("not implemented");
+    }
+
+    function _calculateBatchActionId(BatchRequestAction memory batchAction) private pure returns (uint256) {
+        return uint256(keccak256(abi.encode(batchAction)));
+    }
+}
