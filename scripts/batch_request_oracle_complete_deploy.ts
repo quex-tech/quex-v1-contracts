@@ -52,7 +52,13 @@ async function validate_interfaces(diamond: QuexDiamond) {
 
     const selectors = (await diamond.facets.staticCall()).reduce((acc: string[], v) => acc.concat(v.selectors), []);
 
-    IOraclePool__factory.createInterface().forEachFunction((x) => require_function(x));
+    // A batch pool resolves action content via getBatchAction, not the single-request getAction, so
+    // getAction is deliberately not cut and must be excluded from the IOraclePool completeness check.
+    const oraclePoolInterface = IOraclePool__factory.createInterface();
+    const omittedSelectors = new Set<string>([oraclePoolInterface.getFunction("getAction").selector]);
+    oraclePoolInterface.forEachFunction((x) => {
+        if (!omittedSelectors.has(x.selector)) require_function(x);
+    });
     IBatchRequestOraclePool__factory.createInterface().forEachFunction((x) => require_function(x));
 
     const requestInterface = IRequestOraclePool__factory.createInterface();

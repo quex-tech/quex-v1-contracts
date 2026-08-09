@@ -145,6 +145,11 @@ contract BatchRequestActionFacetTest is Test {
         testObject.addBatchActionByParts(new bytes32[](2), new bytes32[](1), keccak256("s"), keccak256("f"));
     }
 
+    function test_addBatchActionByParts_RevertsIf_MoreThanEightSources() public {
+        vm.expectRevert(IBatchRequestOraclePool.BatchSizeOutOfRange.selector);
+        testObject.addBatchActionByParts(new bytes32[](9), new bytes32[](9), keccak256("s"), keccak256("f"));
+    }
+
     function test_addBatchAction_AcceptsExactlyEightSources() public {
         BatchRequestAction memory batchAction = _createBatchAction(8);
 
