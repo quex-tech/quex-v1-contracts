@@ -48,6 +48,29 @@ contract BatchRequestActionFacetTest is Test {
         assertEq(testObject.getBatchAction(actionId), abi.encode(batchAction));
     }
 
+    function test_addBatchAction_RevertsIf_EmptyBatch() public {
+        BatchRequestAction memory batchAction = _createBatchAction(0);
+
+        vm.expectRevert(IBatchRequestOraclePool.BatchSizeOutOfRange.selector);
+        testObject.addBatchAction(batchAction);
+    }
+
+    function test_addBatchAction_RevertsIf_MoreThanEightSources() public {
+        BatchRequestAction memory batchAction = _createBatchAction(9);
+
+        vm.expectRevert(IBatchRequestOraclePool.BatchSizeOutOfRange.selector);
+        testObject.addBatchAction(batchAction);
+    }
+
+    function test_addBatchAction_RevertsIf_PatchCountMismatch() public {
+        BatchRequestAction memory batchAction = _createBatchAction(2);
+        batchAction.patches = new HTTPPrivatePatch[](1);
+        batchAction.patches[0] = emptyPatch;
+
+        vm.expectRevert(IBatchRequestOraclePool.BatchLengthMismatch.selector);
+        testObject.addBatchAction(batchAction);
+    }
+
     HTTPPrivatePatch private emptyPatch =
         HTTPPrivatePatch("", new RequestHeaderPatch[](0), new QueryParameterPatch[](0), "", address(0));
 
@@ -81,5 +104,22 @@ contract BatchRequestActionFacetTest is Test {
         batchAction = BatchRequestAction(requests, patches, "uint256", "map(.price) | add");
         actionId = uint256(keccak256(abi.encode(batchAction)));
         return (batchAction, actionId);
+    }
+
+    function _createBatchAction(uint256 sourceCount) private view returns (BatchRequestAction memory batchAction) {
+        HTTPRequest[] memory requests = new HTTPRequest[](sourceCount);
+        HTTPPrivatePatch[] memory patches = new HTTPPrivatePatch[](sourceCount);
+        for (uint256 i = 0; i < sourceCount; ++i) {
+            requests[i] = HTTPRequest(
+                RequestMethod.Get,
+                string.concat("api", vm.toString(i), ".example.com"),
+                "/price",
+                new RequestHeader[](0),
+                new QueryParameter[](0),
+                ""
+            );
+            patches[i] = emptyPatch;
+        }
+        return BatchRequestAction(requests, patches, "uint256", "map(.price) | add");
     }
 }

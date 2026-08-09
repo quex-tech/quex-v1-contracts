@@ -6,7 +6,10 @@ import "./BatchRequestOracleStorage.sol";
 import "./RequestActionFacet.sol";
 
 contract BatchRequestActionFacet is RequestActionFacet, IBatchRequestOraclePool {
+    uint256 internal constant MAX_BATCH_SIZE = 8;
+
     function addBatchAction(BatchRequestAction memory batchAction) external returns (uint256 actionId) {
+        _validateBatchSize(batchAction.requests.length, batchAction.patches.length);
         uint256 sourceCount = batchAction.requests.length;
         bytes32[] memory requestIds = new bytes32[](sourceCount);
         bytes32[] memory patchIds = new bytes32[](sourceCount);
@@ -69,5 +72,14 @@ contract BatchRequestActionFacet is RequestActionFacet, IBatchRequestOraclePool 
 
     function _calculateBatchActionId(BatchRequestAction memory batchAction) private pure returns (uint256) {
         return uint256(keccak256(abi.encode(batchAction)));
+    }
+
+    function _validateBatchSize(uint256 requestCount, uint256 patchCount) private pure {
+        if (requestCount == 0 || requestCount > MAX_BATCH_SIZE) {
+            revert BatchSizeOutOfRange();
+        }
+        if (patchCount != requestCount) {
+            revert BatchLengthMismatch();
+        }
     }
 }
