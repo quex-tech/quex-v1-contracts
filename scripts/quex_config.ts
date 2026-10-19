@@ -37,9 +37,17 @@ export interface QuexNetworkConfig {
 }
 
 export const supportedSvns: SupportedSvns = {
-    cpuSvnsToAdd: ["0x0202191b03ff00060000000000000000", "0x0303191b04ff00060000000000000000"],
+    cpuSvnsToAdd: [
+        "0x0202191b03ff00060000000000000000",
+        "0x0303191b04ff00060000000000000000",
+        "0x08080a0a07ff00020000000000000000", // GCP c4 (uFarm batch TD, 2026-10)
+    ],
     cpuSvnsToRemove: [],
-    teeTcbSvnsToAdd: ["0x05010200000000000000000000000000", "0x07010300000000000000000000000000"],
+    teeTcbSvnsToAdd: [
+        "0x05010200000000000000000000000000",
+        "0x07010300000000000000000000000000",
+        "0x09030800000000000000000000000000", // GCP c4 (uFarm batch TD, 2026-10)
+    ],
     teeTcbSvnsToRemove: []
 }
 

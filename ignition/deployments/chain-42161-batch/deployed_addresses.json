@@ -1,0 +1,11 @@
+{
+  "DeployTreasuryFacetModule#TreasuryFacet": "0x048c3dFF84F9d86Ef116C697045C61287Ab9CD61",
+  "DeployConstantMaxResponseBlocksFacetModule#ConstantMaxResponseBlocksFacet": "0x941052E374D0c9871855A77b86C19cDDF91fdfBF",
+  "DeployConstantPriceMonetaryFacetModule#ConstantPriceMonetaryFacet": "0x3E818dc1dbb62dC66D57Da4C3B448bb7de52D0cE",
+  "DeployQuexAddressFacetModule#QuexAddressFacet": "0x67B798903BC49221e5Ae1e26ae57f8a03061A596",
+  "DeployRequestActionFacetModule#RequestActionFacet": "0xe57404E84367a96d801a7edE2f08EBbDdCaa9Ac9",
+  "DeployTrustDomainPolicyFacetModule#TrustDomainPolicyFacet": "0x9d484339F20D333a50d929ed7900107D53EC3831",
+  "ProxyFactory#ProxyFactory": "0xFFf7551b3376AEaDb67630a7be8802B136B9186f",
+  "QuexDiamond#QuexDiamond": "0x2a89767b02C08D68F344ddF27B9B168BdBc9692c",
+  "DeployRequestOracleDiamondModule#QuexDiamond": "0xFDAF9dd4F322792Cd1623c8855Ee4A4040396503"
+}

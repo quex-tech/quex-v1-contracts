@@ -13,22 +13,37 @@ import RequestOracleDeployAndConfigurationModule
     from "../ignition/modules/oracles/requests/RequestOracleDeployAndConfigurationModule";
 import {quexConfig, QuexNetworkConfig, RequestOracleConfig} from "./quex_config";
 import DeployQuexCoreDiamondModule from "../ignition/modules/core/DeployQuexCoreDiamondModule";
+import {getQuexCoreAddress} from "./common";
 import {assert} from "console";
 
+// IGNITION_DEPLOYMENT_ID (e.g. chain-42161-batch) deploys an extra pool beside the
+// chain's default one; set IGNITION_SALT to a fresh value with it, or create2 resolves
+// to the already deployed default pool. The extra pool binds to the chain's existing
+// QuexCore instead of deploying a second core under the new salt.
 async function run(quexNetworkConfig: QuexNetworkConfig) {
     console.log("Start request oracle deploy");
-    const {requestsDiamond} = await ignition.deploy(RequestOracleDeployAndConfigurationModule, {strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2"});
+    const deploymentId = process.env.IGNITION_DEPLOYMENT_ID;
+    const {requestsDiamond} = await ignition.deploy(RequestOracleDeployAndConfigurationModule, {
+        strategy: quexNetworkConfig.disableCreate2 ? "basic" : "create2",
+        deploymentId,
+    });
 
     const diamond = QuexDiamond__factory.connect(await requestsDiamond.getAddress(), requestsDiamond.runner);
 
-    const {quexCoreDiamond} = await ignition.deploy(DeployQuexCoreDiamondModule);
+    let quexCoreAddress: string;
+    if (deploymentId) {
+        quexCoreAddress = await getQuexCoreAddress();
+    } else {
+        const {quexCoreDiamond} = await ignition.deploy(DeployQuexCoreDiamondModule);
+        quexCoreAddress = await quexCoreDiamond.getAddress();
+    }
 
     console.log("Validating interfaces");
     await validate_interfaces(diamond);
     console.log("Configure manager");
     await configure_manager(diamond, quexNetworkConfig.request);
-    await set_config_values(diamond, quexNetworkConfig.request, await quexCoreDiamond.getAddress());
-    console.log("Done");
+    await set_config_values(diamond, quexNetworkConfig.request, quexCoreAddress);
+    console.log(`Done: request oracle ${await diamond.getAddress()} -> core ${quexCoreAddress}`);
 }
 
 async function validate_interfaces(diamond: QuexDiamond) {
